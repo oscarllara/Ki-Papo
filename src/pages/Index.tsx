@@ -13,20 +13,22 @@ const Index = () => {
   const handleSocialLogin = (provider: string) => {
     setIsAuthenticating(provider);
     
-    // Simula o tempo de resposta da rede social (OAuth popup)
+    // Simulação: Quando o Supabase estiver ativo, aqui chamaremos 'auth.signInWithOAuth'
     setTimeout(() => {
       const mockNames: Record<string, string> = {
-        'Google': 'Ricardo Silva (Google)',
-        'Facebook': 'Ana Beatriz (Facebook)',
-        'Instagram': 'insta_user_oficial',
+        'Google': 'Usuário do Google',
+        'Facebook': 'Usuário do Facebook',
+        'Instagram': 'Usuário do Instagram',
         'Apple': 'Usuário Apple'
       };
 
+      // Salvamos qual rede foi usada para o gestor saber
       sessionStorage.setItem('temp_provider', provider);
       sessionStorage.setItem('temp_name', mockNames[provider] || '');
+      
       setIsAuthenticating(null);
       navigate('/onboarding');
-    }, 2000);
+    }, 1500);
   };
 
   return (
@@ -44,8 +46,8 @@ const Index = () => {
               {isAuthenticating === 'Instagram' && <Instagram size={48} className="text-pink-600 animate-bounce" />}
               {isAuthenticating === 'Apple' && <Apple size={48} className="text-slate-900 animate-bounce" />}
             </div>
-            <h3 className="text-lg font-black text-slate-800">Conectando ao {isAuthenticating}</h3>
-            <p className="text-sm text-slate-500 mt-2">Aguarde enquanto buscamos seus dados...</p>
+            <h3 className="text-lg font-black text-slate-800">Autenticando via {isAuthenticating}</h3>
+            <p className="text-sm text-slate-500 mt-2">Conectando aos serviços de rede...</p>
             <Loader2 className="mx-auto mt-6 text-indigo-600 animate-spin" size={24} />
           </Card>
         </div>
@@ -66,7 +68,7 @@ const Index = () => {
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
             disabled={!!isAuthenticating}
           >
-            <Chrome size={18} className="text-red-500" /> Google
+            <Chrome size={18} className="text-red-500" /> Entrar com Google
           </Button>
           <Button 
             onClick={() => handleSocialLogin('Facebook')} 
@@ -74,7 +76,7 @@ const Index = () => {
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
             disabled={!!isAuthenticating}
           >
-            <Facebook size={18} className="text-blue-600 fill-blue-600" /> Facebook
+            <Facebook size={18} className="text-blue-600 fill-blue-600" /> Entrar com Facebook
           </Button>
           <Button 
             onClick={() => handleSocialLogin('Instagram')} 
@@ -82,7 +84,7 @@ const Index = () => {
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
             disabled={!!isAuthenticating}
           >
-            <Instagram size={18} className="text-pink-600" /> Instagram
+            <Instagram size={18} className="text-pink-600" /> Entrar com Instagram
           </Button>
           <Button 
             onClick={() => handleSocialLogin('Apple')} 
@@ -90,27 +92,20 @@ const Index = () => {
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
             disabled={!!isAuthenticating}
           >
-            <Apple size={18} className="fill-slate-900" /> Apple ID
+            <Apple size={18} className="fill-slate-900" /> Entrar com Apple
           </Button>
           
           <div className="relative py-4">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
-            <div className="relative flex justify-center text-[10px] uppercase font-black"><span className="bg-white px-4 text-slate-300 tracking-widest">Ou com contato</span></div>
+            <div className="relative flex justify-center text-[10px] uppercase font-black"><span className="bg-white px-4 text-slate-300 tracking-widest">Ou acesso direto</span></div>
           </div>
           
           <Button 
             onClick={() => navigate('/onboarding')} 
             className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg shadow-xl shadow-indigo-100 transition-all active:scale-95"
           >
-            Acessar agora
+            Acessar sem rede
           </Button>
-          
-          <div className="mt-8 text-center">
-            <p className="text-[10px] text-slate-400 font-medium px-4 leading-relaxed">
-              Ao entrar, você concorda que é maior de 18 anos e aceita nossos 
-              <span className="text-indigo-500 cursor-pointer hover:underline ml-1">Termos de Uso</span>.
-            </p>
-          </div>
         </CardContent>
       </Card>
 
