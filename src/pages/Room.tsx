@@ -38,6 +38,12 @@ const Room = () => {
     setHasJoined(true);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleJoin();
+    }
+  };
+
   if (!hasJoined) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -54,16 +60,19 @@ const Room = () => {
               placeholder="Ex: Viajante_01" 
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              className="h-14 rounded-2xl text-center font-bold text-lg"
+              onKeyDown={handleKeyDown}
+              className="h-14 rounded-2xl text-center font-bold text-lg focus-visible:ring-indigo-500"
+              autoFocus
             />
             <Button 
               onClick={handleJoin}
-              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 rounded-2xl font-bold text-white shadow-lg shadow-indigo-100"
+              disabled={!nickname.trim()}
+              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 rounded-2xl font-bold text-white shadow-lg shadow-indigo-100 transition-all active:scale-95"
             >
               Entrar na Sala
             </Button>
           </div>
-          <Button variant="ghost" onClick={() => navigate('/lobby')} className="text-slate-400">
+          <Button variant="ghost" onClick={() => navigate('/lobby')} className="text-slate-400 hover:text-slate-600">
             Voltar para o Lobby
           </Button>
         </Card>
