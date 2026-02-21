@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Search,
   Globe,
-  Loader2
+  Loader2,
+  Music
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { fetchStates, fetchCitiesByState, IBGEState, IBGECity } from '@/services/ibge';
@@ -82,10 +83,11 @@ const Lobby = () => {
   }, [cities, citySearch]);
 
   const interests = [
-    { id: 'sexo', name: 'Sexo', icon: <Flame size={20} />, color: 'text-pink-500', bg: 'bg-pink-50' },
     { id: 'amizade', name: 'Amizade', icon: <Users size={20} />, color: 'text-blue-500', bg: 'bg-blue-50' },
     { id: 'namoro', name: 'Namoro', icon: <Heart size={20} />, color: 'text-red-500', bg: 'bg-red-50' },
     { id: 'evangelico', name: 'Relacionamento Evangélico', icon: <Cross size={20} />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { id: 'role', name: 'Rolê', icon: <Music size={20} />, color: 'text-amber-500', bg: 'bg-amber-50' },
+    { id: 'sexo', name: 'Sexo', icon: <Flame size={20} />, color: 'text-pink-500', bg: 'bg-pink-50' },
   ];
 
   return (
@@ -246,7 +248,7 @@ const Lobby = () => {
                 </div>
               ) : (
                 /* Seleção de Salas (Interesses) */
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {interests.map((interest) => (
                     <Card 
                       key={interest.id}
@@ -269,7 +271,7 @@ const Lobby = () => {
                         </p>
                       </div>
                       <div className="mt-8 flex items-center text-indigo-600 font-black text-xs uppercase tracking-widest gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                        Abrir sala de bate-papo <ChevronRight size={14} />
+                        Abrir sala <ChevronRight size={14} />
                       </div>
                       
                       {/* Efeito Decorativo de Fundo */}
