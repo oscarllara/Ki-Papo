@@ -5,24 +5,20 @@ import ChatSidebar from '@/components/chat/ChatSidebar';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
-import { MadeWithDyad } from "@/components/made-with-dyad";
 
 const Index = () => {
   return (
-    <div className="flex h-screen bg-white overflow-hidden font-sans text-slate-900">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-900">
+      {/* Lista de Conversas */}
       <ChatSidebar />
 
-      {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col relative bg-slate-50/50">
+      {/* Janela de Conversa Ativa */}
+      <main className="flex-1 flex flex-col bg-white">
         <ChatHeader />
         
-        <MessageList />
-        
-        <MessageInput />
-
-        <div className="absolute bottom-0 right-0 opacity-50 pointer-events-none">
-          <MadeWithDyad />
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          <MessageList />
+          <MessageInput />
         </div>
       </main>
     </div>
