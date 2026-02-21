@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -10,149 +10,184 @@ import {
   ArrowLeft, 
   CheckCircle2, 
   XCircle,
-  EyeOff
+  EyeOff,
+  LogOut,
+  Lock
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [users, setUsers] = useState<any[]>([]);
 
-  // Simulação de dados de usuários
-  const users = [
-    { id: 1, name: "Usuário 01", cpf: "123.***.***-01", birth: "10/05/1990", status: "Verificado", date: "2023-10-25" },
-    { id: 2, name: "Usuário 02", cpf: "456.***.***-02", birth: "22/11/1985", status: "Verificado", date: "2023-10-26" },
-    { id: 3, name: "Usuário 03", cpf: "789.***.***-03", birth: "05/01/2000", status: "Pendente", date: "2023-10-27" },
-  ];
+  // Proteção de rota
+  useEffect(() => {
+    const isAuth = sessionStorage.getItem('admin_auth');
+    if (isAuth !== 'true') {
+      navigate('/admin-login');
+      return;
+    }
 
-  // Simulação de logs de sistema
+    // Carregar usuários do "banco" local
+    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
+    setUsers(savedUsers);
+  }, [navigate]);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin_auth');
+    navigate('/');
+  };
+
   const logs = [
-    { id: 1, event: "Login Realizado", user: "User_SP", ip: "192.168.1.1", time: "14:30:05", status: "Sucesso" },
-    { id: 2, event: "Verificação de CPF", user: "Novo_User", ip: "172.16.0.10", time: "14:32:10", status: "Sucesso" },
-    { id: 3, event: "Entrada em Sala", user: "Gatinha_Legal", ip: "10.0.0.5", time: "14:35:00", status: "Privado" },
-    { id: 4, event: "Tentativa de Acesso Menor", user: "Desconhecido", ip: "189.10.5.2", time: "14:40:22", status: "Bloqueado" },
+    { id: 1, event: "Acesso ao Painel", user: "Admin", ip: "192.168.1.1", time: new Date().toLocaleTimeString(), status: "Sucesso" },
+    { id: 2, event: "Verificação de Usuário", user: "Novo_Membro", ip: "172.16.0.10", time: "Há 5 min", status: "Sucesso" },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/lobby')} className="rounded-full">
+    <div className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans">
+      <div className="max-w-7xl mx-auto space-y-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <Button variant="outline" size="icon" onClick={() => navigate('/')} className="rounded-2xl h-12 w-12 border-slate-200">
               <ArrowLeft size={20} />
             </Button>
             <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Painel Administrativo</h1>
-              <p className="text-slate-500 font-medium">Gestão de segurança, usuários e conformidade do Ki papo.</p>
+              <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Painel do Gestor</h1>
+              <p className="text-slate-500 font-bold mt-1">Monitoramento de acessos e segurança.</p>
             </div>
           </div>
-          <Badge variant="outline" className="px-4 py-1 text-xs font-bold bg-white border-slate-200 gap-2">
-            <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" /> Sistema Online
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="px-5 py-2 text-xs font-black bg-white border-slate-200 gap-3 rounded-full">
+              <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" /> SISTEMA ATIVO
+            </Badge>
+            <Button onClick={handleLogout} variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-2xl gap-2 font-bold">
+              <LogOut size={18} /> Sair
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-none shadow-sm rounded-3xl bg-indigo-600 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-indigo-600 text-white p-4">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium opacity-80 uppercase tracking-wider">Total de Usuários</CardTitle>
-              <div className="text-4xl font-black">1.284</div>
+              <CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest">Usuários Cadastrados</CardTitle>
+              <div className="text-5xl font-black mt-2">{users.length}</div>
             </CardHeader>
             <CardContent>
-              <p className="text-xs opacity-70">+12% em relação ao mês passado</p>
+              <p className="text-xs font-bold opacity-60">Total de validações realizadas</p>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-sm rounded-3xl bg-white">
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-4">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400 uppercase tracking-wider">Alertas de Segurança</CardTitle>
-              <div className="text-4xl font-black text-amber-500">03</div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-slate-400">Tentativas de acesso bloqueadas hoje</p>
-            </CardContent>
-          </Card>
-          <Card className="border-none shadow-sm rounded-3xl bg-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400 uppercase tracking-wider">Status de Privacidade</CardTitle>
-              <div className="flex items-center gap-2 text-emerald-600 font-bold">
-                <EyeOff size={24} /> Ativo
+              <CardTitle className="text-xs font-black text-slate-400 uppercase tracking-widest">Privacidade de Dados</CardTitle>
+              <div className="flex items-center gap-3 text-emerald-600 font-black text-2xl mt-2">
+                <Lock size={28} /> CRIPTOGRAFADO
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-slate-400">Histórico de bate-papo: <b>Não Armazenado</b></p>
+              <p className="text-xs text-slate-400 font-bold">CPFs mascarados por padrão</p>
+            </CardContent>
+          </Card>
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-black text-slate-400 uppercase tracking-widest">Logs de Chat</CardTitle>
+              <div className="flex items-center gap-3 text-slate-400 font-black text-2xl mt-2">
+                <EyeOff size={28} /> EFÊMERO
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-slate-400 font-bold">Nenhuma mensagem é armazenada</p>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="bg-slate-200/50 p-1 rounded-2xl mb-6">
-            <TabsTrigger value="users" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
-              <Users size={16} /> Usuários
+          <TabsList className="bg-slate-200/40 p-1.5 rounded-[1.5rem] mb-8 w-fit">
+            <TabsTrigger value="users" className="rounded-xl px-8 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg font-black text-xs gap-2">
+              <Users size={16} /> LISTA DE USUÁRIOS
             </TabsTrigger>
-            <TabsTrigger value="logs" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
-              <History size={16} /> Logs de Acesso
-            </TabsTrigger>
-            <TabsTrigger value="docs" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
-              <FileText size={16} /> Documentação
+            <TabsTrigger value="logs" className="rounded-xl px-8 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg font-black text-xs gap-2">
+              <History size={16} /> LOGS DE SISTEMA
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
-            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+            <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
+              <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                <h3 className="font-black text-slate-800 tracking-tight">Base de Usuários</h3>
+                <Button variant="outline" className="rounded-xl font-bold text-xs" onClick={() => {
+                  if(confirm('Limpar toda a base de usuários?')) {
+                    localStorage.removeItem('kipapo_users');
+                    setUsers([]);
+                  }
+                }}>Limpar Base</Button>
+              </div>
               <Table>
                 <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="font-bold">ID</TableHead>
-                    <TableHead className="font-bold">CPF (Mascarado)</TableHead>
-                    <TableHead className="font-bold">Nascimento</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                    <TableHead className="font-bold">Data Cadastro</TableHead>
+                  <TableRow className="border-none">
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase pl-8">ID / Data</TableHead>
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase">CPF Mascarado</TableHead>
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase">Data Nasc.</TableHead>
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">#{user.id}</TableCell>
-                      <TableCell>{user.cpf}</TableCell>
-                      <TableCell>{user.birth}</TableCell>
-                      <TableCell>
-                        <Badge className={user.status === 'Verificado' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-500">{user.date}</TableCell>
+                  {users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-40 text-center text-slate-400 font-bold">Nenhum usuário cadastrado ainda.</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    users.map((user) => (
+                      <TableRow key={user.id} className="hover:bg-slate-50/50 border-slate-50 transition-colors">
+                        <TableCell className="pl-8">
+                          <div className="flex flex-col">
+                            <span className="font-black text-slate-900">#{user.id.toString().slice(-4)}</span>
+                            <span className="text-[10px] text-slate-400 font-bold">{user.date}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono font-bold text-slate-600">{user.cpf}</TableCell>
+                        <TableCell className="font-bold text-slate-600">{user.birth.split('-').reverse().join('/')}</TableCell>
+                        <TableCell>
+                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none rounded-lg font-black text-[10px]">
+                            {user.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </Card>
           </TabsContent>
 
           <TabsContent value="logs">
-            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
+            <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
               <Table>
                 <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="font-bold">Evento</TableHead>
-                    <TableHead className="font-bold">Usuário</TableHead>
-                    <TableHead className="font-bold">Endereço IP</TableHead>
-                    <TableHead className="font-bold">Horário</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
+                  <TableRow className="border-none">
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase pl-8">Evento</TableHead>
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase">Usuário</TableHead>
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase">Endereço IP</TableHead>
+                    <TableHead className="font-black text-slate-400 text-[10px] uppercase">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {logs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="font-semibold">{log.event}</TableCell>
-                      <TableCell>{log.user}</TableCell>
-                      <TableCell className="text-xs font-mono text-slate-500">{log.ip}</TableCell>
-                      <TableCell>{log.time}</TableCell>
+                    <TableRow key={log.id} className="border-slate-50">
+                      <TableCell className="pl-8">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-900">{log.event}</span>
+                          <span className="text-[10px] text-slate-400 font-bold">{log.time}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-bold text-slate-600">{log.user}</TableCell>
+                      <TableCell className="text-xs font-mono text-slate-400">{log.ip}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5 font-bold text-xs uppercase">
-                          {log.status === 'Bloqueado' ? <XCircle size={14} className="text-red-500" /> : <CheckCircle2 size={14} className="text-emerald-500" />}
-                          {log.status}
+                        <div className="flex items-center gap-2 font-black text-[10px] text-emerald-600 uppercase">
+                          <CheckCircle2 size={14} /> {log.status}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -160,32 +195,6 @@ const Dashboard = () => {
                 </TableBody>
               </Table>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="docs">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-none shadow-sm rounded-3xl p-6 space-y-4">
-                <div className="flex items-center gap-3 text-indigo-600">
-                  <ShieldAlert size={24} />
-                  <h3 className="font-bold text-lg">Termos de Uso</h3>
-                </div>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  Regras de convivência, proibição de conteúdos ilícitos e diretrizes para maiores de 18 anos. 
-                  O Ki papo preza pela segurança total dos dados sensíveis.
-                </p>
-                <Button variant="outline" className="w-full rounded-xl">Visualizar Documento</Button>
-              </Card>
-              <Card className="border-none shadow-sm rounded-3xl p-6 space-y-4">
-                <div className="flex items-center gap-3 text-emerald-600">
-                  <Lock size={24} />
-                  <h3 className="font-bold text-lg">Política de Privacidade</h3>
-                </div>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  Como tratamos o seu CPF e Data de Nascimento. Garantia de que as mensagens são efêmeras e nunca armazenadas em nossos servidores.
-                </p>
-                <Button variant="outline" className="w-full rounded-xl">Visualizar Documento</Button>
-              </Card>
-            </div>
           </TabsContent>
         </Tabs>
       </div>
