@@ -1,26 +1,26 @@
 "use client";
 
 import React from 'react';
-import { Search, Edit, Circle } from 'lucide-react';
+import { Search, Edit } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Contact } from '@/hooks/use-chat-state';
 
-const ChatSidebar = () => {
-  const contacts = [
-    { id: 1, name: "Ana Silva", lastMsg: "Oi! Tudo bem com você?", time: "10:30", online: true, avatar: "AS", active: true },
-    { id: 2, name: "João Pereira", lastMsg: "Mandei o arquivo que você pediu.", time: "09:45", online: false, avatar: "JP" },
-    { id: 3, name: "Grupo da Família", lastMsg: "Mãe: Vamos almoçar juntos?", time: "Ontem", online: true, avatar: "GF" },
-    { id: 4, name: "Mariana Costa", lastMsg: "Haha, que engraçado!", time: "Segunda", online: false, avatar: "MC" },
-  ];
+interface ChatSidebarProps {
+  contacts: Contact[];
+  activeId: number;
+  onSelectContact: (id: number) => void;
+}
 
+const ChatSidebar = ({ contacts, activeId, onSelectContact }: ChatSidebarProps) => {
   return (
-    <div className="flex flex-col h-full w-80 bg-white border-r border-slate-100">
+    <div className="flex flex-col h-full w-80 bg-white border-r border-slate-100 shrink-0">
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Bate-papo</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Mensagens</h1>
           <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 hover:bg-slate-100">
             <Edit size={18} className="text-slate-600" />
           </Button>
@@ -29,7 +29,7 @@ const ChatSidebar = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <Input 
-            placeholder="Buscar conversas..." 
+            placeholder="Buscar..." 
             className="pl-10 bg-slate-50 border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-indigo-500/20 h-11"
           />
         </div>
@@ -40,9 +40,10 @@ const ChatSidebar = () => {
           {contacts.map((contact) => (
             <button
               key={contact.id}
+              onClick={() => onSelectContact(contact.id)}
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded-2xl transition-all hover:bg-slate-50 group",
-                contact.active ? "bg-indigo-50/50" : ""
+                contact.id === activeId ? "bg-indigo-50" : ""
               )}
             >
               <div className="relative">
@@ -60,7 +61,7 @@ const ChatSidebar = () => {
                 </div>
                 <p className={cn(
                   "text-xs truncate",
-                  contact.active ? "text-indigo-600 font-medium" : "text-slate-500"
+                  contact.id === activeId ? "text-indigo-600 font-medium" : "text-slate-500"
                 )}>
                   {contact.lastMsg}
                 </p>

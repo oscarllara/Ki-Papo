@@ -1,22 +1,29 @@
 "use client";
 
 import React from 'react';
-import { Phone, Video, Info, MoreHorizontal } from 'lucide-react';
+import { Phone, Video, Info } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Contact } from '@/hooks/use-chat-state';
 
-const ChatHeader = () => {
+interface ChatHeaderProps {
+  contact: Contact;
+}
+
+const ChatHeader = ({ contact }: ChatHeaderProps) => {
   return (
     <header className="h-20 border-b border-slate-100 bg-white flex items-center justify-between px-8 shrink-0">
       <div className="flex items-center gap-4">
         <Avatar className="h-10 w-10">
-          <AvatarFallback className="bg-indigo-100 text-indigo-600 font-bold">AS</AvatarFallback>
+          <AvatarFallback className="bg-indigo-100 text-indigo-600 font-bold">{contact.avatar}</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="font-bold text-slate-900">Ana Silva</h2>
+          <h2 className="font-bold text-slate-900">{contact.name}</h2>
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 bg-emerald-500 rounded-full" />
-            <span className="text-xs text-slate-400 font-medium">Online</span>
+            <div className={cn("h-2 w-2 rounded-full", contact.online ? "bg-emerald-500" : "bg-slate-300")} />
+            <span className="text-xs text-slate-400 font-medium">
+              {contact.online ? "Online" : "Offline"}
+            </span>
           </div>
         </div>
       </div>

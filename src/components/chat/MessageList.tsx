@@ -3,17 +3,21 @@
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Message } from '@/hooks/use-chat-state';
 
-const MessageList = () => {
-  const messages = [
-    { id: 1, role: 'assistant', content: 'Olá! Estou pronto para começar a estruturar seu projeto. Como posso ajudar hoje?', time: '10:30' },
-    { id: 2, role: 'user', content: 'Vamos começar definindo os épicos do sistema.', time: '10:31' },
-    { id: 3, role: 'assistant', content: 'Perfeito. Quais são as principais funcionalidades que você visualiza para este projeto?', time: '10:31' },
-  ];
+interface MessageListProps {
+  messages: Message[];
+}
 
+const MessageList = ({ messages }: MessageListProps) => {
   return (
     <ScrollArea className="flex-1 p-6">
       <div className="max-w-3xl mx-auto space-y-6">
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 mt-20">
+            <p className="text-sm italic">Nenhuma mensagem ainda. Comece a conversa!</p>
+          </div>
+        )}
         {messages.map((msg) => (
           <div
             key={msg.id}
