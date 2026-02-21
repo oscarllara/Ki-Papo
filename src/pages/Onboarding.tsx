@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,21 @@ const Onboarding = () => {
     cpf: '', 
     birthDate: '' 
   });
+
+  // Tenta recuperar dados da rede social se existirem
+  useEffect(() => {
+    const tempName = sessionStorage.getItem('temp_name');
+    if (tempName) {
+      setFormData(prev => ({ ...prev, name: tempName }));
+      // Limpa após usar para não persistir em novos acessos diretos
+      sessionStorage.removeItem('temp_name');
+      
+      toast({
+        title: "Dados Recuperados",
+        description: `Olá ${tempName.split(' ')[0]}! Complete seus dados para continuar.`,
+      });
+    }
+  }, []);
 
   const handleVerify = () => {
     if (!formData.name || !formData.whatsapp || !formData.cpf || !formData.birthDate) {
@@ -44,8 +59,7 @@ const Onboarding = () => {
       return;
     }
 
-    // Salvando dados para o administrador
-    const provider = sessionStorage.getItem('temp_provider') || 'Direto';
+    const provider = sessionStorage.getItem('temp_provider') || 'E-mail';
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     const newUser = {
       id: Date.now(),

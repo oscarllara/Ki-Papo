@@ -1,17 +1,32 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, Facebook, Instagram, Chrome, Apple, ShieldCheck, Mail } from 'lucide-react';
+import { MessageCircle, Facebook, Instagram, Chrome, Apple, ShieldCheck, Mail, Loader2 } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
+  const [isAuthenticating, setIsAuthenticating] = useState<string | null>(null);
 
-  const handleLogin = (provider: string) => {
-    sessionStorage.setItem('temp_provider', provider);
-    navigate('/onboarding');
+  const handleSocialLogin = (provider: string) => {
+    setIsAuthenticating(provider);
+    
+    // Simula o tempo de resposta da rede social (OAuth popup)
+    setTimeout(() => {
+      const mockNames: Record<string, string> = {
+        'Google': 'Ricardo Silva (Google)',
+        'Facebook': 'Ana Beatriz (Facebook)',
+        'Instagram': 'insta_user_oficial',
+        'Apple': 'Usuário Apple'
+      };
+
+      sessionStorage.setItem('temp_provider', provider);
+      sessionStorage.setItem('temp_name', mockNames[provider] || '');
+      setIsAuthenticating(null);
+      navigate('/onboarding');
+    }, 2000);
   };
 
   return (
@@ -19,9 +34,26 @@ const Index = () => {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/10 rounded-full blur-3xl" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-white/5 rounded-full blur-3xl" />
 
+      {/* Modal de Autenticação Simulado */}
+      {isAuthenticating && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-xs rounded-3xl border-none shadow-2xl p-8 text-center animate-in zoom-in duration-300">
+            <div className="flex justify-center mb-6">
+              {isAuthenticating === 'Google' && <Chrome size={48} className="text-red-500 animate-bounce" />}
+              {isAuthenticating === 'Facebook' && <Facebook size={48} className="text-blue-600 animate-bounce" />}
+              {isAuthenticating === 'Instagram' && <Instagram size={48} className="text-pink-600 animate-bounce" />}
+              {isAuthenticating === 'Apple' && <Apple size={48} className="text-slate-900 animate-bounce" />}
+            </div>
+            <h3 className="text-lg font-black text-slate-800">Conectando ao {isAuthenticating}</h3>
+            <p className="text-sm text-slate-500 mt-2">Aguarde enquanto buscamos seus dados...</p>
+            <Loader2 className="mx-auto mt-6 text-indigo-600 animate-spin" size={24} />
+          </Card>
+        </div>
+      )}
+
       <Card className="w-full max-w-md border-none shadow-2xl rounded-[3rem] overflow-hidden z-10">
         <CardHeader className="text-center pt-12 pb-6 bg-white">
-          <div className="mx-auto bg-indigo-100 w-20 h-20 rounded-[2rem] flex items-center justify-center mb-6 rotate-6 hover:rotate-0 transition-transform duration-500 shadow-inner">
+          <div className="mx-auto bg-indigo-100 w-20 h-20 rounded-[2rem] flex items-center justify-center mb-6 rotate-6 shadow-inner">
             <MessageCircle size={40} className="text-indigo-600" />
           </div>
           <CardTitle className="text-4xl font-black text-slate-900 tracking-tighter mb-1">Ki papo</CardTitle>
@@ -29,30 +61,34 @@ const Index = () => {
         </CardHeader>
         <CardContent className="space-y-3 p-10 pt-2 bg-white">
           <Button 
-            onClick={() => handleLogin('Google')} 
+            onClick={() => handleSocialLogin('Google')} 
             variant="outline" 
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
+            disabled={!!isAuthenticating}
           >
             <Chrome size={18} className="text-red-500" /> Google
           </Button>
           <Button 
-            onClick={() => handleLogin('Facebook')} 
+            onClick={() => handleSocialLogin('Facebook')} 
             variant="outline" 
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
+            disabled={!!isAuthenticating}
           >
             <Facebook size={18} className="text-blue-600 fill-blue-600" /> Facebook
           </Button>
           <Button 
-            onClick={() => handleLogin('Instagram')} 
+            onClick={() => handleSocialLogin('Instagram')} 
             variant="outline" 
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
+            disabled={!!isAuthenticating}
           >
             <Instagram size={18} className="text-pink-600" /> Instagram
           </Button>
           <Button 
-            onClick={() => handleLogin('Apple')} 
+            onClick={() => handleSocialLogin('Apple')} 
             variant="outline" 
             className="w-full h-12 rounded-xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all active:scale-95"
+            disabled={!!isAuthenticating}
           >
             <Apple size={18} className="fill-slate-900" /> Apple ID
           </Button>
@@ -63,8 +99,8 @@ const Index = () => {
           </div>
           
           <Button 
-            onClick={() => handleLogin('E-mail')} 
-            className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg shadow-xl shadow-indigo-100 transition-all hover:-translate-y-1 active:scale-95"
+            onClick={() => navigate('/onboarding')} 
+            className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg shadow-xl shadow-indigo-100 transition-all active:scale-95"
           >
             Acessar agora
           </Button>
