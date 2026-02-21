@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Onboarding from "./pages/Onboarding";
 import Lobby from "./pages/Lobby";
 import Room from "./pages/Room";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/room/:roomId" element={<Room />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

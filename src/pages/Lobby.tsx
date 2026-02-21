@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { MapPin, Heart, Users, Cross, MessageSquare, Flame } from 'lucide-react';
+import { MapPin, Heart, Users, Cross, MessageSquare, Flame, Settings } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const Lobby = () => {
@@ -23,9 +23,20 @@ const Lobby = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col h-screen overflow-hidden">
-      <header className="p-6 bg-white border-b border-slate-100">
-        <h1 className="text-2xl font-black text-indigo-600 tracking-tight">Ki papo</h1>
-        <p className="text-sm text-slate-500">Escolha onde quer conversar hoje</p>
+      <header className="p-6 bg-white border-b border-slate-100 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-black text-indigo-600 tracking-tight">Ki papo</h1>
+          <p className="text-sm text-slate-500">Escolha onde quer conversar hoje</p>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate('/dashboard')}
+          className="rounded-full text-slate-400 hover:text-indigo-600"
+          title="Painel de Controle"
+        >
+          <Settings size={22} />
+        </Button>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
