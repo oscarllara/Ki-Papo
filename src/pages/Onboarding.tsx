@@ -14,7 +14,7 @@ const Onboarding = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({ 
     name: '',
-    whatsapp: '',
+    whatsapp: '+55 ',
     cpf: '', 
     birthDate: '' 
   });
@@ -35,7 +35,7 @@ const Onboarding = () => {
   }, []);
 
   const handleVerify = () => {
-    if (!formData.name || !formData.whatsapp || !formData.cpf || !formData.birthDate) {
+    if (!formData.name || !formData.whatsapp || formData.whatsapp === '+55 ' || !formData.cpf || !formData.birthDate) {
       toast({
         variant: "destructive",
         title: "Campos incompletos",
@@ -102,9 +102,13 @@ const Onboarding = () => {
           <div className="space-y-1.5">
             <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider">WhatsApp</Label>
             <Input 
-              placeholder="(00) 00000-0000" 
+              placeholder="+55 (00) 00000-0000" 
               value={formData.whatsapp}
-              onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
+              onChange={(e) => {
+                let val = e.target.value;
+                if (!val.startsWith('+55 ')) val = '+55 ' + val.replace(/^\+55\s*/, '');
+                setFormData({...formData, whatsapp: val});
+              }}
               className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
             />
           </div>
