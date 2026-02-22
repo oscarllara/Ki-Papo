@@ -4,11 +4,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { MessageSquare, Facebook, Instagram, Chrome, Apple, ShieldCheck, Loader2, Mail } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
   const [isAuthenticating, setIsAuthenticating] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
 
   const handleSocialLogin = (provider: string) => {
     setIsAuthenticating(provider);
@@ -35,6 +37,15 @@ const Index = () => {
       setIsAuthenticating(null);
       navigate('/onboarding');
     }, 1200);
+  };
+
+  const handleEmailLogin = () => {
+    if (!email.includes('@')) return;
+    
+    sessionStorage.setItem('temp_provider', 'E-mail');
+    sessionStorage.setItem('temp_name', email.split('@')[0]);
+    sessionStorage.setItem('temp_base_url', '');
+    navigate('/onboarding');
   };
 
   return (
@@ -75,6 +86,13 @@ const Index = () => {
               <Chrome size={20} className="text-red-500" /> Entrar com Google
             </Button>
             <Button 
+              onClick={() => handleSocialLogin('Facebook')} 
+              variant="outline" 
+              className="w-full h-14 rounded-2xl border-slate-200 hover:bg-slate-50 gap-4 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95"
+            >
+              <Facebook size={20} className="text-blue-600 fill-blue-600" /> Entrar com Facebook
+            </Button>
+            <Button 
               onClick={() => handleSocialLogin('Instagram')} 
               variant="outline" 
               className="w-full h-14 rounded-2xl border-slate-200 hover:bg-slate-50 gap-4 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95"
@@ -93,13 +111,23 @@ const Index = () => {
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
               <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-white px-4 text-slate-300">Acesso via E-mail</span></div>
             </div>
-            
-            <Button 
-              onClick={() => navigate('/onboarding')} 
-              className="w-full h-16 rounded-[1.5rem] bg-[#2377bb] hover:bg-[#1c629d] text-white font-black text-xl shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95 gap-3"
-            >
-              <Mail size={24} /> Começar Agora
-            </Button>
+
+            <div className="space-y-4">
+              <Input 
+                type="email"
+                placeholder="seu-email@exemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-14 rounded-2xl border-slate-200 text-center focus-visible:ring-primary/30"
+              />
+              <Button 
+                onClick={handleEmailLogin}
+                disabled={!email.includes('@')}
+                className="w-full h-16 rounded-[1.5rem] bg-[#2377bb] hover:bg-[#1c629d] text-white font-black text-xl shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95 gap-3"
+              >
+                <Mail size={24} /> Começar Agora
+              </Button>
+            </div>
             
             <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">
               Ao entrar você concorda com nossos termos
