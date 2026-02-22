@@ -6,7 +6,6 @@ import {
   Users, 
   ArrowLeft, 
   LogOut,
-  Lock,
   KeyRound,
   Save,
   ShieldCheck,
@@ -15,10 +14,12 @@ import {
   Search,
   ExternalLink,
   Trash2,
-  Calendar
+  Calendar,
+  Download,
+  FileDown
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -65,6 +68,74 @@ const Dashboard = () => {
            (user.cpf || '').includes(searchTerm) ||
            (user.whatsapp || '').includes(searchTerm);
   });
+
+  const maskCPF = (cpf: string) => {
+    if (!cpf) return '';
+    // Formato esperado: 000.000.000-00
+    const parts = cpf.split(/[.-]/);
+    if (parts.length < 4) return cpf;
+    return `${parts[0]}.xxx.xxx-${parts[3]}`;
+  };
+
+  const exportCSV = () => {
+    if (users.length === 0) {
+      toast({ variant: "destructive", title: "Erro", description: "Não há dados para exportar." });
+      return;
+    }
+
+    const headers = ["Data", "Nome", "CPF", "WhatsApp", "Rede Social", "Perfil"];
+    const rows = users.map(u => [
+      u.date, 
+      u.name, 
+      u.cpf, 
+      u.whatsapp, 
+      u.socialMedia, 
+      u.socialLink
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `usuarios_kipapo_${new Date().toLocaleDateString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportPDF = () => {
+    if (users.length === 0) {
+      toast({ variant: "destructive", title: "Erro", description: "Não há dados para exportar." });
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.text("Relatório de Usuários - Ki Papo", 14, 15);
+    
+    const tableRows = users.map(u => [
+      u.date, 
+      u.name, 
+      u.cpf, 
+      u.whatsapp, 
+      u.socialMedia
+    ]);
+
+    autoTable(doc, {
+      startY: 20,
+      head: [['Data', 'Nome', 'CPF', 'WhatsApp', 'Origem']],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: [35, 119, 187] } // Azul Ki Papo
+    });
+
+    doc.save(`relatorio_kipapo_${new Date().toLocaleDateString()}.pdf`);
+  };
 
   const handleLogout = () => {
     sessionStorage.removeItem('admin_auth');
@@ -186,7 +257,7 @@ const Dashboard = () => {
                           </TableCell>
                           <TableCell className="font-black text-slate-800 text-sm">{user.name}</TableCell>
                           <TableCell className="font-mono text-xs font-bold text-primary bg-primary/5 px-3 py-1 rounded-lg w-fit">
-                            {user.cpf}
+                            {maskCPF(user.cpf)}
                           </TableCell>
                           <TableCell className="text-slate-600 font-bold text-xs">{user.whatsapp}</TableCell>
                           <TableCell>
@@ -256,23 +327,37 @@ const Dashboard = () => {
 
           <TabsContent value="logs" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
-                  <ShieldCheck size={24} />
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-800">Extração de Relatórios</h3>
+                    <p className="text-sm text-slate-400 font-medium">Exporte a base de usuários verificados.</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-800">Conformidade e Privacidade</h3>
-                  <p className="text-sm text-slate-400 font-medium">Este painel opera sob as diretrizes da LGPD.</p>
+                <div className="flex gap-3">
+                  <Button onClick={exportCSV} variant="outline" className="rounded-2xl font-bold gap-2 border-slate-200">
+                    <Download size={18} /> Exportar CSV
+                  </Button>
+                  <Button onClick={exportPDF} className="rounded-2xl font-bold gap-2 bg-primary text-white hover:bg-primary/90">
+                    <FileDown size={18} /> Exportar PDF
+                  </Button>
                 </div>
               </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-6 bg-slate-50 rounded-3xl space-y-3 border border-slate-100">
-                  <h4 className="font-black text-primary text-xs uppercase tracking-widest">Proteção de Dados</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">Todos os CPFs são armazenados de forma segura e o acesso é restrito apenas a gestores autorizados com senha criptografada.</p>
+                  <h4 className="font-black text-primary text-xs uppercase tracking-widest">Aviso de Privacidade</h4>
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    O acesso aos relatórios completos com CPFs expostos é auditado. Garanta que a extração de dados esteja em conformidade com as finalidades administrativas do Ki Papo.
+                  </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl space-y-3 border border-slate-100">
-                  <h4 className="font-black text-primary text-xs uppercase tracking-widest">Transparência</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">A coleta de dados via redes sociais é feita apenas para fins de verificação de identidade e segurança da comunidade Ki Papo.</p>
+                  <h4 className="font-black text-primary text-xs uppercase tracking-widest">Total de Registros</h4>
+                  <p className="text-3xl font-black text-slate-900">{users.length}</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Usuários verificados na base</p>
                 </div>
               </div>
             </Card>
@@ -305,7 +390,7 @@ const Dashboard = () => {
                   <p className="text-sm font-black text-slate-800">{selectedUser.birth?.split('-').reverse().join('/')}</p>
                 </div>
                 <div className="col-span-2 p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-primary tracking-wider">Documento Identificado (CPF)</Label>
+                  <Label className="text-[10px] font-black uppercase text-primary tracking-wider">Documento Identificado (CPF Completo)</Label>
                   <p className="text-2xl font-black text-slate-900 font-mono tracking-tighter leading-none">{selectedUser.cpf}</p>
                 </div>
                 <div className="space-y-1">

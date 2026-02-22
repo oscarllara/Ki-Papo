@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Facebook, Instagram, Chrome, Apple, ShieldCheck, Loader2 } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { MessageSquare, Facebook, Instagram, Chrome, Apple, ShieldCheck, Loader2, Mail } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -39,7 +39,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Elementos decorativos com as cores da marca */}
       <div className="absolute top-0 left-0 w-full h-2 bg-[#a3cc16]" />
       <div className="absolute bottom-0 left-0 w-full h-2 bg-[#a3cc16]" />
       
@@ -76,23 +75,30 @@ const Index = () => {
               <Chrome size={20} className="text-red-500" /> Entrar com Google
             </Button>
             <Button 
-              onClick={() => handleSocialLogin('Facebook')} 
+              onClick={() => handleSocialLogin('Instagram')} 
               variant="outline" 
               className="w-full h-14 rounded-2xl border-slate-200 hover:bg-slate-50 gap-4 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95"
             >
-              <Facebook size={20} className="text-blue-600 fill-blue-600" /> Entrar com Facebook
+              <Instagram size={20} className="text-pink-600" /> Entrar com Instagram
+            </Button>
+            <Button 
+              onClick={() => handleSocialLogin('Apple')} 
+              variant="outline" 
+              className="w-full h-14 rounded-2xl border-slate-200 hover:bg-slate-50 gap-4 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95"
+            >
+              <Apple size={20} className="text-slate-900" /> Entrar com Apple
             </Button>
             
             <div className="relative py-6">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-white px-4 text-slate-300">Ou continue direto</span></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-white px-4 text-slate-300">Acesso via E-mail</span></div>
             </div>
             
             <Button 
               onClick={() => navigate('/onboarding')} 
-              className="w-full h-16 rounded-[1.5rem] bg-[#2377bb] hover:bg-[#1c629d] text-white font-black text-xl shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95"
+              className="w-full h-16 rounded-[1.5rem] bg-[#2377bb] hover:bg-[#1c629d] text-white font-black text-xl shadow-xl shadow-blue-100 transition-all hover:scale-[1.02] active:scale-95 gap-3"
             >
-              Começar Agora
+              <Mail size={24} /> Começar Agora
             </Button>
             
             <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">
@@ -106,7 +112,7 @@ const Index = () => {
             onClick={() => navigate('/admin-login')}
             className="text-slate-300 hover:text-primary transition-colors flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
           >
-            <ShieldCheck size={14} /> Acesso Restrito
+            <ShieldCheck size={14} /> Acesso Administrativo
           </button>
         </div>
       </div>
