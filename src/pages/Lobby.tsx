@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, 
   Heart, 
@@ -235,7 +236,7 @@ const Lobby = () => {
                   {interests.map((interest) => (
                     <Card 
                       key={interest.id}
-                      onClick={() => navigate(`/room/${selectedCity.toLowerCase().replace(/\s+/g, '-')}-${interest.id}`)}
+                      onClick={() => navigate(`/room/${selectedCity?.toLowerCase().replace(/\s+/g, '-')}-${interest.id}`)}
                       className="group cursor-pointer border-none shadow-xl hover:shadow-2xl transition-all p-10 rounded-[2.5rem] bg-white relative overflow-hidden active:scale-[0.98]"
                     >
                       <div className="flex items-center justify-between mb-8 relative z-10">
