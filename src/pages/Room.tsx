@@ -7,8 +7,26 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { SendHorizontal, Phone, Video, Camera, ArrowLeft, Users, Lock, Unlock, Smile } from 'lucide-react';
+import { 
+  SendHorizontal, 
+  Phone, 
+  Video, 
+  Camera as CameraIcon, 
+  ArrowLeft, 
+  Users, 
+  Lock, 
+  Smile,
+  Image as ImageIcon,
+  X
+} from 'lucide-react';
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface ChatMessage {
   id: string;
@@ -17,27 +35,31 @@ interface ChatMessage {
   time: string;
   isMe: boolean;
   isPrivate?: boolean;
+  type?: 'text' | 'image' | 'video';
 }
 
 const Room = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   
   const [nickname, setNickname] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
   const [message, setMessage] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [targetUser, setTargetUser] = useState<string | null>(null);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   
-  // Lista de mensagens dinâmica
   const [messagesList, setMessagesList] = useState<ChatMessage[]>([
     {
       id: '1',
       sender: 'Participante_Ativo',
       content: 'Olá pessoal! Alguém disponível para um papo?',
       time: '12:45',
-      isMe: false
+      isMe: false,
+      type: 'text'
     }
   ]);
 
@@ -54,7 +76,6 @@ const Room = () => {
 
   const onlineUsers = ["Local_User", "Gatinha_Chat", "Rex_2024", "Flor_do_Campo", "Navegador"];
 
-  // Efeito para rolar para o final do chat
   useEffect(() => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -70,33 +91,29 @@ const Room = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
+  const handleSendMessage = (content: string = message, type: 'text' | 'image' | 'video' = 'text') => {
+    if (!content.trim() && type === 'text') return;
 
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       sender: nickname,
-      content: message,
+      content: content,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
-      isPrivate: isPrivate
+      isPrivate: isPrivate,
+      type: type
     };
 
     setMessagesList(prev => [...prev, newMessage]);
-    setMessage('');
-    
-    // Simulação de resposta (opcional para teste)
-    if (!isPrivate) {
-      setTimeout(() => {
-        const reply: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          sender: onlineUsers[Math.floor(Math.random() * onlineUsers.length)],
-          content: 'Oi! Tudo bem por aqui também!',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isMe: false
-        };
-        setMessagesList(prev => [...prev, reply]);
-      }, 2000);
+    if (type === 'text') setMessage('');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const type = file.type.startsWith('video') ? 'video' : 'image';
+      handleSendMessage(`Enviou um(a) ${type === 'image' ? 'foto' : 'vídeo'} da ${source === 'camera' ? 'câmera' : 'galeria'}`, type);
+      setIsMediaDialogOpen(false);
     }
   };
 
@@ -144,6 +161,23 @@ const Room = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
+      {/* Hidden Inputs for Media */}
+      <input 
+        type="file" 
+        accept="image/*,video/*" 
+        className="hidden" 
+        ref={galleryInputRef}
+        onChange={(e) => handleFileChange(e, 'gallery')}
+      />
+      <input 
+        type="file" 
+        accept="image/*,video/*" 
+        capture="environment" 
+        className="hidden" 
+        ref={cameraInputRef}
+        onChange={(e) => handleFileChange(e, 'camera')}
+      />
+
       <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
         <div className="p-8 border-b border-slate-100 bg-white">
           <h3 className="font-black text-slate-900 flex items-center gap-3 uppercase tracking-widest text-[10px]">
@@ -231,7 +265,16 @@ const Room = () => {
                     ? "bg-primary text-white border-transparent rounded-tr-none" 
                     : "bg-white text-slate-700 border-slate-100 rounded-tl-none"
                 )}>
-                  <p className="text-sm leading-relaxed font-medium">{msg.content}</p>
+                  {msg.type === 'text' ? (
+                    <p className="text-sm leading-relaxed font-medium">{msg.content}</p>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white/20 p-2 rounded-lg">
+                        {msg.type === 'image' ? <ImageIcon size={20} /> : <Video size={20} />}
+                      </div>
+                      <p className="text-sm font-bold italic">{msg.content}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -247,8 +290,13 @@ const Room = () => {
               </div>
             )}
             <div className="relative flex items-center gap-3 bg-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-primary/10 transition-all border border-transparent focus-within:border-primary/20">
-              <Button variant="ghost" size="icon" className="text-slate-400 rounded-full hover:text-primary hover:bg-white shrink-0">
-                <Camera size={20} />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-slate-400 rounded-full hover:text-primary hover:bg-white shrink-0"
+                onClick={() => setIsMediaDialogOpen(true)}
+              >
+                <CameraIcon size={20} />
               </Button>
               <Input 
                 placeholder={isPrivate ? "Sussurrar no privado..." : "Diga algo para todos na sala..."}
@@ -262,7 +310,7 @@ const Room = () => {
                   <Smile size={20} />
                 </Button>
                 <Button 
-                  onClick={handleSendMessage}
+                  onClick={() => handleSendMessage()}
                   disabled={!message.trim()}
                   className="bg-primary hover:bg-primary/90 text-white rounded-[1.25rem] w-12 h-12 p-0 shadow-lg shadow-primary/20 disabled:opacity-30 transition-all active:scale-90"
                 >
@@ -273,6 +321,44 @@ const Room = () => {
           </div>
         </div>
       </main>
+
+      {/* Media Selection Dialog */}
+      <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
+        <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none shadow-2xl overflow-hidden font-sans">
+          <DialogHeader className="text-center space-y-2">
+            <div className="mx-auto bg-primary/10 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-2">
+              <CameraIcon className="text-primary" size={32} />
+            </div>
+            <DialogTitle className="text-xl font-black text-slate-800">Compartilhar Mídia</DialogTitle>
+            <DialogDescription className="text-xs text-slate-400 font-medium">
+              Escolha de onde você deseja enviar sua foto ou vídeo.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 gap-3 mt-6">
+            <Button 
+              onClick={() => cameraInputRef.current?.click()}
+              className="h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-sm gap-3 transition-all active:scale-95"
+            >
+              <CameraIcon size={20} /> Abrir Câmera
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => galleryInputRef.current?.click()}
+              className="h-16 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-sm gap-3 transition-all active:scale-95"
+            >
+              <ImageIcon size={20} /> Abrir Galeria
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => setIsMediaDialogOpen(false)}
+              className="text-slate-400 font-bold text-xs uppercase tracking-widest"
+            >
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
