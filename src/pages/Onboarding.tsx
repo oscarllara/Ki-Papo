@@ -37,13 +37,17 @@ const Onboarding = () => {
       } else {
         setFormData(prev => ({ ...prev, name: tempName }));
       }
-      
-      toast({
-        title: "Dados Recuperados",
-        description: `Olá! Complete seus dados para continuar.`,
-      });
     }
   }, []);
+
+  const maskCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '') // Remove tudo o que não é dígito
+      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os 3 primeiros dígitos
+      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os 3 próximos dígitos
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2') // Coloca hífen após os 3 últimos dígitos
+      .replace(/(-\d{2})\d+?$/, '$1'); // Limita o tamanho
+  };
 
   const handleVerify = () => {
     if (!formData.name || !formData.whatsapp || formData.whatsapp === '+55 ' || !formData.cpf || !formData.birthDate) {
@@ -70,19 +74,16 @@ const Onboarding = () => {
       return;
     }
 
-    const provider = sessionStorage.getItem('temp_provider') || 'E-mail';
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
-    
     const newUser = {
       id: Date.now(),
       name: formData.name,
       whatsapp: formData.whatsapp,
-      socialMedia: provider,
+      socialMedia: sessionStorage.getItem('temp_provider') || 'E-mail',
       socialLink: socialPrefix + socialHandle,
       cpf: formData.cpf,
       birth: formData.birthDate,
       date: new Date().toLocaleDateString('pt-BR'),
-      lastAccess: new Date().toLocaleString('pt-BR'),
       status: 'Verificado'
     };
     
@@ -110,7 +111,6 @@ const Onboarding = () => {
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
-              autoFocus
             />
           </div>
           
@@ -150,7 +150,7 @@ const Onboarding = () => {
               <Input 
                 placeholder="000.000.000-00" 
                 value={formData.cpf}
-                onChange={(e) => setFormData({...formData, cpf: e.target.value})}
+                onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})}
                 className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
               />
             </div>

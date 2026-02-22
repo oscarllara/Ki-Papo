@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +22,18 @@ const Room = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [targetUser, setTargetUser] = useState<string | null>(null);
 
+  // Extrair o nome da cidade do roomId
+  const cityName = useMemo(() => {
+    if (!roomId) return "nossa cidade";
+    // O roomId vem no formato: cidade-interesse (ex: abadia-dos-dourados-network)
+    // Vamos pegar todas as partes exceto a última (que é o interesse)
+    const parts = roomId.split('-');
+    parts.pop(); // Remove o interesse
+    return parts.join(' ').replace(/\b\w/g, l => l.toUpperCase()); // Capitaliza
+  }, [roomId]);
+
   // Simulação de usuários online
-  const onlineUsers = ["Aventureiro_SP", "Gatinha_Legal", "Rex_2024", "Flor_do_Campo", "Navegador"];
+  const onlineUsers = ["Aventureiro_Local", "Gatinha_Chat", "Rex_2024", "Flor_do_Campo", "Navegador"];
 
   const handleJoin = () => {
     if (!nickname.trim()) return;
@@ -126,7 +136,7 @@ const Room = () => {
             </Button>
             <div>
               <h2 className="font-black text-slate-800 tracking-tight uppercase text-xs">
-                Sala: {roomId?.replace('-', ' ')}
+                Sala: {cityName}
               </h2>
               <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
                 <Unlock size={10} /> Canal Público
@@ -147,11 +157,11 @@ const Room = () => {
                 Hoje
               </span>
             </div>
-            {/* Mensagem Pública Simulação */}
+            {/* Mensagem Pública Simulação Dinâmica */}
             <div className="flex flex-col items-start gap-1">
-              <span className="text-[10px] font-bold text-indigo-500 ml-1">Aventureiro_SP</span>
+              <span className="text-[10px] font-bold text-indigo-500 ml-1">Participante_Local</span>
               <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm max-w-[80%]">
-                <p className="text-sm text-slate-700 leading-relaxed">Olá pessoal! Alguém de São Paulo por aqui?</p>
+                <p className="text-sm text-slate-700 leading-relaxed">Olá pessoal! Alguém de <span className="text-indigo-600 font-bold">{cityName}</span> por aqui?</p>
               </div>
             </div>
           </div>
