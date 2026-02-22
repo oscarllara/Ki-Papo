@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, Facebook, Instagram, Chrome, Apple, ShieldCheck, Mail, Loader2 } from 'lucide-react';
+import { MessageCircle, Facebook, Instagram, Chrome, Apple, ShieldCheck, Loader2 } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -22,9 +22,17 @@ const Index = () => {
         'Apple': 'Usuário Apple'
       };
 
-      // Salvamos qual rede foi usada para o gestor saber
+      const mockBases: Record<string, string> = {
+        'Google': 'https://google.com/',
+        'Facebook': 'https://facebook.com/',
+        'Instagram': 'https://instagram.com/',
+        'Apple': 'https://apple.com/'
+      };
+
+      // Salvamos qual rede e o link base
       sessionStorage.setItem('temp_provider', provider);
       sessionStorage.setItem('temp_name', mockNames[provider] || '');
+      sessionStorage.setItem('temp_base_url', mockBases[provider] || '');
       
       setIsAuthenticating(null);
       navigate('/onboarding');

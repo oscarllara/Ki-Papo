@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   FileText,
   Eye,
-  Search
+  Search,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,7 +144,7 @@ const Dashboard = () => {
                       <TableHead className="font-black text-slate-400 text-[9px] uppercase py-4">Nome</TableHead>
                       <TableHead className="font-black text-slate-400 text-[9px] uppercase py-4">WhatsApp</TableHead>
                       <TableHead className="font-black text-slate-400 text-[9px] uppercase py-4">CPF (Completo)</TableHead>
-                      <TableHead className="font-black text-slate-400 text-[9px] uppercase py-4">Rede</TableHead>
+                      <TableHead className="font-black text-slate-400 text-[9px] uppercase py-4">Perfil Social</TableHead>
                       <TableHead className="font-black text-slate-400 text-[9px] uppercase py-4 text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -162,9 +163,16 @@ const Dashboard = () => {
                           <TableCell className="text-xs font-bold text-slate-600">{user.whatsapp}</TableCell>
                           <TableCell className="font-mono text-[11px] font-bold text-indigo-600">{user.cpf}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="text-[9px] font-black uppercase border-indigo-100 text-indigo-600 bg-indigo-50/30">
-                              {user.socialMedia}
-                            </Badge>
+                            <a 
+                              href={user.socialLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-bold text-[10px] uppercase group transition-colors"
+                            >
+                              <Badge variant="outline" className="text-[9px] font-black uppercase border-indigo-100 text-indigo-600 bg-indigo-50/30 gap-1">
+                                {user.socialMedia} <ExternalLink size={10} className="opacity-50 group-hover:opacity-100" />
+                              </Badge>
+                            </a>
                           </TableCell>
                           <TableCell className="text-center">
                             <Button 
@@ -282,9 +290,16 @@ const Dashboard = () => {
                   <Label className="text-[10px] font-black uppercase text-indigo-600 tracking-wider">CPF COMPLETO</Label>
                   <p className="text-xl font-black text-slate-900 font-mono tracking-tighter mt-1">{selectedUser.cpf}</p>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Rede Social</Label>
-                  <p className="text-sm font-bold text-slate-800">{selectedUser.socialMedia}</p>
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Perfil Social</Label>
+                  <a 
+                    href={selectedUser.socialLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:underline text-sm font-bold break-all flex items-center gap-2"
+                  >
+                    {selectedUser.socialLink} <ExternalLink size={14} />
+                  </a>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Cadastro em</Label>

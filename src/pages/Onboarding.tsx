@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, AlertCircle } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Link } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 const Onboarding = () => {
@@ -16,19 +16,27 @@ const Onboarding = () => {
     name: '',
     whatsapp: '+55 ',
     cpf: '', 
-    birthDate: '' 
+    birthDate: '',
+    socialLink: ''
   });
 
   useEffect(() => {
     const tempName = sessionStorage.getItem('temp_name');
-    if (tempName) {
-      setFormData(prev => ({ ...prev, name: tempName }));
-      sessionStorage.removeItem('temp_name');
+    const tempBaseUrl = sessionStorage.getItem('temp_base_url');
+    
+    if (tempName || tempBaseUrl) {
+      setFormData(prev => ({ 
+        ...prev, 
+        name: tempName || '',
+        socialLink: tempBaseUrl || '' 
+      }));
       
-      toast({
-        title: "Dados Recuperados",
-        description: `Olá ${tempName.split(' ')[0]}! Complete seus dados para continuar.`,
-      });
+      if (tempName) {
+        toast({
+          title: "Dados Recuperados",
+          description: `Olá! Complete seus dados para continuar.`,
+        });
+      }
     }
   }, []);
 
@@ -60,13 +68,13 @@ const Onboarding = () => {
     const provider = sessionStorage.getItem('temp_provider') || 'E-mail';
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     
-    // Agora salvamos o CPF completo para o administrador
     const newUser = {
       id: Date.now(),
       name: formData.name,
       whatsapp: formData.whatsapp,
       socialMedia: provider,
-      cpf: formData.cpf, // Removida a máscara no salvamento
+      socialLink: formData.socialLink,
+      cpf: formData.cpf,
       birth: formData.birthDate,
       date: new Date().toLocaleDateString('pt-BR'),
       lastAccess: new Date().toLocaleString('pt-BR'),
@@ -99,6 +107,19 @@ const Onboarding = () => {
               className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
             />
           </div>
+          
+          <div className="space-y-1.5">
+            <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider flex items-center gap-2">
+              <Link size={12} /> Perfil Social (URL)
+            </Label>
+            <Input 
+              placeholder="https://..." 
+              value={formData.socialLink}
+              onChange={(e) => setFormData({...formData, socialLink: e.target.value})}
+              className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500 text-indigo-600 font-medium"
+            />
+          </div>
+
           <div className="space-y-1.5">
             <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider">WhatsApp</Label>
             <Input 
