@@ -83,6 +83,7 @@ const Lobby = () => {
   }, [cities, citySearch]);
 
   const interests = [
+    { id: 'network', name: 'Network', icon: <Globe size={20} />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { id: 'amizade', name: 'Amizade', icon: <Users size={20} />, color: 'text-blue-500', bg: 'bg-blue-50' },
     { id: 'namoro', name: 'Namoro', icon: <Heart size={20} />, color: 'text-red-500', bg: 'bg-red-50' },
     { id: 'evangelico', name: 'Relacionamento Evangélico', icon: <Cross size={20} />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
