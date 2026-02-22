@@ -34,6 +34,7 @@ import { toast } from "sonner";
 interface ChatMessage {
   id: string;
   sender: string;
+  receiver?: string; // Nome de quem deve receber no privado
   content: string;
   time: string;
   isMe: boolean;
@@ -46,7 +47,6 @@ const Room = () => {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Refs específicas para cada ação
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +104,7 @@ const Room = () => {
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       sender: nickname,
+      receiver: isPrivate ? (targetUser || undefined) : undefined,
       content: content,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
@@ -175,30 +176,9 @@ const Room = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* Inputs Escondidos Otimizados */}
-      <input 
-        type="file" 
-        accept="image/*,video/*" 
-        className="hidden" 
-        ref={galleryInputRef}
-        onChange={(e) => handleFileChange(e, 'Galeria')}
-      />
-      <input 
-        type="file" 
-        accept="image/*" 
-        capture="environment" 
-        className="hidden" 
-        ref={photoInputRef}
-        onChange={(e) => handleFileChange(e, 'Câmera (Foto)')}
-      />
-      <input 
-        type="file" 
-        accept="video/*" 
-        capture="environment" 
-        className="hidden" 
-        ref={videoInputRef}
-        onChange={(e) => handleFileChange(e, 'Câmera (Vídeo)')}
-      />
+      <input type="file" accept="image/*,video/*" className="hidden" ref={galleryInputRef} onChange={(e) => handleFileChange(e, 'Galeria')} />
+      <input type="file" accept="image/*" capture="environment" className="hidden" ref={photoInputRef} onChange={(e) => handleFileChange(e, 'Câmera (Foto)')} />
+      <input type="file" accept="video/*" capture="environment" className="hidden" ref={videoInputRef} onChange={(e) => handleFileChange(e, 'Câmera (Vídeo)')} />
 
       <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
         <div className="p-8 border-b border-slate-100 bg-white">
@@ -231,9 +211,9 @@ const Room = () => {
             ))}
           </div>
         </ScrollArea>
-        <div className="p-6 bg-white border-t border-slate-100">
-          <p className="text-[10px] text-slate-300 font-bold uppercase text-center leading-tight">
-            Toque em alguém para <br />enviar uma mensagem privada.
+        <div className="p-6 bg-white border-t border-slate-100 text-center">
+          <p className="text-[10px] text-slate-300 font-bold uppercase leading-tight">
+            Clique em um usuário para <br />iniciar um chat privado.
           </p>
         </div>
       </aside>
@@ -276,16 +256,28 @@ const Room = () => {
                   msg.isMe ? "ml-auto items-end" : "items-start"
                 )}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   {!msg.isMe && <span className="text-[10px] font-black text-secondary uppercase tracking-tight">{msg.sender}</span>}
-                  <span className="text-[9px] text-slate-300">{msg.time}</span>
-                  {msg.isPrivate && <Lock size={10} className="text-primary" />}
+                  
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] text-slate-400 font-bold">{msg.time}</span>
+                    {msg.isPrivate && (
+                      <div className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/10">
+                        <Lock size={8} />
+                        <span className="text-[8px] font-black uppercase tracking-tighter">
+                          {msg.isMe ? `Privado para: ${msg.receiver}` : `Privado de: ${msg.sender}`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+                
                 <div className={cn(
                   "p-4 rounded-[1.5rem] shadow-sm border",
                   msg.isMe 
-                    ? "bg-primary text-white border-transparent rounded-tr-none" 
-                    : "bg-white text-slate-700 border-slate-100 rounded-tl-none"
+                    ? (msg.isPrivate ? "bg-indigo-700 text-white border-transparent" : "bg-primary text-white border-transparent") 
+                    : "bg-white text-slate-700 border-slate-100",
+                  msg.isMe ? "rounded-tr-none" : "rounded-tl-none"
                 )}>
                   {msg.type === 'text' ? (
                     <p className="text-sm leading-relaxed font-medium">{msg.content}</p>
@@ -307,8 +299,8 @@ const Room = () => {
           <div className="max-w-4xl mx-auto space-y-3">
             {isPrivate && (
               <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl animate-in slide-in-from-bottom-2">
-                <span className="flex items-center gap-2"><Lock size={12}/> Privado para: {targetUser}</span>
-                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="hover:opacity-70 underline">Cancelar</button>
+                <span className="flex items-center gap-2"><Lock size={12}/> Enviando no privado para: <span className="underline decoration-secondary decoration-2 underline-offset-4">{targetUser}</span></span>
+                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="hover:opacity-70 font-black">X CANCELAR</button>
               </div>
             )}
             <div className="relative flex items-center gap-3 bg-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-primary/10 transition-all border border-transparent focus-within:border-primary/20">
@@ -321,7 +313,7 @@ const Room = () => {
                 <CameraIcon size={20} />
               </Button>
               <Input 
-                placeholder={isPrivate ? "Sussurrar no privado..." : "Diga algo para todos na sala..."}
+                placeholder={isPrivate ? `Sussurrar para ${targetUser}...` : "Diga algo para todos na sala..."}
                 className="border-none bg-transparent focus-visible:ring-0 text-slate-800 font-bold placeholder:text-slate-400 placeholder:font-medium"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -344,7 +336,7 @@ const Room = () => {
         </div>
       </main>
 
-      {/* Seletor de Mídia e Chamada */}
+      {/* Media Selection Dialog */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none shadow-2xl overflow-hidden font-sans">
           <DialogHeader className="text-center space-y-2">
@@ -356,40 +348,25 @@ const Room = () => {
               O que você deseja fazer agora?
             </DialogDescription>
           </DialogHeader>
-          
           <div className="grid grid-cols-1 gap-3 mt-6">
-            <Button 
-              onClick={() => photoInputRef.current?.click()}
-              className="h-14 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
-            >
+            <Button onClick={() => photoInputRef.current?.click()} className="h-14 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
               <CameraIcon size={18} /> Tirar Foto
             </Button>
-            <Button 
-              onClick={() => videoInputRef.current?.click()}
-              variant="outline"
-              className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
-            >
+            <Button onClick={() => videoInputRef.current?.click()} variant="outline" className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
               <VideoIcon size={18} /> Gravar Vídeo
             </Button>
-            <Button 
-              onClick={() => galleryInputRef.current?.click()}
-              variant="outline"
-              className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
-            >
+            <Button onClick={() => galleryInputRef.current?.click()} variant="outline" className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
               <ImageIcon size={18} /> Galeria de Fotos
             </Button>
             <div className="h-px bg-slate-100 my-2" />
-            <Button 
-              onClick={() => { setIsMediaDialogOpen(false); startVideoCall(); }}
-              className="h-14 bg-secondary hover:opacity-90 text-secondary-foreground rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
-            >
+            <Button onClick={() => { setIsMediaDialogOpen(false); startVideoCall(); }} className="h-14 bg-secondary hover:opacity-90 text-secondary-foreground rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
               <VideoIcon size={18} /> Chamada de Vídeo
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Simulação de Chamada */}
+      {/* Video Call Simulation Modal */}
       <Dialog open={isCalling} onOpenChange={setIsCalling}>
         <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden font-sans bg-slate-900">
           <div className="relative h-full w-full flex flex-col items-center justify-center text-center p-8">
@@ -398,24 +375,15 @@ const Room = () => {
                 <Users size={32} className="text-white/20" />
               </div>
             </div>
-            
             <Avatar className="h-32 w-32 border-4 border-primary shadow-2xl mb-6">
               <AvatarFallback className="bg-slate-800 text-white text-4xl font-black">?</AvatarFallback>
             </Avatar>
-            
             <h3 className="text-2xl font-black text-white tracking-tight mb-2">Chamada de Vídeo</h3>
             <p className="text-primary font-bold animate-pulse">Conectando ao servidor...</p>
-            
             <div className="absolute bottom-12 flex items-center gap-6">
-              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700">
-                <Mic size={24} />
-              </Button>
-              <Button onClick={() => setIsCalling(false)} size="icon" className="h-20 w-20 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-xl shadow-red-500/20">
-                <X size={32} />
-              </Button>
-              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700">
-                <VideoIcon size={24} />
-              </Button>
+              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700"><Mic size={24} /></Button>
+              <Button onClick={() => setIsCalling(false)} size="icon" className="h-20 w-20 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-xl shadow-red-500/20"><X size={32} /></Button>
+              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700"><VideoIcon size={24} /></Button>
             </div>
           </div>
         </DialogContent>
