@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,22 +10,42 @@ import { Card } from "@/components/ui/card";
 import { SendHorizontal, Phone, Video, Camera, ArrowLeft, Users, Lock, Unlock, Smile } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
+interface ChatMessage {
+  id: string;
+  sender: string;
+  content: string;
+  time: string;
+  isMe: boolean;
+  isPrivate?: boolean;
+}
+
 const Room = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
   
   const [nickname, setNickname] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
   const [message, setMessage] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [targetUser, setTargetUser] = useState<string | null>(null);
+  
+  // Lista de mensagens dinâmica
+  const [messagesList, setMessagesList] = useState<ChatMessage[]>([
+    {
+      id: '1',
+      sender: 'Participante_Ativo',
+      content: 'Olá pessoal! Alguém disponível para um papo?',
+      time: '12:45',
+      isMe: false
+    }
+  ]);
 
-  // Extrair o nome da cidade de forma segura
   const cityName = useMemo(() => {
     if (!roomId) return "nossa cidade";
     try {
       const parts = roomId.split('-');
-      if (parts.length > 1) parts.pop(); // Remove o interesse (ex: -network)
+      if (parts.length > 1) parts.pop();
       return parts.join(' ').replace(/\b\w/g, l => l.toUpperCase());
     } catch (e) {
       return "Sala Ki Papo";
@@ -34,9 +54,55 @@ const Room = () => {
 
   const onlineUsers = ["Local_User", "Gatinha_Chat", "Rex_2024", "Flor_do_Campo", "Navegador"];
 
+  // Efeito para rolar para o final do chat
+  useEffect(() => {
+    if (scrollRef.current) {
+      const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messagesList]);
+
   const handleJoin = () => {
     if (nickname.trim().length >= 3) {
       setHasJoined(true);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      sender: nickname,
+      content: message,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isMe: true,
+      isPrivate: isPrivate
+    };
+
+    setMessagesList(prev => [...prev, newMessage]);
+    setMessage('');
+    
+    // Simulação de resposta (opcional para teste)
+    if (!isPrivate) {
+      setTimeout(() => {
+        const reply: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          sender: onlineUsers[Math.floor(Math.random() * onlineUsers.length)],
+          content: 'Oi! Tudo bem por aqui também!',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isMe: false
+        };
+        setMessagesList(prev => [...prev, reply]);
+      }, 2000);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
     }
   };
 
@@ -78,7 +144,6 @@ const Room = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* Sidebar - Desktop Only */}
       <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
         <div className="p-8 border-b border-slate-100 bg-white">
           <h3 className="font-black text-slate-900 flex items-center gap-3 uppercase tracking-widest text-[10px]">
@@ -117,7 +182,6 @@ const Room = () => {
         </div>
       </aside>
 
-      {/* Chat Area */}
       <main className="flex-1 flex flex-col relative">
         <header className="h-20 border-b border-slate-100 flex items-center justify-between px-6 bg-white z-10 shadow-sm">
           <div className="flex items-center gap-4">
@@ -140,8 +204,7 @@ const Room = () => {
           </div>
         </header>
 
-        {/* Messages List */}
-        <ScrollArea className="flex-1 p-6 bg-slate-50/20">
+        <ScrollArea className="flex-1 p-6 bg-slate-50/20" ref={scrollRef}>
           <div className="max-w-4xl mx-auto space-y-8 py-4">
             <div className="flex justify-center">
               <span className="text-[9px] font-black text-slate-300 bg-white px-5 py-2 rounded-full border border-slate-100 uppercase tracking-widest">
@@ -149,20 +212,32 @@ const Room = () => {
               </span>
             </div>
 
-            {/* Simulação de Mensagem Recebida */}
-            <div className="flex flex-col items-start gap-2 max-w-[80%]">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-secondary uppercase tracking-tight">Participante_Ativo</span>
-                <span className="text-[9px] text-slate-300">12:45</span>
+            {messagesList.map((msg) => (
+              <div 
+                key={msg.id} 
+                className={cn(
+                  "flex flex-col gap-2 max-w-[80%]",
+                  msg.isMe ? "ml-auto items-end" : "items-start"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  {!msg.isMe && <span className="text-[10px] font-black text-secondary uppercase tracking-tight">{msg.sender}</span>}
+                  <span className="text-[9px] text-slate-300">{msg.time}</span>
+                  {msg.isPrivate && <Lock size={10} className="text-primary" />}
+                </div>
+                <div className={cn(
+                  "p-4 rounded-[1.5rem] shadow-sm border",
+                  msg.isMe 
+                    ? "bg-primary text-white border-transparent rounded-tr-none" 
+                    : "bg-white text-slate-700 border-slate-100 rounded-tl-none"
+                )}>
+                  <p className="text-sm leading-relaxed font-medium">{msg.content}</p>
+                </div>
               </div>
-              <div className="bg-white p-4 rounded-[1.5rem] rounded-tl-none border border-slate-100 shadow-sm">
-                <p className="text-sm text-slate-700 leading-relaxed font-medium">Olá pessoal! Alguém de <span className="text-primary font-black">{cityName}</span> disponível para um papo?</p>
-              </div>
-            </div>
+            ))}
           </div>
         </ScrollArea>
 
-        {/* Footer Input */}
         <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
           <div className="max-w-4xl mx-auto space-y-3">
             {isPrivate && (
@@ -180,12 +255,14 @@ const Room = () => {
                 className="border-none bg-transparent focus-visible:ring-0 text-slate-800 font-bold placeholder:text-slate-400 placeholder:font-medium"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
               <div className="flex items-center gap-1 shrink-0">
                 <Button variant="ghost" size="icon" className="text-slate-400 rounded-full hover:text-primary hover:bg-white">
                   <Smile size={20} />
                 </Button>
                 <Button 
+                  onClick={handleSendMessage}
                   disabled={!message.trim()}
                   className="bg-primary hover:bg-primary/90 text-white rounded-[1.25rem] w-12 h-12 p-0 shadow-lg shadow-primary/20 disabled:opacity-30 transition-all active:scale-90"
                 >
