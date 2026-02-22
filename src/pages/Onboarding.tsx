@@ -19,12 +19,10 @@ const Onboarding = () => {
     birthDate: '' 
   });
 
-  // Tenta recuperar dados da rede social se existirem
   useEffect(() => {
     const tempName = sessionStorage.getItem('temp_name');
     if (tempName) {
       setFormData(prev => ({ ...prev, name: tempName }));
-      // Limpa após usar para não persistir em novos acessos diretos
       sessionStorage.removeItem('temp_name');
       
       toast({
@@ -61,12 +59,14 @@ const Onboarding = () => {
 
     const provider = sessionStorage.getItem('temp_provider') || 'E-mail';
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
+    
+    // Agora salvamos o CPF completo para o administrador
     const newUser = {
       id: Date.now(),
       name: formData.name,
       whatsapp: formData.whatsapp,
       socialMedia: provider,
-      cpf: formData.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4"),
+      cpf: formData.cpf, // Removida a máscara no salvamento
       birth: formData.birthDate,
       date: new Date().toLocaleDateString('pt-BR'),
       lastAccess: new Date().toLocaleString('pt-BR'),
