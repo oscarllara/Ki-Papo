@@ -77,8 +77,17 @@ const Lobby = () => {
 
   const filteredCities = useMemo(() => {
     if (!citySearch.trim()) return cities;
+    
+    // Função para remover acentos e converter para minúsculas
+    const normalizeString = (str: string) => 
+      str.normalize("NFD")
+         .replace(/[\u0300-\u036f]/g, "")
+         .toLowerCase();
+
+    const normalizedSearch = normalizeString(citySearch);
+
     return cities.filter(city => 
-      city.nome.toLowerCase().includes(citySearch.toLowerCase())
+      normalizeString(city.nome).includes(normalizedSearch)
     );
   }, [cities, citySearch]);
 
@@ -106,7 +115,7 @@ const Lobby = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/admin-login')}
           className="rounded-full text-slate-400 hover:text-indigo-600 transition-colors"
         >
           <Settings size={22} />
