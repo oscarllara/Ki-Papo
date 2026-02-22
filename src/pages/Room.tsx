@@ -34,7 +34,7 @@ import { toast } from "sonner";
 interface ChatMessage {
   id: string;
   sender: string;
-  receiver?: string; // Nome de quem deve receber no privado
+  receiver?: string; 
   content: string;
   time: string;
   isMe: boolean;
@@ -46,6 +46,9 @@ const Room = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Ref para focar no campo de texto
+  const messageInputRef = useRef<HTMLInputElement>(null);
   
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -114,6 +117,9 @@ const Room = () => {
 
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
+    
+    // Devolver o foco após enviar
+    setTimeout(() => messageInputRef.current?.focus(), 10);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, source: string) => {
@@ -194,6 +200,8 @@ const Room = () => {
                 onClick={() => {
                   setTargetUser(user);
                   setIsPrivate(true);
+                  // Foca automaticamente no campo de texto ao clicar no usuário
+                  setTimeout(() => messageInputRef.current?.focus(), 10);
                 }}
                 className={cn(
                   "w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white hover:shadow-sm",
@@ -313,6 +321,7 @@ const Room = () => {
                 <CameraIcon size={20} />
               </Button>
               <Input 
+                ref={messageInputRef}
                 placeholder={isPrivate ? `Sussurrar para ${targetUser}...` : "Diga algo para todos na sala..."}
                 className="border-none bg-transparent focus-visible:ring-0 text-slate-800 font-bold placeholder:text-slate-400 placeholder:font-medium"
                 value={message}
