@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [namePlaceholder, setNamePlaceholder] = useState('Seu nome completo');
   const [formData, setFormData] = useState({ 
     name: '',
     whatsapp: '+55 ',
@@ -25,11 +26,21 @@ const Onboarding = () => {
     const tempBaseUrl = sessionStorage.getItem('temp_base_url');
     
     if (tempName || tempBaseUrl) {
-      setFormData(prev => ({ 
-        ...prev, 
-        name: tempName || '',
-        socialLink: tempBaseUrl || '' 
-      }));
+      // Se o nome for o genérico "Usuário do...", usamos como placeholder
+      if (tempName?.startsWith('Usuário')) {
+        setNamePlaceholder(tempName);
+        setFormData(prev => ({ 
+          ...prev, 
+          socialLink: tempBaseUrl || '' 
+        }));
+      } else {
+        // Se for um nome real vindo da rede social, mantemos como valor
+        setFormData(prev => ({ 
+          ...prev, 
+          name: tempName || '',
+          socialLink: tempBaseUrl || '' 
+        }));
+      }
       
       if (tempName) {
         toast({
@@ -101,10 +112,11 @@ const Onboarding = () => {
           <div className="space-y-1.5">
             <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider">Nome Completo</Label>
             <Input 
-              placeholder="Seu nome" 
+              placeholder={namePlaceholder} 
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
+              autoFocus
             />
           </div>
           
