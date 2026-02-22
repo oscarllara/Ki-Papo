@@ -6,48 +6,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, AlertCircle, Link } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Link as LinkIcon } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [namePlaceholder, setNamePlaceholder] = useState('Seu nome completo');
+  const [socialPrefix, setSocialPrefix] = useState('');
+  const [socialHandle, setSocialHandle] = useState('');
+  
   const [formData, setFormData] = useState({ 
     name: '',
     whatsapp: '+55 ',
     cpf: '', 
-    birthDate: '',
-    socialLink: ''
+    birthDate: ''
   });
 
   useEffect(() => {
     const tempName = sessionStorage.getItem('temp_name');
     const tempBaseUrl = sessionStorage.getItem('temp_base_url');
     
-    if (tempName || tempBaseUrl) {
-      // Se o nome for o genérico "Usuário do...", usamos como placeholder
-      if (tempName?.startsWith('Usuário')) {
+    if (tempBaseUrl) {
+      setSocialPrefix(tempBaseUrl);
+    }
+
+    if (tempName) {
+      if (tempName.startsWith('Usuário')) {
         setNamePlaceholder(tempName);
-        setFormData(prev => ({ 
-          ...prev, 
-          socialLink: tempBaseUrl || '' 
-        }));
       } else {
-        // Se for um nome real vindo da rede social, mantemos como valor
-        setFormData(prev => ({ 
-          ...prev, 
-          name: tempName || '',
-          socialLink: tempBaseUrl || '' 
-        }));
+        setFormData(prev => ({ ...prev, name: tempName }));
       }
       
-      if (tempName) {
-        toast({
-          title: "Dados Recuperados",
-          description: `Olá! Complete seus dados para continuar.`,
-        });
-      }
+      toast({
+        title: "Dados Recuperados",
+        description: `Olá! Complete seus dados para continuar.`,
+      });
     }
   }, []);
 
@@ -84,7 +78,7 @@ const Onboarding = () => {
       name: formData.name,
       whatsapp: formData.whatsapp,
       socialMedia: provider,
-      socialLink: formData.socialLink,
+      socialLink: socialPrefix + socialHandle,
       cpf: formData.cpf,
       birth: formData.birthDate,
       date: new Date().toLocaleDateString('pt-BR'),
@@ -122,14 +116,19 @@ const Onboarding = () => {
           
           <div className="space-y-1.5">
             <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider flex items-center gap-2">
-              <Link size={12} /> Perfil Social (URL)
+              <LinkIcon size={12} /> Perfil Social (Link Direto)
             </Label>
-            <Input 
-              placeholder="https://..." 
-              value={formData.socialLink}
-              onChange={(e) => setFormData({...formData, socialLink: e.target.value})}
-              className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500 text-indigo-600 font-medium"
-            />
+            <div className="flex items-center h-12 rounded-xl border border-slate-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 transition-all px-3">
+              <span className="text-slate-400 font-medium whitespace-nowrap text-sm select-none">
+                {socialPrefix || 'https://'}
+              </span>
+              <input 
+                className="flex-1 bg-transparent border-none focus:outline-none text-indigo-600 font-bold h-full ml-0.5 text-sm"
+                value={socialHandle}
+                onChange={(e) => setSocialHandle(e.target.value)}
+                placeholder="seu_usuario"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
