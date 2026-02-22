@@ -5,15 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   ArrowLeft, 
-  CheckCircle2, 
   LogOut,
   Lock,
-  Settings,
   KeyRound,
   Save,
   ShieldCheck,
-  Globe,
-  ShieldAlert,
   FileText,
   Eye,
   Search
@@ -111,7 +107,7 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="security" className="rounded-xl px-8 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md font-black text-[10px] gap-2 uppercase whitespace-nowrap">
               <ShieldCheck size={14} /> Segurança Admin
-            </ShieldCheck>
+            </TabsTrigger>
             <TabsTrigger value="privacy" className="rounded-xl px-8 py-3 data-[state=active]:bg-white data-[state=active]:shadow-md font-black text-[10px] gap-2 uppercase whitespace-nowrap">
               <FileText size={14} /> Privacidade (LGPD)
             </TabsTrigger>
