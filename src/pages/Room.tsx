@@ -17,7 +17,9 @@ import {
   Lock, 
   Smile,
   Image as ImageIcon,
-  X
+  Video as VideoIcon,
+  X,
+  Mic
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import {
@@ -27,6 +29,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface ChatMessage {
   id: string;
@@ -42,8 +45,11 @@ const Room = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Refs específicas para cada ação
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   
   const [nickname, setNickname] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
@@ -51,6 +57,7 @@ const Room = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [targetUser, setTargetUser] = useState<string | null>(null);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const [isCalling, setIsCalling] = useState(false);
   
   const [messagesList, setMessagesList] = useState<ChatMessage[]>([
     {
@@ -108,13 +115,20 @@ const Room = () => {
     if (type === 'text') setMessage('');
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, source: string) => {
     const file = e.target.files?.[0];
     if (file) {
       const type = file.type.startsWith('video') ? 'video' : 'image';
-      handleSendMessage(`Enviou um(a) ${type === 'image' ? 'foto' : 'vídeo'} da ${source === 'camera' ? 'câmera' : 'galeria'}`, type);
+      handleSendMessage(`Enviou um(a) ${type === 'image' ? 'foto' : 'vídeo'} via ${source}`, type);
       setIsMediaDialogOpen(false);
     }
+  };
+
+  const startVideoCall = () => {
+    setIsCalling(true);
+    setTimeout(() => {
+      toast.info("A conexão está instável. Tentando reconectar chamada de vídeo...");
+    }, 3000);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -161,21 +175,29 @@ const Room = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* Hidden Inputs for Media */}
+      {/* Inputs Escondidos Otimizados */}
       <input 
         type="file" 
         accept="image/*,video/*" 
         className="hidden" 
         ref={galleryInputRef}
-        onChange={(e) => handleFileChange(e, 'gallery')}
+        onChange={(e) => handleFileChange(e, 'Galeria')}
       />
       <input 
         type="file" 
-        accept="image/*,video/*" 
+        accept="image/*" 
         capture="environment" 
         className="hidden" 
-        ref={cameraInputRef}
-        onChange={(e) => handleFileChange(e, 'camera')}
+        ref={photoInputRef}
+        onChange={(e) => handleFileChange(e, 'Câmera (Foto)')}
+      />
+      <input 
+        type="file" 
+        accept="video/*" 
+        capture="environment" 
+        className="hidden" 
+        ref={videoInputRef}
+        onChange={(e) => handleFileChange(e, 'Câmera (Vídeo)')}
       />
 
       <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
@@ -233,8 +255,8 @@ const Room = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Phone size={20} /></Button>
-            <Button variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Video size={20} /></Button>
+            <Button onClick={() => toast.info("Ligação de áudio não disponível nesta sala.")} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Phone size={20} /></Button>
+            <Button onClick={startVideoCall} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Video size={20} /></Button>
           </div>
         </header>
 
@@ -270,7 +292,7 @@ const Room = () => {
                   ) : (
                     <div className="flex items-center gap-3">
                       <div className="bg-white/20 p-2 rounded-lg">
-                        {msg.type === 'image' ? <ImageIcon size={20} /> : <Video size={20} />}
+                        {msg.type === 'image' ? <ImageIcon size={20} /> : <VideoIcon size={20} />}
                       </div>
                       <p className="text-sm font-bold italic">{msg.content}</p>
                     </div>
@@ -322,40 +344,79 @@ const Room = () => {
         </div>
       </main>
 
-      {/* Media Selection Dialog */}
+      {/* Seletor de Mídia e Chamada */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none shadow-2xl overflow-hidden font-sans">
           <DialogHeader className="text-center space-y-2">
             <div className="mx-auto bg-primary/10 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-2">
               <CameraIcon className="text-primary" size={32} />
             </div>
-            <DialogTitle className="text-xl font-black text-slate-800">Compartilhar Mídia</DialogTitle>
+            <DialogTitle className="text-xl font-black text-slate-800">Câmera e Mídia</DialogTitle>
             <DialogDescription className="text-xs text-slate-400 font-medium">
-              Escolha de onde você deseja enviar sua foto ou vídeo.
+              O que você deseja fazer agora?
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid grid-cols-1 gap-3 mt-6">
             <Button 
-              onClick={() => cameraInputRef.current?.click()}
-              className="h-16 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-sm gap-3 transition-all active:scale-95"
+              onClick={() => photoInputRef.current?.click()}
+              className="h-14 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
             >
-              <CameraIcon size={20} /> Abrir Câmera
+              <CameraIcon size={18} /> Tirar Foto
             </Button>
             <Button 
+              onClick={() => videoInputRef.current?.click()}
               variant="outline"
-              onClick={() => galleryInputRef.current?.click()}
-              className="h-16 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-sm gap-3 transition-all active:scale-95"
+              className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
             >
-              <ImageIcon size={20} /> Abrir Galeria
+              <VideoIcon size={18} /> Gravar Vídeo
             </Button>
             <Button 
-              variant="ghost" 
-              onClick={() => setIsMediaDialogOpen(false)}
-              className="text-slate-400 font-bold text-xs uppercase tracking-widest"
+              onClick={() => galleryInputRef.current?.click()}
+              variant="outline"
+              className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
             >
-              Cancelar
+              <ImageIcon size={18} /> Galeria de Fotos
             </Button>
+            <div className="h-px bg-slate-100 my-2" />
+            <Button 
+              onClick={() => { setIsMediaDialogOpen(false); startVideoCall(); }}
+              className="h-14 bg-secondary hover:opacity-90 text-secondary-foreground rounded-2xl font-black text-xs gap-3 transition-all active:scale-95"
+            >
+              <VideoIcon size={18} /> Chamada de Vídeo
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Simulação de Chamada */}
+      <Dialog open={isCalling} onOpenChange={setIsCalling}>
+        <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden font-sans bg-slate-900">
+          <div className="relative h-full w-full flex flex-col items-center justify-center text-center p-8">
+            <div className="absolute top-8 right-8 w-32 h-44 bg-slate-800 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl">
+              <div className="h-full w-full flex items-center justify-center bg-slate-700">
+                <Users size={32} className="text-white/20" />
+              </div>
+            </div>
+            
+            <Avatar className="h-32 w-32 border-4 border-primary shadow-2xl mb-6">
+              <AvatarFallback className="bg-slate-800 text-white text-4xl font-black">?</AvatarFallback>
+            </Avatar>
+            
+            <h3 className="text-2xl font-black text-white tracking-tight mb-2">Chamada de Vídeo</h3>
+            <p className="text-primary font-bold animate-pulse">Conectando ao servidor...</p>
+            
+            <div className="absolute bottom-12 flex items-center gap-6">
+              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700">
+                <Mic size={24} />
+              </Button>
+              <Button onClick={() => setIsCalling(false)} size="icon" className="h-20 w-20 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-xl shadow-red-500/20">
+                <X size={32} />
+              </Button>
+              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700">
+                <VideoIcon size={24} />
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
