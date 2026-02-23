@@ -51,12 +51,23 @@ const Onboarding = () => {
     return value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1');
   };
 
+  const maskPhone = (value: string) => {
+    let v = value.replace(/\D/g, "");
+    // Remove o 55 inicial se o usuário digitar para não duplicar
+    if (v.length >= 2 && v.startsWith("55")) v = v.slice(2);
+    
+    if (v.length === 0) return "+55 ";
+    if (v.length <= 2) return `+55 (${v}`;
+    if (v.length <= 7) return `+55 (${v.slice(0, 2)}) ${v.slice(2)}`;
+    return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
+  };
+
   const handleVerify = () => {
-    if (!formData.name || !formData.whatsapp || !formData.cpf || !formData.state || !formData.city) {
+    if (!formData.name || formData.whatsapp.length < 18 || !formData.cpf || !formData.state || !formData.city) {
       toast({ 
         variant: "destructive", 
-        title: "Campos incompletos", 
-        description: "Por favor, preencha todos os campos para continuar." 
+        title: "Dados incompletos", 
+        description: "Por favor, preencha todos os campos corretamente." 
       });
       return;
     }
@@ -148,7 +159,7 @@ const Onboarding = () => {
             <Input 
               placeholder="+55 (00) 00000-0000" 
               value={formData.whatsapp} 
-              onChange={(e) => setFormData({...formData, whatsapp: e.target.value})} 
+              onChange={(e) => setFormData({...formData, whatsapp: maskPhone(e.target.value)})} 
               className="h-14 rounded-2xl border-slate-200 focus-visible:ring-primary/20 font-bold" 
             />
           </div>
