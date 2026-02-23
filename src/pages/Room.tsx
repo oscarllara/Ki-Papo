@@ -7,28 +7,9 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { 
-  SendHorizontal, 
-  Phone, 
-  Video, 
-  Camera as CameraIcon, 
-  ArrowLeft, 
-  Users, 
-  Lock, 
-  Smile,
-  Image as ImageIcon,
-  Video as VideoIcon,
-  X,
-  Mic
-} from 'lucide-react';
+import { SendHorizontal, Phone, Video, Camera as CameraIcon, ArrowLeft, Users, Lock, Smile, Image as ImageIcon, Video as VideoIcon, X, Mic } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 interface ChatMessage {
@@ -46,11 +27,7 @@ const Room = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // Ref para focar no campo de texto
   const messageInputRef = useRef<HTMLInputElement>(null);
-  
-  const galleryInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   
@@ -61,120 +38,72 @@ const Room = () => {
   const [targetUser, setTargetUser] = useState<string | null>(null);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
-  
-  const [messagesList, setMessagesList] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      sender: 'Participante_Ativo',
-      content: 'Olá pessoal! Alguém disponível para um papo?',
-      time: '12:45',
-      isMe: false,
-      type: 'text'
-    }
-  ]);
-
-  const cityName = useMemo(() => {
-    if (!roomId) return "nossa cidade";
-    try {
-      const parts = roomId.split('-');
-      if (parts.length > 1) parts.pop();
-      return parts.join(' ').replace(/\b\w/g, l => l.toUpperCase());
-    } catch (e) {
-      return "Sala Ki Papo";
-    }
-  }, [roomId]);
+  const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
 
   const onlineUsers = ["Local_User", "Gatinha_Chat", "Rex_2024", "Flor_do_Campo", "Navegador"];
 
   useEffect(() => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+      if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
   }, [messagesList]);
 
-  const handleJoin = () => {
-    if (nickname.trim().length >= 3) {
-      setHasJoined(true);
+  // Simulação de resposta (BOT)
+  useEffect(() => {
+    const lastMsg = messagesList[messagesList.length - 1];
+    if (lastMsg?.isMe) {
+      const timer = setTimeout(() => {
+        const botName = lastMsg.isPrivate ? (lastMsg.receiver || onlineUsers[0]) : onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
+        const reply: ChatMessage = {
+          id: Date.now().toString(),
+          sender: botName,
+          receiver: lastMsg.isPrivate ? nickname : undefined,
+          content: lastMsg.isPrivate ? `Oi! Acabei de receber seu privado. Tudo bem?` : `E aí ${nickname}, como vai as coisas em ${cityName}?`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isMe: false,
+          isPrivate: lastMsg.isPrivate,
+          type: 'text'
+        };
+        setMessagesList(prev => [...prev, reply]);
+      }, 2500);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [messagesList]);
+
+  const cityName = useMemo(() => {
+    if (!roomId) return "nossa cidade";
+    const parts = roomId.split('-');
+    return parts.length > 1 ? parts.slice(0, -1).join(' ').replace(/\b\w/g, l => l.toUpperCase()) : "Sala Local";
+  }, [roomId]);
 
   const handleSendMessage = (content: string = message, type: 'text' | 'image' | 'video' = 'text') => {
     if (!content.trim() && type === 'text') return;
-
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       sender: nickname,
       receiver: isPrivate ? (targetUser || undefined) : undefined,
-      content: content,
+      content,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
-      isPrivate: isPrivate,
-      type: type
+      isPrivate,
+      type
     };
-
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
-    
-    // Devolver o foco após enviar
     setTimeout(() => messageInputRef.current?.focus(), 10);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, source: string) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const type = file.type.startsWith('video') ? 'video' : 'image';
-      handleSendMessage(`Enviou um(a) ${type === 'image' ? 'foto' : 'vídeo'} via ${source}`, type);
-      setIsMediaDialogOpen(false);
-    }
-  };
-
-  const startVideoCall = () => {
-    setIsCalling(true);
-    setTimeout(() => {
-      toast.info("A conexão está instável. Tentando reconectar chamada de vídeo...");
-    }, 3000);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSendMessage();
-    }
-  };
+  const handleJoin = () => { if (nickname.trim().length >= 3) setHasJoined(true); };
 
   if (!hasJoined) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm p-10 rounded-[2.5rem] border-none shadow-2xl text-center space-y-8 animate-in fade-in zoom-in duration-500">
-          <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary shadow-inner">
-            <Users size={40} />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Entrar na Sala</h2>
-            <p className="text-sm text-slate-400 font-medium">Escolha como quer ser chamado no chat.</p>
-          </div>
-          <div className="space-y-4">
-            <Input 
-              placeholder="Seu apelido..." 
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-              className="h-14 rounded-2xl text-center font-bold text-lg border-slate-100 bg-slate-50 focus-visible:ring-primary/30"
-              autoFocus
-            />
-            <Button 
-              onClick={handleJoin}
-              disabled={nickname.trim().length < 3}
-              className="w-full h-16 bg-primary hover:bg-primary/90 rounded-2xl font-black text-white shadow-xl shadow-primary/20 transition-all active:scale-95"
-            >
-              Entrar Agora
-            </Button>
-          </div>
-          <Button variant="ghost" onClick={() => navigate('/lobby')} className="text-slate-400 hover:text-primary font-bold">
-            <ArrowLeft size={16} className="mr-2" /> Voltar ao Lobby
-          </Button>
+        <Card className="w-full max-w-sm p-10 rounded-[2.5rem] border-none shadow-2xl text-center space-y-6">
+          <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary"><Users size={40} /></div>
+          <h2 className="text-2xl font-black text-slate-800">Entrar na Sala</h2>
+          <Input placeholder="Seu apelido..." value={nickname} onChange={(e) => setNickname(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleJoin()} className="h-14 rounded-2xl text-center font-bold text-lg" autoFocus />
+          <Button onClick={handleJoin} disabled={nickname.trim().length < 3} className="w-full h-16 bg-primary rounded-2xl font-black text-white shadow-xl">Entrar Agora</Button>
         </Card>
       </div>
     );
@@ -182,218 +111,90 @@ const Room = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      <input type="file" accept="image/*,video/*" className="hidden" ref={galleryInputRef} onChange={(e) => handleFileChange(e, 'Galeria')} />
-      <input type="file" accept="image/*" capture="environment" className="hidden" ref={photoInputRef} onChange={(e) => handleFileChange(e, 'Câmera (Foto)')} />
-      <input type="file" accept="video/*" capture="environment" className="hidden" ref={videoInputRef} onChange={(e) => handleFileChange(e, 'Câmera (Vídeo)')} />
+      {/* INPUTS DE CÂMERA REAL COM ATRIBUTO CAPTURE */}
+      <input type="file" accept="image/*" capture="user" className="hidden" ref={photoInputRef} onChange={() => handleSendMessage("Enviou uma foto agora mesmo!", 'image')} />
+      <input type="file" accept="video/*" capture="user" className="hidden" ref={videoInputRef} onChange={() => handleSendMessage("Enviou um vídeo agora mesmo!", 'video')} />
 
       <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
         <div className="p-8 border-b border-slate-100 bg-white">
-          <h3 className="font-black text-slate-900 flex items-center gap-3 uppercase tracking-widest text-[10px]">
-            Participantes <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-md">{onlineUsers.length}</span>
-          </h3>
+          <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Participantes Online</h3>
         </div>
         <ScrollArea className="flex-1 p-4">
-          <div className="space-y-2">
-            {onlineUsers.map(user => (
-              <button 
-                key={user}
-                onClick={() => {
-                  setTargetUser(user);
-                  setIsPrivate(true);
-                  // Foca automaticamente no campo de texto ao clicar no usuário
-                  setTimeout(() => messageInputRef.current?.focus(), 10);
-                }}
-                className={cn(
-                  "w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white hover:shadow-sm",
-                  targetUser === user ? "bg-white shadow-md ring-1 ring-primary/10" : ""
-                )}
-              >
-                <div className="relative">
-                  <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                    <AvatarFallback className="bg-slate-200 text-slate-500 text-xs font-black">{user[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
-                </div>
-                <span className="text-sm font-bold text-slate-700 truncate">{user}</span>
-              </button>
-            ))}
-          </div>
+          {onlineUsers.map(user => (
+            <button key={user} onClick={() => { setTargetUser(user); setIsPrivate(true); setTimeout(() => messageInputRef.current?.focus(), 10); }} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white", targetUser === user ? "bg-white shadow-md ring-1 ring-primary/10" : "")}>
+              <div className="relative">
+                <Avatar className="h-10 w-10"><AvatarFallback className="bg-slate-200 font-black">{user[0]}</AvatarFallback></Avatar>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+              </div>
+              <span className="text-sm font-bold text-slate-700">{user}</span>
+            </button>
+          ))}
         </ScrollArea>
-        <div className="p-6 bg-white border-t border-slate-100 text-center">
-          <p className="text-[10px] text-slate-300 font-bold uppercase leading-tight">
-            Clique em um usuário para <br />iniciar um chat privado.
-          </p>
-        </div>
       </aside>
 
       <main className="flex-1 flex flex-col relative">
         <header className="h-20 border-b border-slate-100 flex items-center justify-between px-6 bg-white z-10 shadow-sm">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/lobby')} className="rounded-full text-slate-400">
-              <ArrowLeft size={20} />
-            </Button>
-            <div>
-              <h2 className="font-black text-slate-900 tracking-tighter text-xl">
-                {cityName}
-              </h2>
-              <div className="flex items-center gap-2">
-                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                 <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Chat Público Ativo</span>
-              </div>
-            </div>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/lobby')} className="rounded-full"><ArrowLeft size={20} /></Button>
+            <h2 className="font-black text-slate-900 text-xl">{cityName}</h2>
           </div>
           <div className="flex items-center gap-1">
-            <Button onClick={() => toast.info("Ligação de áudio não disponível nesta sala.")} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Phone size={20} /></Button>
-            <Button onClick={startVideoCall} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Video size={20} /></Button>
+            <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Video size={20} /></Button>
           </div>
         </header>
 
         <ScrollArea className="flex-1 p-6 bg-slate-50/20" ref={scrollRef}>
-          <div className="max-w-4xl mx-auto space-y-8 py-4">
-            <div className="flex justify-center">
-              <span className="text-[9px] font-black text-slate-300 bg-white px-5 py-2 rounded-full border border-slate-100 uppercase tracking-widest">
-                Bem-vindo à sala de {cityName}
-              </span>
-            </div>
-
+          <div className="max-w-4xl mx-auto space-y-6 py-4">
             {messagesList.map((msg) => (
-              <div 
-                key={msg.id} 
-                className={cn(
-                  "flex flex-col gap-2 max-w-[80%]",
-                  msg.isMe ? "ml-auto items-end" : "items-start"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  {!msg.isMe && <span className="text-[10px] font-black text-secondary uppercase tracking-tight">{msg.sender}</span>}
-                  
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-slate-400 font-bold">{msg.time}</span>
-                    {msg.isPrivate && (
-                      <div className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/10">
-                        <Lock size={8} />
-                        <span className="text-[8px] font-black uppercase tracking-tighter">
-                          {msg.isMe ? `Privado para: ${msg.receiver}` : `Privado de: ${msg.sender}`}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+              <div key={msg.id} className={cn("flex flex-col gap-1 max-w-[80%]", msg.isMe ? "ml-auto items-end" : "items-start")}>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-slate-400 font-bold">
+                    {msg.time} {msg.isPrivate && (msg.isMe ? ` - ${msg.receiver}` : ` - ${msg.sender}`)}
+                  </span>
+                  {msg.isPrivate && <Lock size={8} className="text-primary" />}
                 </div>
-                
-                <div className={cn(
-                  "p-4 rounded-[1.5rem] shadow-sm border",
-                  msg.isMe 
-                    ? (msg.isPrivate ? "bg-indigo-700 text-white border-transparent" : "bg-primary text-white border-transparent") 
-                    : "bg-white text-slate-700 border-slate-100",
-                  msg.isMe ? "rounded-tr-none" : "rounded-tl-none"
-                )}>
-                  {msg.type === 'text' ? (
-                    <p className="text-sm leading-relaxed font-medium">{msg.content}</p>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <div className="bg-white/20 p-2 rounded-lg">
-                        {msg.type === 'image' ? <ImageIcon size={20} /> : <VideoIcon size={20} />}
-                      </div>
-                      <p className="text-sm font-bold italic">{msg.content}</p>
-                    </div>
-                  )}
+                <div className={cn("p-4 rounded-[1.5rem] shadow-sm", msg.isMe ? (msg.isPrivate ? "bg-indigo-700 text-white" : "bg-primary text-white") : "bg-white text-slate-700 border border-slate-100")}>
+                  <p className="text-sm font-medium">{msg.content}</p>
                 </div>
               </div>
             ))}
           </div>
         </ScrollArea>
 
-        <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
+        <div className="p-6 bg-white border-t border-slate-100">
           <div className="max-w-4xl mx-auto space-y-3">
             {isPrivate && (
-              <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl animate-in slide-in-from-bottom-2">
-                <span className="flex items-center gap-2"><Lock size={12}/> Enviando no privado para: <span className="underline decoration-secondary decoration-2 underline-offset-4">{targetUser}</span></span>
-                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="hover:opacity-70 font-black">X CANCELAR</button>
+              <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase px-5 py-2.5 rounded-xl">
+                <span>Enviando no privado para: <span className="underline">{targetUser}</span></span>
+                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="font-black">CANCELAR</button>
               </div>
             )}
-            <div className="relative flex items-center gap-3 bg-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-primary/10 transition-all border border-transparent focus-within:border-primary/20">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-slate-400 rounded-full hover:text-primary hover:bg-white shrink-0"
-                onClick={() => setIsMediaDialogOpen(true)}
-              >
-                <CameraIcon size={20} />
-              </Button>
-              <Input 
-                ref={messageInputRef}
-                placeholder={isPrivate ? `Sussurrar para ${targetUser}...` : "Diga algo para todos na sala..."}
-                className="border-none bg-transparent focus-visible:ring-0 text-slate-800 font-bold placeholder:text-slate-400 placeholder:font-medium"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <div className="flex items-center gap-1 shrink-0">
-                <Button variant="ghost" size="icon" className="text-slate-400 rounded-full hover:text-primary hover:bg-white">
-                  <Smile size={20} />
-                </Button>
-                <Button 
-                  onClick={() => handleSendMessage()}
-                  disabled={!message.trim()}
-                  className="bg-primary hover:bg-primary/90 text-white rounded-[1.25rem] w-12 h-12 p-0 shadow-lg shadow-primary/20 disabled:opacity-30 transition-all active:scale-90"
-                >
-                  <SendHorizontal size={22} />
-                </Button>
-              </div>
+            <div className="flex items-center gap-3 bg-slate-100 rounded-[2rem] p-2">
+              <Button variant="ghost" size="icon" className="text-slate-400" onClick={() => setIsMediaDialogOpen(true)}><CameraIcon size={20} /></Button>
+              <Input ref={messageInputRef} placeholder={isPrivate ? `Sussurrar para ${targetUser}...` : "Diga algo..."} className="border-none bg-transparent font-bold" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} />
+              <Button onClick={() => handleSendMessage()} disabled={!message.trim()} className="bg-primary hover:bg-primary/90 text-white rounded-[1.25rem] w-12 h-12 shadow-lg"><SendHorizontal size={22} /></Button>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Media Selection Dialog */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
-        <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none shadow-2xl overflow-hidden font-sans">
-          <DialogHeader className="text-center space-y-2">
-            <div className="mx-auto bg-primary/10 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-2">
-              <CameraIcon className="text-primary" size={32} />
-            </div>
-            <DialogTitle className="text-xl font-black text-slate-800">Câmera e Mídia</DialogTitle>
-            <DialogDescription className="text-xs text-slate-400 font-medium">
-              O que você deseja fazer agora?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-3 mt-6">
-            <Button onClick={() => photoInputRef.current?.click()} className="h-14 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
-              <CameraIcon size={18} /> Tirar Foto
-            </Button>
-            <Button onClick={() => videoInputRef.current?.click()} variant="outline" className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
-              <VideoIcon size={18} /> Gravar Vídeo
-            </Button>
-            <Button onClick={() => galleryInputRef.current?.click()} variant="outline" className="h-14 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
-              <ImageIcon size={18} /> Galeria de Fotos
-            </Button>
-            <div className="h-px bg-slate-100 my-2" />
-            <Button onClick={() => { setIsMediaDialogOpen(false); startVideoCall(); }} className="h-14 bg-secondary hover:opacity-90 text-secondary-foreground rounded-2xl font-black text-xs gap-3 transition-all active:scale-95">
-              <VideoIcon size={18} /> Chamada de Vídeo
-            </Button>
+        <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none">
+          <div className="grid grid-cols-1 gap-3">
+            <Button onClick={() => photoInputRef.current?.click()} className="h-14 bg-primary text-white rounded-2xl font-black gap-3"><CameraIcon size={18} /> Tirar Foto Agora</Button>
+            <Button onClick={() => videoInputRef.current?.click()} variant="outline" className="h-14 rounded-2xl font-black gap-3"><VideoIcon size={18} /> Gravar Vídeo Agora</Button>
+            <Button onClick={() => setIsMediaDialogOpen(false)} variant="ghost" className="h-14 font-black">Cancelar</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Video Call Simulation Modal */}
       <Dialog open={isCalling} onOpenChange={setIsCalling}>
-        <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] p-0 border-none shadow-2xl overflow-hidden font-sans bg-slate-900">
-          <div className="relative h-full w-full flex flex-col items-center justify-center text-center p-8">
-            <div className="absolute top-8 right-8 w-32 h-44 bg-slate-800 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl">
-              <div className="h-full w-full flex items-center justify-center bg-slate-700">
-                <Users size={32} className="text-white/20" />
-              </div>
-            </div>
-            <Avatar className="h-32 w-32 border-4 border-primary shadow-2xl mb-6">
-              <AvatarFallback className="bg-slate-800 text-white text-4xl font-black">?</AvatarFallback>
-            </Avatar>
-            <h3 className="text-2xl font-black text-white tracking-tight mb-2">Chamada de Vídeo</h3>
-            <p className="text-primary font-bold animate-pulse">Conectando ao servidor...</p>
-            <div className="absolute bottom-12 flex items-center gap-6">
-              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700"><Mic size={24} /></Button>
-              <Button onClick={() => setIsCalling(false)} size="icon" className="h-20 w-20 rounded-full bg-red-500 text-white hover:bg-red-600 shadow-xl shadow-red-500/20"><X size={32} /></Button>
-              <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700"><VideoIcon size={24} /></Button>
-            </div>
+        <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] bg-slate-900 border-none p-0 overflow-hidden">
+          <div className="h-full flex flex-col items-center justify-center text-center p-8">
+            <Avatar className="h-32 w-32 border-4 border-primary mb-6 animate-pulse"><AvatarFallback>?</AvatarFallback></Avatar>
+            <h3 className="text-2xl font-black text-white mb-2">Chamada de Vídeo</h3>
+            <p className="text-primary font-bold">Conectando...</p>
+            <Button onClick={() => setIsCalling(false)} className="absolute bottom-12 h-20 w-20 rounded-full bg-red-500 hover:bg-red-600"><X size={32} /></Button>
           </div>
         </DialogContent>
       </Dialog>

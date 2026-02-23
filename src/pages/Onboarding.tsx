@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, AlertCircle, Link as LinkIcon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ShieldCheck, AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { fetchStates, fetchCitiesByState, IBGEState, IBGECity } from '@/services/ibge';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -16,65 +18,56 @@ const Onboarding = () => {
   const [socialPrefix, setSocialPrefix] = useState('');
   const [socialHandle, setSocialHandle] = useState('');
   
+  const [states, setStates] = useState<IBGEState[]>([]);
+  const [cities, setCities] = useState<IBGECity[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+
   const [formData, setFormData] = useState({ 
     name: '',
     whatsapp: '+55 ',
     cpf: '', 
-    birthDate: ''
+    birthDate: '',
+    state: '',
+    city: ''
   });
 
   useEffect(() => {
+    const loadStates = async () => {
+      const data = await fetchStates();
+      setStates(data);
+    };
+    loadStates();
+
     const tempName = sessionStorage.getItem('temp_name');
     const tempBaseUrl = sessionStorage.getItem('temp_base_url');
-    
-    if (tempBaseUrl) {
-      setSocialPrefix(tempBaseUrl);
-    }
-
+    if (tempBaseUrl) setSocialPrefix(tempBaseUrl);
     if (tempName) {
-      if (tempName.startsWith('Usuário')) {
-        setNamePlaceholder(tempName);
-      } else {
-        setFormData(prev => ({ ...prev, name: tempName }));
-      }
+      if (tempName.startsWith('Usuário')) setNamePlaceholder(tempName);
+      else setFormData(prev => ({ ...prev, name: tempName }));
     }
   }, []);
 
+  useEffect(() => {
+    const loadCities = async () => {
+      if (!formData.state) return;
+      setLoadingCities(true);
+      const data = await fetchCitiesByState(formData.state);
+      setCities(data);
+      setLoadingCities(false);
+    };
+    loadCities();
+  }, [formData.state]);
+
   const maskCPF = (value: string) => {
-    return value
-      .replace(/\D/g, '') // Remove tudo o que não é dígito
-      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os 3 primeiros dígitos
-      .replace(/(\d{3})(\d)/, '$1.$2') // Coloca ponto após os 3 próximos dígitos
-      .replace(/(\d{3})(\d{1,2})/, '$1-$2') // Coloca hífen após os 3 últimos dígitos
-      .replace(/(-\d{2})\d+?$/, '$1'); // Limita o tamanho
+    return value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1');
   };
 
   const handleVerify = () => {
-    if (!formData.name || !formData.whatsapp || formData.whatsapp === '+55 ' || !formData.cpf || !formData.birthDate) {
-      toast({
-        variant: "destructive",
-        title: "Campos incompletos",
-        description: "Por favor, preencha todos os campos obrigatórios.",
-      });
+    if (!formData.name || !formData.whatsapp || !formData.cpf || !formData.birthDate || !formData.state || !formData.city) {
+      toast({ variant: "destructive", title: "Campos incompletos", description: "Por favor, preencha todos os campos." });
       return;
     }
 
-    const birth = new Date(formData.birthDate);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-
-    if (age < 18) {
-      toast({
-        variant: "destructive",
-        title: "Acesso Negado",
-        description: "Você precisa ter mais de 18 anos para acessar o Ki papo.",
-      });
-      return;
-    }
-
-    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     const newUser = {
       id: Date.now(),
       name: formData.name,
@@ -83,10 +76,13 @@ const Onboarding = () => {
       socialLink: socialPrefix + socialHandle,
       cpf: formData.cpf,
       birth: formData.birthDate,
+      state: formData.state,
+      city: formData.city,
       date: new Date().toLocaleDateString('pt-BR'),
       status: 'Verificado'
     };
     
+    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     localStorage.setItem('kipapo_users', JSON.stringify([newUser, ...savedUsers]));
     navigate('/lobby');
   };
@@ -99,83 +95,49 @@ const Onboarding = () => {
             <ShieldCheck className="text-emerald-600" size={32} />
           </div>
           <CardTitle className="text-3xl font-black text-slate-800 tracking-tight">Identificação</CardTitle>
-          <p className="text-sm text-slate-500 font-medium px-8 mt-2">
-            Mantenha seu perfil seguro e verificado.
-          </p>
         </CardHeader>
         <CardContent className="space-y-5 p-10 pt-4 bg-white">
           <div className="space-y-1.5">
-            <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider">Nome Completo</Label>
-            <Input 
-              placeholder={namePlaceholder} 
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
-            />
+            <Label className="font-bold text-slate-700 text-xs uppercase">Nome Completo</Label>
+            <Input placeholder={namePlaceholder} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-12 rounded-xl" />
           </div>
           
-          <div className="space-y-1.5">
-            <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider flex items-center gap-2">
-              <LinkIcon size={12} /> Perfil Social (Link Direto)
-            </Label>
-            <div className="flex items-center h-12 rounded-xl border border-slate-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 transition-all px-3">
-              <span className="text-slate-400 font-medium whitespace-nowrap text-sm select-none">
-                {socialPrefix || 'https://'}
-              </span>
-              <input 
-                className="flex-1 bg-transparent border-none focus:outline-none text-indigo-600 font-bold h-full ml-0.5 text-sm"
-                value={socialHandle}
-                onChange={(e) => setSocialHandle(e.target.value)}
-                placeholder="seu_usuario"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider">WhatsApp</Label>
-            <Input 
-              placeholder="+55 (00) 00000-0000" 
-              value={formData.whatsapp}
-              onChange={(e) => {
-                let val = e.target.value;
-                if (!val.startsWith('+55 ')) val = '+55 ' + val.replace(/^\+55\s*/, '');
-                setFormData({...formData, whatsapp: val});
-              }}
-              className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
-            />
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider">CPF</Label>
-              <Input 
-                placeholder="000.000.000-00" 
-                value={formData.cpf}
-                onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})}
-                className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
-              />
+              <Label className="font-bold text-slate-700 text-xs uppercase">Estado (UF)</Label>
+              <Select onValueChange={(val) => setFormData({...formData, state: val, city: ''})}>
+                <SelectTrigger className="h-12 rounded-xl">
+                  <SelectValue placeholder="UF" />
+                </SelectTrigger>
+                <SelectContent>
+                  {states.map(s => <SelectItem key={s.sigla} value={s.sigla}>{s.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="font-bold text-slate-700 ml-1 text-xs uppercase tracking-wider">Nascimento</Label>
-              <Input 
-                type="date" 
-                value={formData.birthDate}
-                onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                className="h-12 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
-              />
+              <Label className="font-bold text-slate-700 text-xs uppercase">Cidade</Label>
+              <Select onValueChange={(val) => setFormData({...formData, city: val})} disabled={!formData.state || loadingCities}>
+                <SelectTrigger className="h-12 rounded-xl">
+                  {loadingCities ? <Loader2 className="animate-spin w-4 h-4" /> : <SelectValue placeholder="Cidade" />}
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          
-          <div className="bg-amber-50/50 border border-amber-100 p-4 rounded-2xl flex gap-3 mt-4">
-            <AlertCircle className="text-amber-500 shrink-0" size={20} />
-            <p className="text-[10px] text-amber-900 leading-relaxed font-bold uppercase tracking-tight">
-              Apenas maiores de 18 anos. Seus dados são protegidos por criptografia de ponta.
-            </p>
+
+          <div className="space-y-1.5">
+            <Label className="font-bold text-slate-700 text-xs uppercase">CPF</Label>
+            <Input placeholder="000.000.000-00" value={formData.cpf} onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})} className="h-12 rounded-xl" />
           </div>
 
-          <Button 
-            onClick={handleVerify}
-            className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-100 transition-all active:scale-95"
-          >
+          <div className="space-y-1.5">
+            <Label className="font-bold text-slate-700 text-xs uppercase">WhatsApp</Label>
+            <Input placeholder="+55 (00) 00000-0000" value={formData.whatsapp} onChange={(e) => setFormData({...formData, whatsapp: e.target.value})} className="h-12 rounded-xl" />
+          </div>
+
+          <Button onClick={handleVerify} className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg shadow-xl">
             Validar e Entrar
           </Button>
         </CardContent>
