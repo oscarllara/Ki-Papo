@@ -102,7 +102,6 @@ const Dashboard = () => {
 
     const headers = ["Data", "Nome", "CPF", "WhatsApp", "Rede Social/E-mail", "Cidade", "Estado"];
     
-    // Mapeia os dados garantindo que strings com caracteres especiais não quebrem o CSV (usando ponto e vírgula para Excel PT-BR)
     const rows = users.map(u => [
       u.date || "",
       u.name || "",
@@ -113,12 +112,12 @@ const Dashboard = () => {
       u.state || ""
     ]);
 
+    // Usando \r\n para melhor compatibilidade com Windows/Excel
     const csvContent = [
       headers.join(";"),
       ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(";"))
-    ].join("\n");
+    ].join("\r\n");
 
-    // Adiciona BOM (\uFEFF) para garantir que o Excel reconheça a codificação UTF-8 corretamente
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
