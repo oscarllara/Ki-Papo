@@ -85,12 +85,12 @@ const Room = () => {
     };
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
+    messageInputRef.current?.focus();
   };
 
   const startLiveCamera = async (mode: 'photo' | 'video') => {
     try {
       setCameraMode(mode);
-      // Solicita vídeo primeiro, áudio apenas se for modo vídeo e for possível
       const constraints = { 
         video: { facingMode: "user" }, 
         audio: mode === 'video' 
@@ -120,6 +120,7 @@ const Room = () => {
     }
     setCameraStream(null);
     setIsLiveCameraOpen(false);
+    messageInputRef.current?.focus();
   };
 
   const captureMedia = () => {
@@ -131,6 +132,15 @@ const Room = () => {
       toast.success("Vídeo enviado!");
     }
     stopLiveCamera();
+  };
+
+  const selectPrivateUser = (user: string) => {
+    setTargetUser(user);
+    setIsPrivate(true);
+    // Pequeno delay para garantir que o componente de aviso privado apareça antes do foco
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 100);
   };
 
   const handleJoin = () => { if (nickname.trim().length >= 3) setHasJoined(true); };
@@ -157,12 +167,12 @@ const Room = () => {
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-2">
             {onlineUsers.map(user => (
-              <button key={user} onClick={() => { setTargetUser(user); setIsPrivate(true); }} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white", targetUser === user ? "bg-white shadow-md ring-1 ring-primary/10" : "")}>
+              <button key={user} onClick={() => selectPrivateUser(user)} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white text-left", targetUser === user ? "bg-white shadow-md ring-1 ring-primary/10" : "")}>
                 <div className="relative">
                   <Avatar className="h-10 w-10 border-2 border-white shadow-sm"><AvatarFallback className="bg-slate-200 font-black text-xs">{user[0]}</AvatarFallback></Avatar>
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                 </div>
-                <div className="text-left">
+                <div>
                   <span className="text-sm font-bold text-slate-700 block">{user}</span>
                   <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest">Disponível</span>
                 </div>
@@ -194,10 +204,10 @@ const Room = () => {
             {messagesList.map((msg) => (
               <div key={msg.id} className={cn("flex flex-col gap-1 max-w-[80%]", msg.isMe ? "ml-auto items-end" : "items-start animate-in fade-in slide-in-from-bottom-2")}>
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-slate-400 font-black uppercase">
-                    {msg.time} {msg.isMe ? nickname : msg.sender}
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-tight">
+                    {msg.sender} • {msg.time}
                   </span>
-                  {msg.isPrivate && <Lock size={8} className="text-primary" />}
+                  {msg.isPrivate && <Lock size={10} className="text-primary" />}
                 </div>
                 <div className={cn(
                   "p-4 rounded-[1.5rem] shadow-sm", 
@@ -231,13 +241,21 @@ const Room = () => {
             )}
             <div className="flex items-center gap-3 bg-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-primary/10 transition-all border border-transparent focus-within:border-primary/20">
               <Button variant="ghost" size="icon" className="text-slate-400 rounded-full" onClick={() => setIsMediaDialogOpen(true)}><CameraIcon size={20} /></Button>
-              <Input ref={messageInputRef} placeholder={isPrivate ? `Conversando no privado com ${targetUser}...` : "Diga algo para todos..."} className="border-none bg-transparent font-bold text-slate-700 placeholder:text-slate-400" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} />
+              <Input 
+                ref={messageInputRef} 
+                placeholder={isPrivate ? `Conversando no privado com ${targetUser}...` : "Diga algo para todos..."} 
+                className="border-none bg-transparent font-bold text-slate-700 placeholder:text-slate-400 focus-visible:ring-0" 
+                value={message} 
+                onChange={(e) => setMessage(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
+              />
               <Button onClick={() => handleSendMessage()} disabled={!message.trim()} className="bg-primary hover:bg-primary/90 text-white rounded-[1.25rem] w-12 h-12 shadow-xl shadow-primary/20 shrink-0 transition-transform active:scale-90"><SendHorizontal size={22} /></Button>
             </div>
           </div>
         </div>
       </main>
 
+      {/* Dialogs permanecem os mesmos, removidos apenas para brevidade e foco na mudança */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none shadow-2xl">
           <div className="text-center space-y-6">
@@ -252,7 +270,7 @@ const Room = () => {
       </Dialog>
 
       <Dialog open={isLiveCameraOpen} onOpenChange={(open) => !open && stopLiveCamera()}>
-        <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] bg-black border-none p-0 overflow-hidden">
+        <DialogContent className="max-md:w-full max-w-md h-[80vh] rounded-[2.5rem] bg-black border-none p-0 overflow-hidden">
           <div className="relative h-full flex flex-col">
             <video ref={videoRef} autoPlay playsInline muted={cameraMode === 'photo'} className="w-full h-full object-cover" />
             <div className="absolute top-6 left-6 right-6 flex justify-between items-center">
@@ -276,7 +294,7 @@ const Room = () => {
       </Dialog>
 
       <Dialog open={isCalling} onOpenChange={setIsCalling}>
-        <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] bg-slate-900 border-none p-0 overflow-hidden shadow-2xl">
+        <DialogContent className="max-md:w-full max-w-md h-[80vh] rounded-[2.5rem] bg-slate-900 border-none p-0 overflow-hidden shadow-2xl">
           <div className="h-full flex flex-col items-center justify-between py-20 px-10 text-center">
             <div className="space-y-4">
               <div className="relative mx-auto">

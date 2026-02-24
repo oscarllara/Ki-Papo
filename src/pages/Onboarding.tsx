@@ -77,6 +77,10 @@ const Onboarding = () => {
     return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
   };
 
+  const formatCityName = (value: string) => {
+    return value.replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value.startsWith(baseUrl)) {
@@ -84,6 +88,11 @@ const Onboarding = () => {
     } else {
       setFormData({ ...formData, socialLink: baseUrl });
     }
+  };
+
+  const handleLinkFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    const len = e.target.value.length;
+    e.target.setSelectionRange(len, len);
   };
 
   const getSocialConfig = () => {
@@ -179,7 +188,7 @@ const Onboarding = () => {
               <Input 
                 placeholder="Sua cidade" 
                 value={formData.city} 
-                onChange={(e) => setFormData({...formData, city: e.target.value})} 
+                onChange={(e) => setFormData({...formData, city: formatCityName(e.target.value)})} 
                 className="h-14 rounded-2xl border-slate-200 font-bold" 
               />
             </div>
@@ -214,6 +223,7 @@ const Onboarding = () => {
               <Input 
                 value={formData.socialLink} 
                 onChange={handleSocialLinkChange}
+                onFocus={handleLinkFocus}
                 className="h-14 rounded-2xl border-slate-200 pl-10 font-bold" 
               />
             </div>
