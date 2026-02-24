@@ -71,6 +71,14 @@ const Room = () => {
     return parts.length > 1 ? parts.slice(0, -1).join(' ').replace(/\b\w/g, l => l.toUpperCase()) : "Sala Local";
   }, [roomId]);
 
+  // Filtra mensagens para garantir que as privadas só apareçam para os envolvidos
+  const visibleMessages = useMemo(() => {
+    return messagesList.filter(msg => {
+      if (!msg.isPrivate) return true;
+      return msg.sender === nickname || msg.receiver === nickname;
+    });
+  }, [messagesList, nickname]);
+
   const handleSendMessage = (content: string = message, type: 'text' | 'image' | 'video' = 'text') => {
     if (!content.trim() && type === 'text') return;
     const newMessage: ChatMessage = {
@@ -137,7 +145,6 @@ const Room = () => {
   const selectPrivateUser = (user: string) => {
     setTargetUser(user);
     setIsPrivate(true);
-    // Pequeno delay para garantir que o componente de aviso privado apareça antes do foco
     setTimeout(() => {
       messageInputRef.current?.focus();
     }, 100);
@@ -198,14 +205,14 @@ const Room = () => {
 
         <ScrollArea className="flex-1 p-6 bg-slate-50/20" ref={scrollRef}>
           <div className="max-w-4xl mx-auto space-y-6 py-4">
-            {messagesList.length === 0 && (
+            {visibleMessages.length === 0 && (
               <div className="text-center py-20 opacity-20"><ImageIcon size={48} className="mx-auto mb-4" /><p className="font-bold">Nenhuma mensagem ainda...</p></div>
             )}
-            {messagesList.map((msg) => (
+            {visibleMessages.map((msg) => (
               <div key={msg.id} className={cn("flex flex-col gap-1 max-w-[80%]", msg.isMe ? "ml-auto items-end" : "items-start animate-in fade-in slide-in-from-bottom-2")}>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-slate-400 font-black uppercase tracking-tight">
-                    {msg.sender} • {msg.time}
+                    {msg.isPrivate ? `PARA ${msg.receiver}` : msg.sender} • {msg.time}
                   </span>
                   {msg.isPrivate && <Lock size={10} className="text-primary" />}
                 </div>
@@ -255,7 +262,6 @@ const Room = () => {
         </div>
       </main>
 
-      {/* Dialogs permanecem os mesmos, removidos apenas para brevidade e foco na mudança */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none shadow-2xl">
           <div className="text-center space-y-6">
