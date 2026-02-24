@@ -10,7 +10,8 @@ import {
   Search,
   FileText,
   Table as TableIcon,
-  ExternalLink
+  ExternalLink,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -54,35 +55,43 @@ const Dashboard = () => {
   });
 
   const exportCSV = () => {
-    const headers = ["Data", "Nome", "CPF", "WhatsApp", "Cidade", "Estado", "Rede Social"];
-    const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.city, u.state, u.socialMedia]);
+    const headers = ["Data", "Nome", "CPF", "WhatsApp", "Rede Social/E-mail", "Cidade", "Estado"];
+    const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, u.city, u.state]);
     const csvContent = [headers.join(","), ...rows.map(row => row.map(cell => `"${cell}"`).join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_kipapo_${new Date().toLocaleDateString()}.csv`;
+    link.download = `relatorio_usuarios_kipapo_${new Date().toLocaleDateString()}.csv`;
     link.click();
   };
 
   const exportPDF = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF('landscape'); // Landscape para caber mais colunas
     doc.setFontSize(20);
     doc.text("Relatório de Usuários Ki Papo", 14, 20);
     doc.setFontSize(10);
     doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 28);
 
-    const headers = [["Data", "Nome", "CPF", "WhatsApp", "Cidade/UF"]];
-    const data = users.map(u => [u.date || '-', u.name || '-', u.cpf || '-', u.whatsapp || '-', `${u.city || '-'}/${u.state || '-'}`]);
+    const headers = [["Data", "Nome", "CPF", "WhatsApp", "Link Social/E-mail", "Cidade/UF"]];
+    const data = users.map(u => [
+      u.date || '-', 
+      u.name || '-', 
+      u.cpf || '-', 
+      u.whatsapp || '-', 
+      u.socialLink || '-',
+      `${u.city || '-'}/${u.state || '-'}`
+    ]);
 
     autoTable(doc, {
       head: headers,
       body: data,
       startY: 35,
       theme: 'grid',
-      headStyles: { fillColor: [35, 119, 187] }
+      headStyles: { fillColor: [35, 119, 187] },
+      styles: { fontSize: 8 }
     });
 
-    doc.save(`relatorio_kipapo_${new Date().toLocaleDateString()}.pdf`);
+    doc.save(`relatorio_usuarios_kipapo_${new Date().toLocaleDateString()}.pdf`);
   };
 
   const handleLogout = () => { 
@@ -131,32 +140,42 @@ const Dashboard = () => {
                 <Table>
                   <TableHeader className="bg-slate-50/50 border-b">
                     <TableRow>
-                      <TableHead className="font-black text-[10px] uppercase py-6 pl-10 text-slate-400">Usuário</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase py-6 pl-10 text-slate-400">Data/Usuário</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase text-slate-400">CPF/WhatsApp</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase text-slate-400">Rede Social/E-mail</TableHead>
                       <TableHead className="font-black text-[10px] uppercase text-slate-400">Cidade/UF</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-400">Rede Social</TableHead>
                       <TableHead className="text-right pr-10 text-slate-400">Ação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.length === 0 ? (
-                      <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400 font-bold">Nenhum usuário cadastrado.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} className="text-center py-20 text-slate-400 font-bold">Nenhum usuário cadastrado.</TableCell></TableRow>
                     ) : (
                       filteredUsers.map((user) => (
                         <TableRow key={user.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50">
-                          <TableCell className="pl-10">
+                          <TableCell className="pl-10 py-6">
                             <div className="flex flex-col">
-                              <span className="font-black text-slate-800">{user.name}</span>
-                              <span className="text-[10px] font-bold text-slate-400">CPF: {user.cpf}</span>
+                              <span className="text-[10px] font-black text-slate-400 uppercase">{user.date}</span>
+                              <span className="font-black text-slate-800 text-base">{user.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-slate-600">{user.cpf}</span>
+                              <span className="text-xs font-black text-primary">{user.whatsapp}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 max-w-[200px]">
+                              <LinkIcon size={12} className="text-slate-300 shrink-0" />
+                              <span className="text-xs font-bold text-slate-600 truncate">{user.socialLink || user.email || 'Não informado'}</span>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2 text-slate-600">
                               <MapPin size={14} className="text-primary opacity-50" />
-                              <span className="font-bold text-sm">{user.city} - {user.state}</span>
+                              <span className="font-bold text-sm">{user.city}/{user.state}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className="bg-secondary text-secondary-foreground text-[8px] font-black uppercase tracking-widest">{user.socialMedia}</Badge>
                           </TableCell>
                           <TableCell className="text-right pr-10">
                             <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)} className="rounded-xl font-bold h-10 border-slate-200">
@@ -176,8 +195,8 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Card className="lg:col-span-2 border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
                 <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-                  <h3 className="text-xl font-black text-slate-800">Pré-visualização</h3>
-                  <Badge variant="outline" className="font-bold">{users.length} Contatos</Badge>
+                  <h3 className="text-xl font-black text-slate-800">Pré-visualização do Relatório</h3>
+                  <Badge variant="outline" className="font-bold">{users.length} Registros</Badge>
                 </div>
                 <ScrollArea className="h-[500px]">
                   <Table>
@@ -185,17 +204,19 @@ const Dashboard = () => {
                       <TableRow>
                         <TableHead className="text-[10px] font-black uppercase py-4 pl-8">Data</TableHead>
                         <TableHead className="text-[10px] font-black uppercase">Nome</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase">Link/Rede</TableHead>
                         <TableHead className="text-[10px] font-black uppercase">Cidade/UF</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {users.length === 0 ? (
-                         <TableRow><TableCell colSpan={3} className="text-center py-20 text-slate-400">Sem dados para exportar.</TableCell></TableRow>
+                         <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400">Sem dados para exportar.</TableCell></TableRow>
                       ) : (
                         users.map((u, i) => (
                           <TableRow key={i} className="border-b border-slate-50">
                             <TableCell className="pl-8 text-xs font-bold text-slate-400">{u.date}</TableCell>
                             <TableCell className="text-xs font-black text-slate-700">{u.name}</TableCell>
+                            <TableCell className="text-xs font-bold text-slate-500 truncate max-w-[150px]">{u.socialLink}</TableCell>
                             <TableCell className="text-xs font-bold text-slate-500">{u.city}/{u.state}</TableCell>
                           </TableRow>
                         ))
@@ -209,7 +230,7 @@ const Dashboard = () => {
                 <Card className="border-none shadow-2xl rounded-[2.5rem] bg-indigo-600 p-10 text-white space-y-8">
                   <div className="space-y-2">
                     <h3 className="text-2xl font-black">Exportar</h3>
-                    <p className="text-indigo-100 text-sm opacity-80">Baixe o relatório completo de usuários.</p>
+                    <p className="text-indigo-100 text-sm opacity-80">Baixe o relatório completo de usuários com todos os campos.</p>
                   </div>
                   <div className="space-y-3">
                     <Button onClick={exportPDF} disabled={users.length === 0} className="w-full h-16 bg-white text-indigo-600 hover:bg-indigo-50 rounded-2xl font-black uppercase tracking-widest gap-3 shadow-xl disabled:opacity-50">
@@ -233,22 +254,25 @@ const Dashboard = () => {
               <div className="bg-primary p-10 text-white text-center">
                 <div className="w-20 h-20 bg-white/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 backdrop-blur-md"><ShieldCheck size={40} /></div>
                 <DialogTitle className="text-2xl font-black mb-1">Perfil do Usuário</DialogTitle>
-                <p className="text-[10px] uppercase font-bold opacity-60">Cadastrado em {selectedUser.date}</p>
+                <p className="text-[10px] uppercase font-bold opacity-60">Último Acesso: {selectedUser.date}</p>
               </div>
               <div className="p-10 space-y-6 bg-white">
                 <div className="grid grid-cols-2 gap-6">
                   <div><Label className="text-[10px] uppercase text-slate-400 font-black">UF</Label><p className="font-black text-slate-800">{selectedUser.state}</p></div>
                   <div><Label className="text-[10px] uppercase text-slate-400 font-black">Cidade</Label><p className="font-black text-slate-800">{selectedUser.city}</p></div>
                 </div>
+                <div><Label className="text-[10px] uppercase text-slate-400 font-black">CPF</Label><p className="font-black text-slate-800">{selectedUser.cpf}</p></div>
                 <div><Label className="text-[10px] uppercase text-slate-400 font-black">WhatsApp</Label><p className="font-black text-primary text-lg">{selectedUser.whatsapp}</p></div>
                 <div>
-                  <Label className="text-[10px] uppercase text-slate-400 font-black">Rede Social</Label>
-                  <a href={selectedUser.socialLink?.startsWith('http') ? selectedUser.socialLink : `https://${selectedUser.socialLink}`} target="_blank" className="mt-2 flex items-center justify-between gap-2 text-primary font-bold text-sm bg-slate-50 p-4 rounded-2xl">
-                    <span className="truncate">{selectedUser.socialLink || 'Link não informado'}</span>
-                    <ExternalLink size={16} className="shrink-0 opacity-40" />
-                  </a>
+                  <Label className="text-[10px] uppercase text-slate-400 font-black">Link Rede Social / E-mail</Label>
+                  <div className="mt-2 flex items-center justify-between gap-2 text-primary font-bold text-sm bg-slate-50 p-4 rounded-2xl">
+                    <span className="truncate">{selectedUser.socialLink || 'Não informado'}</span>
+                    <a href={selectedUser.socialLink?.startsWith('http') ? selectedUser.socialLink : `https://${selectedUser.socialLink}`} target="_blank" rel="noreferrer">
+                      <ExternalLink size={16} className="shrink-0 opacity-40 hover:opacity-100 transition-opacity" />
+                    </a>
+                  </div>
                 </div>
-                <Button onClick={() => setSelectedUser(null)} className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest">Fechar</Button>
+                <Button onClick={() => setSelectedUser(null)} className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest">Fechar Ficha</Button>
               </div>
             </>
           )}
