@@ -18,33 +18,20 @@ export type Contact = {
   avatar: string;
 };
 
-const initialContacts: Contact[] = [
-  { id: 1, name: "Ana Silva", lastMsg: "Oi! Tudo bem com você?", time: "10:30", online: true, avatar: "AS" },
-  { id: 2, name: "João Pereira", lastMsg: "Mandei o arquivo que você pediu.", time: "09:45", online: false, avatar: "JP" },
-  { id: 3, name: "Grupo da Família", lastMsg: "Mãe: Vamos almoçar juntos?", time: "Ontem", online: true, avatar: "GF" },
-  { id: 4, name: "Mariana Costa", lastMsg: "Haha, que engraçado!", time: "Segunda", online: false, avatar: "MC" },
-];
+const initialContacts: Contact[] = [];
 
-const initialMessages: Record<number, Message[]> = {
-  1: [
-    { id: 1, role: 'assistant', content: 'Olá! Como vai?', time: '10:30' },
-    { id: 2, role: 'user', content: 'Tudo bem, e você?', time: '10:31' },
-  ],
-  2: [
-    { id: 1, role: 'assistant', content: 'Oi, João aqui.', time: '09:40' },
-  ]
-};
+const initialMessages: Record<number, Message[]> = {};
 
 export function useChatState() {
   const [contacts] = useState<Contact[]>(initialContacts);
-  const [activeContactId, setActiveContactId] = useState<number>(1);
+  const [activeContactId, setActiveContactId] = useState<number>(0);
   const [messages, setMessages] = useState<Record<number, Message[]>>(initialMessages);
 
-  const activeContact = contacts.find(c => c.id === activeContactId) || contacts[0];
-  const activeMessages = messages[activeContactId] || [];
+  const activeContact = contacts.find(c => c.id === activeContactId) || null;
+  const activeMessages = activeContactId ? (messages[activeContactId] || []) : [];
 
   const sendMessage = (content: string) => {
-    if (!content.trim()) return;
+    if (!content.trim() || !activeContactId) return;
     
     const newMessage: Message = {
       id: Date.now(),
