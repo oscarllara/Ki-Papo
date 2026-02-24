@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShieldCheck, Loader2, Link as LinkIcon, Instagram, Facebook, Chrome, Apple, Mail } from 'lucide-react';
+import { ShieldCheck, Loader2, Link as LinkIcon, Instagram, Facebook, Chrome, Apple, Mail } from 'lucide-center';
 import { useToast } from "@/hooks/use-toast";
 import { fetchStates, IBGEState } from '@/services/ibge';
+import { Instagram as InstagramIcon, Facebook as FacebookIcon, Chrome as GoogleIcon, Apple as AppleIcon, Mail as MailIcon } from 'lucide-react';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const Onboarding = () => {
   const [states, setStates] = useState<IBGEState[]>([]);
   const [loadingStates, setLoadingStates] = useState(true);
   const [provider, setProvider] = useState<string>('E-mail');
+  const [baseUrl, setBaseUrl] = useState<string>('https://instagram.com/');
 
   const [formData, setFormData] = useState({ 
     name: '',
@@ -43,7 +45,11 @@ const Onboarding = () => {
 
     const tempName = sessionStorage.getItem('temp_name');
     const tempProvider = sessionStorage.getItem('temp_provider') || 'E-mail';
+    const tempBaseUrl = sessionStorage.getItem('temp_base_url') || 'https://instagram.com/';
+    
     setProvider(tempProvider);
+    setBaseUrl(tempBaseUrl);
+    setFormData(prev => ({ ...prev, socialLink: tempBaseUrl }));
 
     if (tempName) {
       if (tempName.startsWith('Usuário')) setNamePlaceholder(tempName);
@@ -64,18 +70,28 @@ const Onboarding = () => {
     return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
   };
 
+  const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Impede o usuário de apagar o baseUrl
+    if (value.startsWith(baseUrl)) {
+      setFormData({ ...formData, socialLink: value });
+    } else {
+      setFormData({ ...formData, socialLink: baseUrl });
+    }
+  };
+
   const getSocialConfig = () => {
     switch(provider) {
       case 'Facebook':
-        return { label: 'Link do Perfil Facebook', placeholder: 'facebook.com/seu-perfil', icon: <Facebook size={16} className="text-blue-600" /> };
+        return { label: 'Perfil do Facebook', icon: <FacebookIcon size={16} className="text-blue-600" /> };
       case 'Instagram':
-        return { label: 'Link do Perfil Instagram', placeholder: 'instagram.com/seu-perfil', icon: <Instagram size={16} className="text-pink-600" /> };
+        return { label: 'Perfil do Instagram', icon: <InstagramIcon size={16} className="text-pink-600" /> };
       case 'Google':
-        return { label: 'Link do Perfil Google/YouTube', placeholder: 'youtube.com/@seu-canal', icon: <Chrome size={16} className="text-red-500" /> };
+        return { label: 'Canal do YouTube', icon: <GoogleIcon size={16} className="text-red-500" /> };
       case 'Apple':
-        return { label: 'Link de Rede Social (Opcional)', placeholder: 'instagram.com/seu-perfil', icon: <Apple size={16} className="text-slate-900" /> };
+        return { label: 'Rede Social', icon: <AppleIcon size={16} className="text-slate-900" /> };
       default:
-        return { label: 'Link de Rede Social (Instagram/LinkedIn)', placeholder: 'instagram.com/seu-perfil', icon: <Mail size={16} className="text-slate-400" /> };
+        return { label: 'Rede Social', icon: <MailIcon size={16} className="text-slate-400" /> };
     }
   };
 
@@ -190,9 +206,8 @@ const Onboarding = () => {
                 {socialConfig.icon}
               </div>
               <Input 
-                placeholder={socialConfig.placeholder} 
                 value={formData.socialLink} 
-                onChange={(e) => setFormData({...formData, socialLink: e.target.value})} 
+                onChange={handleSocialLinkChange}
                 className="h-14 rounded-2xl border-slate-200 pl-10 font-bold" 
               />
             </div>

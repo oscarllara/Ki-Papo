@@ -24,10 +24,10 @@ const Index = () => {
       };
 
       const mockBases: Record<string, string> = {
-        'Google': 'https://google.com/',
+        'Google': 'https://youtube.com/@',
         'Facebook': 'https://facebook.com/',
         'Instagram': 'https://instagram.com/',
-        'Apple': 'https://apple.com/'
+        'Apple': 'https://'
       };
 
       sessionStorage.setItem('temp_provider', provider);
@@ -44,7 +44,7 @@ const Index = () => {
     
     sessionStorage.setItem('temp_provider', 'E-mail');
     sessionStorage.setItem('temp_name', email.split('@')[0]);
-    sessionStorage.setItem('temp_base_url', '');
+    sessionStorage.setItem('temp_base_url', 'https://instagram.com/');
     navigate('/onboarding');
   };
 
