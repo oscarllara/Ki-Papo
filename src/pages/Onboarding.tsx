@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShieldCheck, Loader2, Link as LinkIcon } from 'lucide-react';
+import { ShieldCheck, Loader2, Link as LinkIcon, Instagram, Facebook, Chrome, Apple, Mail } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { fetchStates, IBGEState } from '@/services/ibge';
 
@@ -17,6 +17,7 @@ const Onboarding = () => {
   const [namePlaceholder, setNamePlaceholder] = useState('Seu nome completo');
   const [states, setStates] = useState<IBGEState[]>([]);
   const [loadingStates, setLoadingStates] = useState(true);
+  const [provider, setProvider] = useState<string>('E-mail');
 
   const [formData, setFormData] = useState({ 
     name: '',
@@ -41,7 +42,9 @@ const Onboarding = () => {
     loadStates();
 
     const tempName = sessionStorage.getItem('temp_name');
-    const tempProvider = sessionStorage.getItem('temp_provider');
+    const tempProvider = sessionStorage.getItem('temp_provider') || 'E-mail';
+    setProvider(tempProvider);
+
     if (tempName) {
       if (tempName.startsWith('Usuário')) setNamePlaceholder(tempName);
       else setFormData(prev => ({ ...prev, name: tempName }));
@@ -61,6 +64,23 @@ const Onboarding = () => {
     return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
   };
 
+  const getSocialConfig = () => {
+    switch(provider) {
+      case 'Facebook':
+        return { label: 'Link do Perfil Facebook', placeholder: 'facebook.com/seu-perfil', icon: <Facebook size={16} className="text-blue-600" /> };
+      case 'Instagram':
+        return { label: 'Link do Perfil Instagram', placeholder: 'instagram.com/seu-perfil', icon: <Instagram size={16} className="text-pink-600" /> };
+      case 'Google':
+        return { label: 'Link do Perfil Google/YouTube', placeholder: 'youtube.com/@seu-canal', icon: <Chrome size={16} className="text-red-500" /> };
+      case 'Apple':
+        return { label: 'Link de Rede Social (Opcional)', placeholder: 'instagram.com/seu-perfil', icon: <Apple size={16} className="text-slate-900" /> };
+      default:
+        return { label: 'Link de Rede Social (Instagram/LinkedIn)', placeholder: 'instagram.com/seu-perfil', icon: <Mail size={16} className="text-slate-400" /> };
+    }
+  };
+
+  const socialConfig = getSocialConfig();
+
   const handleVerify = () => {
     if (!formData.name || formData.whatsapp.length < 18 || !formData.cpf || !formData.state || !formData.city) {
       toast({ 
@@ -75,7 +95,7 @@ const Onboarding = () => {
       id: Date.now(),
       name: formData.name,
       whatsapp: formData.whatsapp,
-      socialMedia: sessionStorage.getItem('temp_provider') || 'E-mail',
+      socialMedia: provider,
       socialLink: formData.socialLink,
       cpf: formData.cpf,
       state: formData.state,
@@ -164,11 +184,13 @@ const Onboarding = () => {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Link da Rede Social (Instagram/FB)</Label>
+            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">{socialConfig.label}</Label>
             <div className="relative">
-              <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50">
+                {socialConfig.icon}
+              </div>
               <Input 
-                placeholder="instagram.com/seu-perfil" 
+                placeholder={socialConfig.placeholder} 
                 value={formData.socialLink} 
                 onChange={(e) => setFormData({...formData, socialLink: e.target.value})} 
                 className="h-14 rounded-2xl border-slate-200 pl-10 font-bold" 
