@@ -58,6 +58,14 @@ const Room = () => {
 
   const onlineUsers = ["Maria_22", "Joao_Silva", "Gabi_BH", "Paulo_Vila", "Nanda_Fit"];
 
+  // Efeito para garantir que o vídeo seja exibido assim que o diálogo abrir e o stream estiver pronto
+  useEffect(() => {
+    if (isLiveCameraOpen && cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(e => console.error("Erro ao iniciar vídeo:", e));
+    }
+  }, [isLiveCameraOpen, cameraStream]);
+
   useEffect(() => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -71,7 +79,6 @@ const Room = () => {
     return parts.length > 1 ? parts.slice(0, -1).join(' ').replace(/\b\w/g, l => l.toUpperCase()) : "Sala Local";
   }, [roomId]);
 
-  // Filtra mensagens para garantir que as privadas só apareçam para os envolvidos
   const visibleMessages = useMemo(() => {
     return messagesList.filter(msg => {
       if (!msg.isPrivate) return true;
@@ -106,19 +113,11 @@ const Room = () => {
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setCameraStream(stream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(e => console.error("Erro ao dar play no vídeo:", e));
-        };
-      }
-      
       setIsLiveCameraOpen(true);
       setIsMediaDialogOpen(false);
     } catch (err) {
       console.error("Erro ao acessar câmera:", err);
-      toast.error("Não foi possível acessar a câmera ou microfone. Verifique as permissões.");
+      toast.error("Não foi possível acessar a câmera. Verifique as permissões.");
     }
   };
 
