@@ -11,7 +11,8 @@ import {
   FileText,
   Table as TableIcon,
   ExternalLink,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Trash2
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,9 +25,22 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
+import { useToast } from "@/hooks/use-toast";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -54,6 +68,15 @@ const Dashboard = () => {
     );
   });
 
+  const clearAllUsers = () => {
+    localStorage.removeItem('kipapo_users');
+    setUsers([]);
+    toast({
+      title: "Base de Dados Zerada",
+      description: "Todos os cadastros foram removidos com sucesso.",
+    });
+  };
+
   const exportCSV = () => {
     const headers = ["Data", "Nome", "CPF", "WhatsApp", "Rede Social/E-mail", "Cidade", "Estado"];
     const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, u.city, u.state]);
@@ -66,7 +89,7 @@ const Dashboard = () => {
   };
 
   const exportPDF = () => {
-    const doc = new jsPDF('landscape'); // Landscape para caber mais colunas
+    const doc = new jsPDF('landscape');
     doc.setFontSize(20);
     doc.text("Relatório de Usuários Ki Papo", 14, 20);
     doc.setFontSize(10);
@@ -118,7 +141,7 @@ const Dashboard = () => {
         <Tabs defaultValue="users" className="w-full">
           <TabsList className="bg-slate-200/50 p-1.5 rounded-[2rem] mb-8 w-fit">
             <TabsTrigger value="users" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white">Usuários Ativos</TabsTrigger>
-            <TabsTrigger value="logs" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white">Exportar Dados</TabsTrigger>
+            <TabsTrigger value="logs" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-white">Relatórios & Limpeza</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -229,8 +252,8 @@ const Dashboard = () => {
               <div className="space-y-6">
                 <Card className="border-none shadow-2xl rounded-[2.5rem] bg-indigo-600 p-10 text-white space-y-8">
                   <div className="space-y-2">
-                    <h3 className="text-2xl font-black">Exportar</h3>
-                    <p className="text-indigo-100 text-sm opacity-80">Baixe o relatório completo de usuários com todos os campos.</p>
+                    <h3 className="text-2xl font-black">Ações</h3>
+                    <p className="text-indigo-100 text-sm opacity-80">Gerencie a exportação e a base de usuários.</p>
                   </div>
                   <div className="space-y-3">
                     <Button onClick={exportPDF} disabled={users.length === 0} className="w-full h-16 bg-white text-indigo-600 hover:bg-indigo-50 rounded-2xl font-black uppercase tracking-widest gap-3 shadow-xl disabled:opacity-50">
@@ -239,6 +262,28 @@ const Dashboard = () => {
                     <Button onClick={exportCSV} disabled={users.length === 0} variant="outline" className="w-full h-16 border-white/20 text-white hover:bg-white/10 rounded-2xl font-black uppercase tracking-widest gap-3 disabled:opacity-50">
                       <TableIcon size={20} /> Baixar CSV
                     </Button>
+                    
+                    <div className="pt-4 mt-4 border-t border-white/10">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="w-full h-16 rounded-2xl font-black uppercase tracking-widest gap-3 bg-red-500/20 hover:bg-red-500 text-white border-2 border-red-500/50">
+                            <Trash2 size={20} /> Zerar Base de Dados
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="rounded-[2.5rem] border-none p-10">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-2xl font-black tracking-tight">Tem certeza absoluta?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-slate-500 font-medium">
+                              Esta ação irá excluir permanentemente todos os {users.length} usuários cadastrados até agora. Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="mt-6 gap-3">
+                            <AlertDialogCancel className="rounded-xl h-12 font-bold">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={clearAllUsers} className="rounded-xl h-12 bg-red-600 hover:bg-red-700 font-black">Sim, Limpar Tudo</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </Card>
               </div>
