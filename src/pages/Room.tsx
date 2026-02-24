@@ -51,13 +51,13 @@ const Room = () => {
   const [targetUser, setTargetUser] = useState<string | null>(null);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(false);
+  const [cameraMode, setCameraMode] = useState<'photo' | 'video'>('photo');
   const [isCalling, setIsCalling] = useState(false);
   const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   const onlineUsers = ["Maria_22", "Joao_Silva", "Gabi_BH", "Paulo_Vila", "Nanda_Fit"];
 
-  // Efeito de scroll automático
   useEffect(() => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -65,7 +65,6 @@ const Room = () => {
     }
   }, [messagesList]);
 
-  // Simulação de Resposta de Contatos Fictícios
   useEffect(() => {
     const lastMsg = messagesList[messagesList.length - 1];
     if (lastMsg?.isMe) {
@@ -110,9 +109,10 @@ const Room = () => {
     setTimeout(() => messageInputRef.current?.focus(), 10);
   };
 
-  const startLiveCamera = async () => {
+  const startLiveCamera = async (mode: 'photo' | 'video') => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      setCameraMode(mode);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: mode === 'video' });
       setCameraStream(stream);
       if (videoRef.current) videoRef.current.srcObject = stream;
       setIsLiveCameraOpen(true);
@@ -128,10 +128,15 @@ const Room = () => {
     setIsLiveCameraOpen(false);
   };
 
-  const takePhoto = () => {
-    handleSendMessage("Enviou uma foto instantânea!", 'image');
+  const captureMedia = () => {
+    if (cameraMode === 'photo') {
+      handleSendMessage("Enviou uma foto instantânea!", 'image');
+      toast.success("Foto enviada!");
+    } else {
+      handleSendMessage("Enviou um vídeo instantâneo!", 'video');
+      toast.success("Vídeo enviado!");
+    }
     stopLiveCamera();
-    toast.success("Foto enviada com sucesso!");
   };
 
   const handleJoin = () => { if (nickname.trim().length >= 3) setHasJoined(true); };
@@ -245,31 +250,40 @@ const Room = () => {
           <div className="text-center space-y-6">
             <div className="mx-auto bg-primary/10 w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-primary"><CameraIcon size={32} /></div>
             <div className="space-y-3">
-              <Button onClick={startLiveCamera} className="w-full h-14 bg-primary text-white rounded-2xl font-black gap-3 shadow-lg shadow-primary/20"><CameraIcon size={18} /> Tirar Foto Agora</Button>
-              <Button onClick={() => toast.info("Gravação de vídeo em desenvolvimento.")} variant="outline" className="w-full h-14 rounded-2xl font-black gap-3 border-slate-200"><VideoIcon size={18} /> Gravar Vídeo Agora</Button>
+              <Button onClick={() => startLiveCamera('photo')} className="w-full h-14 bg-primary text-white rounded-2xl font-black gap-3 shadow-lg shadow-primary/20"><CameraIcon size={18} /> Tirar Foto Agora</Button>
+              <Button onClick={() => startLiveCamera('video')} variant="outline" className="w-full h-14 rounded-2xl font-black gap-3 border-slate-200"><VideoIcon size={18} /> Gravar Vídeo Agora</Button>
             </div>
             <Button onClick={() => setIsMediaDialogOpen(false)} variant="ghost" className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Cancelar</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Câmera ao Vivo para Foto Instantânea */}
+      {/* Câmera ao Vivo */}
       <Dialog open={isLiveCameraOpen} onOpenChange={(open) => !open && stopLiveCamera()}>
         <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] bg-black border-none p-0 overflow-hidden">
           <div className="relative h-full flex flex-col">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+            <video ref={videoRef} autoPlay playsInline muted={cameraMode === 'photo'} className="w-full h-full object-cover" />
             <div className="absolute top-6 left-6 right-6 flex justify-between items-center">
-              <span className="bg-black/40 backdrop-blur-md text-white text-[10px] font-black uppercase px-4 py-2 rounded-full border border-white/10">Câmera Ativa</span>
+              <span className="bg-black/40 backdrop-blur-md text-white text-[10px] font-black uppercase px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
+                {cameraMode === 'video' && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+                {cameraMode === 'photo' ? 'Modo Foto' : 'Modo Gravação'}
+              </span>
               <Button onClick={stopLiveCamera} variant="ghost" size="icon" className="bg-white/10 text-white rounded-full"><X size={20} /></Button>
             </div>
             <div className="absolute bottom-10 left-0 right-0 flex justify-center items-center gap-8">
-               <Button onClick={takePhoto} className="h-24 w-24 rounded-full bg-white border-8 border-slate-200/50 hover:scale-105 transition-all shadow-2xl" />
+               <Button 
+                  onClick={captureMedia} 
+                  className={cn(
+                    "h-24 w-24 rounded-full bg-white border-8 border-slate-200/50 hover:scale-105 transition-all shadow-2xl",
+                    cameraMode === 'video' ? "bg-red-500 border-red-200" : ""
+                  )} 
+                />
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Chamada de Vídeo Encaminhando */}
+      {/* Chamada de Vídeo */}
       <Dialog open={isCalling} onOpenChange={setIsCalling}>
         <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] bg-slate-900 border-none p-0 overflow-hidden shadow-2xl">
           <div className="h-full flex flex-col items-center justify-between py-20 px-10 text-center">
@@ -285,11 +299,11 @@ const Room = () => {
             </div>
 
             <div className="space-y-8 w-full">
-              <p className="text-slate-400 text-xs font-medium px-10 leading-relaxed">Aguardando o participante aceitar o convite para conexão segura em {cityName}.</p>
+              <p className="text-slate-400 text-xs font-medium px-10 leading-relaxed">Aguardando participante em {cityName}.</p>
               <div className="flex justify-center gap-6">
-                <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-colors"><Mic size={24} /></Button>
+                <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white"><Mic size={24} /></Button>
                 <Button onClick={() => setIsCalling(false)} size="icon" className="h-20 w-20 rounded-full bg-red-500 hover:bg-red-600 shadow-2xl shadow-red-500/30 transition-transform active:scale-95"><X size={32} /></Button>
-                <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white hover:bg-slate-700 transition-colors"><RefreshCw size={24} /></Button>
+                <Button size="icon" className="h-16 w-16 rounded-full bg-slate-800 text-white"><RefreshCw size={24} /></Button>
               </div>
             </div>
           </div>

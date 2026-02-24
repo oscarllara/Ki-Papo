@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck, Loader2, Link as LinkIcon } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { fetchStates, IBGEState } from '@/services/ibge';
 
@@ -22,9 +22,9 @@ const Onboarding = () => {
     name: '',
     whatsapp: '+55 ',
     cpf: '', 
-    birthDate: '',
     state: '',
-    city: ''
+    city: '',
+    socialLink: ''
   });
 
   useEffect(() => {
@@ -41,6 +41,7 @@ const Onboarding = () => {
     loadStates();
 
     const tempName = sessionStorage.getItem('temp_name');
+    const tempProvider = sessionStorage.getItem('temp_provider');
     if (tempName) {
       if (tempName.startsWith('Usuário')) setNamePlaceholder(tempName);
       else setFormData(prev => ({ ...prev, name: tempName }));
@@ -53,9 +54,7 @@ const Onboarding = () => {
 
   const maskPhone = (value: string) => {
     let v = value.replace(/\D/g, "");
-    // Remove o 55 inicial se o usuário digitar para não duplicar
     if (v.length >= 2 && v.startsWith("55")) v = v.slice(2);
-    
     if (v.length === 0) return "+55 ";
     if (v.length <= 2) return `+55 (${v}`;
     if (v.length <= 7) return `+55 (${v.slice(0, 2)}) ${v.slice(2)}`;
@@ -67,7 +66,7 @@ const Onboarding = () => {
       toast({ 
         variant: "destructive", 
         title: "Dados incompletos", 
-        description: "Por favor, preencha todos os campos corretamente." 
+        description: "Por favor, preencha todos os campos obrigatórios." 
       });
       return;
     }
@@ -77,7 +76,7 @@ const Onboarding = () => {
       name: formData.name,
       whatsapp: formData.whatsapp,
       socialMedia: sessionStorage.getItem('temp_provider') || 'E-mail',
-      socialLink: sessionStorage.getItem('temp_social_link') || '',
+      socialLink: formData.socialLink,
       cpf: formData.cpf,
       state: formData.state,
       city: formData.city,
@@ -113,7 +112,7 @@ const Onboarding = () => {
               placeholder={namePlaceholder} 
               value={formData.name} 
               onChange={(e) => setFormData({...formData, name: e.target.value})} 
-              className="h-14 rounded-2xl border-slate-200 focus-visible:ring-primary/20 font-bold" 
+              className="h-14 rounded-2xl border-slate-200 font-bold" 
             />
           </div>
           
@@ -139,7 +138,7 @@ const Onboarding = () => {
                 placeholder="Sua cidade" 
                 value={formData.city} 
                 onChange={(e) => setFormData({...formData, city: e.target.value})} 
-                className="h-14 rounded-2xl border-slate-200 focus-visible:ring-primary/20 font-bold" 
+                className="h-14 rounded-2xl border-slate-200 font-bold" 
               />
             </div>
           </div>
@@ -150,7 +149,7 @@ const Onboarding = () => {
               placeholder="000.000.000-00" 
               value={formData.cpf} 
               onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})} 
-              className="h-14 rounded-2xl border-slate-200 focus-visible:ring-primary/20 font-bold" 
+              className="h-14 rounded-2xl border-slate-200 font-bold" 
             />
           </div>
 
@@ -160,8 +159,21 @@ const Onboarding = () => {
               placeholder="+55 (00) 00000-0000" 
               value={formData.whatsapp} 
               onChange={(e) => setFormData({...formData, whatsapp: maskPhone(e.target.value)})} 
-              className="h-14 rounded-2xl border-slate-200 focus-visible:ring-primary/20 font-bold" 
+              className="h-14 rounded-2xl border-slate-200 font-bold" 
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Link da Rede Social (Instagram/FB)</Label>
+            <div className="relative">
+              <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+              <Input 
+                placeholder="instagram.com/seu-perfil" 
+                value={formData.socialLink} 
+                onChange={(e) => setFormData({...formData, socialLink: e.target.value})} 
+                className="h-14 rounded-2xl border-slate-200 pl-10 font-bold" 
+              />
+            </div>
           </div>
 
           <div className="pt-4">

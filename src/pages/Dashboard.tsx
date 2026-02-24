@@ -6,11 +6,11 @@ import {
   ShieldCheck, 
   LogOut, 
   Eye, 
-  Download, 
-  ExternalLink,
   MapPin,
-  Link as LinkIcon,
-  Search
+  Search,
+  FileText,
+  Table as TableIcon,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,19 +20,29 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { jsPDF } from "jspdf";
+import autoTable from 'jspdf-autotable';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const isAuth = sessionStorage.getItem('admin_auth');
-    if (isAuth !== 'true') { navigate('/admin-login'); return; }
+    if (isAuth !== 'true') {
+      navigate('/admin-login');
+      return;
+    }
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     setUsers(savedUsers);
+    setIsLoaded(true);
   }, [navigate]);
+
+  if (!isLoaded) return null;
 
   const filteredUsers = users.filter(user => {
     const search = searchTerm.toLowerCase();
@@ -44,17 +54,41 @@ const Dashboard = () => {
   });
 
   const exportCSV = () => {
-    const headers = ["Data", "Nome", "CPF", "WhatsApp", "Cidade", "Estado", "Link de Perfil"];
-    const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.city, u.state, u.socialLink]);
+    const headers = ["Data", "Nome", "CPF", "WhatsApp", "Cidade", "Estado", "Rede Social"];
+    const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.city, u.state, u.socialMedia]);
     const csvContent = [headers.join(","), ...rows.map(row => row.map(cell => `"${cell}"`).join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_usuarios_kipapo.csv`;
+    link.download = `relatorio_kipapo_${new Date().toLocaleDateString()}.csv`;
     link.click();
   };
 
-  const handleLogout = () => { sessionStorage.removeItem('admin_auth'); navigate('/'); };
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text("Relatório de Usuários Ki Papo", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 28);
+
+    const headers = [["Data", "Nome", "CPF", "WhatsApp", "Cidade/UF"]];
+    const data = users.map(u => [u.date || '-', u.name || '-', u.cpf || '-', u.whatsapp || '-', `${u.city || '-'}/${u.state || '-'}`]);
+
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: 35,
+      theme: 'grid',
+      headStyles: { fillColor: [35, 119, 187] }
+    });
+
+    doc.save(`relatorio_kipapo_${new Date().toLocaleDateString()}.pdf`);
+  };
+
+  const handleLogout = () => { 
+    sessionStorage.removeItem('admin_auth'); 
+    navigate('/'); 
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
@@ -68,7 +102,7 @@ const Dashboard = () => {
             </div>
           </div>
           <Button onClick={handleLogout} variant="ghost" className="text-red-500 font-bold gap-2 rounded-2xl">
-            <LogOut size={16} /> Sair do Painel
+            <LogOut size={16} /> Sair
           </Button>
         </div>
 
@@ -90,33 +124,29 @@ const Dashboard = () => {
                     onChange={(e) => setSearchTerm(e.target.value)} 
                   />
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge className="bg-primary text-white px-5 py-2.5 rounded-xl font-black text-[10px]">{filteredUsers.length} USUÁRIOS</Badge>
-                </div>
+                <Badge className="bg-primary text-white px-5 py-2.5 rounded-xl font-black text-[10px]">{filteredUsers.length} USUÁRIOS</Badge>
               </div>
               
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-slate-50/50 border-b">
                     <TableRow>
-                      <TableHead className="font-black text-[10px] uppercase py-6 pl-10 text-slate-400">Dados do Usuário</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-400">Localização</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-400">Rede Social / Link</TableHead>
-                      <TableHead className="text-right pr-10 text-slate-400">Ações</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase py-6 pl-10 text-slate-400">Usuário</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase text-slate-400">Cidade/UF</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase text-slate-400">Rede Social</TableHead>
+                      <TableHead className="text-right pr-10 text-slate-400">Ação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-40 text-center text-slate-400 font-bold">Nenhum usuário encontrado.</TableCell>
-                      </TableRow>
+                      <TableRow><TableCell colSpan={4} className="text-center py-20 text-slate-400 font-bold">Nenhum usuário cadastrado.</TableCell></TableRow>
                     ) : (
                       filteredUsers.map((user) => (
                         <TableRow key={user.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-50">
                           <TableCell className="pl-10">
                             <div className="flex flex-col">
                               <span className="font-black text-slate-800">{user.name}</span>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">CPF: {user.cpf}</span>
+                              <span className="text-[10px] font-bold text-slate-400">CPF: {user.cpf}</span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -126,16 +156,11 @@ const Dashboard = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <Badge className="w-fit bg-secondary text-secondary-foreground text-[8px] font-black uppercase tracking-widest">{user.socialMedia}</Badge>
-                              <a href={user.socialLink} target="_blank" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 truncate max-w-[200px]">
-                                <LinkIcon size={12} /> {user.socialLink || 'Sem link'}
-                              </a>
-                            </div>
+                            <Badge className="bg-secondary text-secondary-foreground text-[8px] font-black uppercase tracking-widest">{user.socialMedia}</Badge>
                           </TableCell>
                           <TableCell className="text-right pr-10">
-                            <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)} className="rounded-xl font-bold h-10 border-slate-200 hover:bg-primary hover:text-white hover:border-transparent transition-all">
-                              <Eye size={14} className="mr-2" /> Visualizar
+                            <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)} className="rounded-xl font-bold h-10 border-slate-200">
+                              <Eye size={14} className="mr-2" /> Ficha
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -148,15 +173,55 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="logs">
-            <Card className="border-none shadow-2xl rounded-[3rem] bg-white p-12 flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="space-y-2 text-center md:text-left">
-                <h3 className="text-3xl font-black text-slate-900 tracking-tight">Relatórios Detalhados</h3>
-                <p className="text-slate-400 font-bold max-w-md">Gere uma planilha completa com todos os dados dos usuários, incluindo localização e links de perfis.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <Card className="lg:col-span-2 border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
+                <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-xl font-black text-slate-800">Pré-visualização</h3>
+                  <Badge variant="outline" className="font-bold">{users.length} Contatos</Badge>
+                </div>
+                <ScrollArea className="h-[500px]">
+                  <Table>
+                    <TableHeader className="bg-slate-50 sticky top-0">
+                      <TableRow>
+                        <TableHead className="text-[10px] font-black uppercase py-4 pl-8">Data</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase">Nome</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase">Cidade/UF</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.length === 0 ? (
+                         <TableRow><TableCell colSpan={3} className="text-center py-20 text-slate-400">Sem dados para exportar.</TableCell></TableRow>
+                      ) : (
+                        users.map((u, i) => (
+                          <TableRow key={i} className="border-b border-slate-50">
+                            <TableCell className="pl-8 text-xs font-bold text-slate-400">{u.date}</TableCell>
+                            <TableCell className="text-xs font-black text-slate-700">{u.name}</TableCell>
+                            <TableCell className="text-xs font-bold text-slate-500">{u.city}/{u.state}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </Card>
+
+              <div className="space-y-6">
+                <Card className="border-none shadow-2xl rounded-[2.5rem] bg-indigo-600 p-10 text-white space-y-8">
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black">Exportar</h3>
+                    <p className="text-indigo-100 text-sm opacity-80">Baixe o relatório completo de usuários.</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Button onClick={exportPDF} disabled={users.length === 0} className="w-full h-16 bg-white text-indigo-600 hover:bg-indigo-50 rounded-2xl font-black uppercase tracking-widest gap-3 shadow-xl disabled:opacity-50">
+                      <FileText size={20} /> Baixar PDF
+                    </Button>
+                    <Button onClick={exportCSV} disabled={users.length === 0} variant="outline" className="w-full h-16 border-white/20 text-white hover:bg-white/10 rounded-2xl font-black uppercase tracking-widest gap-3 disabled:opacity-50">
+                      <TableIcon size={20} /> Baixar CSV
+                    </Button>
+                  </div>
+                </Card>
               </div>
-              <Button onClick={exportCSV} className="h-20 px-10 bg-primary hover:bg-primary/90 text-white rounded-[2rem] font-black uppercase tracking-widest gap-3 shadow-2xl shadow-primary/30 transition-all active:scale-95">
-                <Download size={24} /> Baixar Planilha CSV
-              </Button>
-            </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -166,36 +231,24 @@ const Dashboard = () => {
           {selectedUser && (
             <>
               <div className="bg-primary p-10 text-white text-center">
-                <div className="w-20 h-20 bg-white/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
-                  <ShieldCheck size={40} />
-                </div>
+                <div className="w-20 h-20 bg-white/20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 backdrop-blur-md"><ShieldCheck size={40} /></div>
                 <DialogTitle className="text-2xl font-black mb-1">Perfil do Usuário</DialogTitle>
-                <p className="text-[10px] uppercase font-bold opacity-60 tracking-[0.2em]">Cadastro Validado em {selectedUser.date}</p>
+                <p className="text-[10px] uppercase font-bold opacity-60">Cadastrado em {selectedUser.date}</p>
               </div>
               <div className="p-10 space-y-6 bg-white">
                 <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Estado</Label>
-                    <p className="font-black text-slate-800">{selectedUser.state}</p>
-                  </div>
-                  <div>
-                    <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Cidade</Label>
-                    <p className="font-black text-slate-800">{selectedUser.city}</p>
-                  </div>
+                  <div><Label className="text-[10px] uppercase text-slate-400 font-black">UF</Label><p className="font-black text-slate-800">{selectedUser.state}</p></div>
+                  <div><Label className="text-[10px] uppercase text-slate-400 font-black">Cidade</Label><p className="font-black text-slate-800">{selectedUser.city}</p></div>
                 </div>
-                <div className="h-px bg-slate-50" />
+                <div><Label className="text-[10px] uppercase text-slate-400 font-black">WhatsApp</Label><p className="font-black text-primary text-lg">{selectedUser.whatsapp}</p></div>
                 <div>
-                  <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">WhatsApp / Contato</Label>
-                  <p className="font-black text-primary text-lg">{selectedUser.whatsapp}</p>
-                </div>
-                <div>
-                  <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Link do Perfil Social</Label>
-                  <a href={selectedUser.socialLink} target="_blank" className="mt-2 flex items-center justify-between gap-2 text-primary font-bold text-sm bg-slate-50 p-4 rounded-2xl group">
-                    <span className="truncate">{selectedUser.socialLink || 'Não informado'}</span>
-                    <ExternalLink size={16} className="shrink-0 opacity-40 group-hover:opacity-100" />
+                  <Label className="text-[10px] uppercase text-slate-400 font-black">Rede Social</Label>
+                  <a href={selectedUser.socialLink?.startsWith('http') ? selectedUser.socialLink : `https://${selectedUser.socialLink}`} target="_blank" className="mt-2 flex items-center justify-between gap-2 text-primary font-bold text-sm bg-slate-50 p-4 rounded-2xl">
+                    <span className="truncate">{selectedUser.socialLink || 'Link não informado'}</span>
+                    <ExternalLink size={16} className="shrink-0 opacity-40" />
                   </a>
                 </div>
-                <Button onClick={() => setSelectedUser(null)} className="w-full h-16 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest transition-all">Fechar Ficha</Button>
+                <Button onClick={() => setSelectedUser(null)} className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest">Fechar</Button>
               </div>
             </>
           )}
