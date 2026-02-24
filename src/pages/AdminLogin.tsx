@@ -25,10 +25,9 @@ const AdminLogin = () => {
     const admins = JSON.parse(localStorage.getItem('kipapo_admins') || '[]');
     const storedPassword = localStorage.getItem('admin_password') || INITIAL_PASSWORD;
 
-    // Verifica se é o admin padrão ou um dos novos cadastrados
-    const isValidAdmin = (username === 'admin' && password === storedPassword) || 
-                       admins.some((a: any) => a.username === username && a.password === password) ||
-                       (admins.length === 0 && username === 'gestor' && password === INITIAL_PASSWORD);
+    // Verifica se é o admin padrão (oscarlara) ou um dos novos cadastrados
+    const isValidAdmin = (username === 'oscarlara' && password === storedPassword) || 
+                       admins.some((a: any) => a.username === username && a.password === password);
 
     if (isValidAdmin) {
       sessionStorage.setItem('admin_auth', 'true');
