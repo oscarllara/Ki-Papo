@@ -95,17 +95,48 @@ const Dashboard = () => {
   };
 
   const exportCSV = () => {
+    if (users.length === 0) {
+      toast({ variant: "destructive", title: "Exportação vazia", description: "Não há usuários cadastrados para exportar." });
+      return;
+    }
+
     const headers = ["Data", "Nome", "CPF", "WhatsApp", "Rede Social/E-mail", "Cidade", "Estado"];
-    const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, u.city, u.state]);
-    const csvContent = [headers.join(","), ...rows.map(row => row.map(cell => `"${cell}"`).join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    
+    // Mapeia os dados garantindo que strings com caracteres especiais não quebrem o CSV (usando ponto e vírgula para Excel PT-BR)
+    const rows = users.map(u => [
+      u.date || "",
+      u.name || "",
+      u.cpf || "",
+      u.whatsapp || "",
+      u.socialLink || "",
+      u.city || "",
+      u.state || ""
+    ]);
+
+    const csvContent = [
+      headers.join(";"),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(";"))
+    ].join("\n");
+
+    // Adiciona BOM (\uFEFF) para garantir que o Excel reconheça a codificação UTF-8 corretamente
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_usuarios_kipapo.csv`;
+    link.setAttribute("href", url);
+    link.setAttribute("download", `relatorio_usuarios_kipapo.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    
+    toast({ title: "Exportação concluída", description: "O arquivo CSV foi gerado com sucesso." });
   };
 
   const exportPDF = () => {
+    if (users.length === 0) {
+      toast({ variant: "destructive", title: "Exportação vazia", description: "Não há usuários cadastrados para exportar." });
+      return;
+    }
     const doc = new jsPDF('landscape');
     doc.text("Relatório de Usuários Ki Papo", 14, 20);
     const data = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, `${u.city}/${u.state}`]);
@@ -259,7 +290,7 @@ const Dashboard = () => {
 
       {/* Ficha de Usuário */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="max-w-md rounded-[3rem] p-10 border-none shadow-2xl bg-white">
+        <DialogContent className="max-md:max-w-[90vw] max-w-md rounded-[3rem] p-10 border-none shadow-2xl bg-white">
           {selectedUser && (
             <div className="space-y-6">
               <div className="text-center">
