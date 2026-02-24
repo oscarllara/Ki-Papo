@@ -7,10 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShieldCheck, Loader2, Link as LinkIcon, Instagram, Facebook, Chrome, Apple, Mail } from 'lucide-center';
+import { 
+  ShieldCheck, 
+  Loader2, 
+  Instagram as InstagramIcon, 
+  Facebook as FacebookIcon, 
+  Chrome as GoogleIcon, 
+  Apple as AppleIcon, 
+  Mail as MailIcon 
+} from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { fetchStates, IBGEState } from '@/services/ibge';
-import { Instagram as InstagramIcon, Facebook as FacebookIcon, Chrome as GoogleIcon, Apple as AppleIcon, Mail as MailIcon } from 'lucide-react';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -72,7 +79,6 @@ const Onboarding = () => {
 
   const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Impede o usuário de apagar o baseUrl
     if (value.startsWith(baseUrl)) {
       setFormData({ ...formData, socialLink: value });
     } else {

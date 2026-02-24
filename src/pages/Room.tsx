@@ -65,27 +65,6 @@ const Room = () => {
     }
   }, [messagesList]);
 
-  useEffect(() => {
-    const lastMsg = messagesList[messagesList.length - 1];
-    if (lastMsg?.isMe) {
-      const timer = setTimeout(() => {
-        const botName = lastMsg.isPrivate ? (lastMsg.receiver || onlineUsers[0]) : onlineUsers[Math.floor(Math.random() * onlineUsers.length)];
-        const reply: ChatMessage = {
-          id: Date.now().toString(),
-          sender: botName,
-          receiver: lastMsg.isPrivate ? nickname : undefined,
-          content: lastMsg.isPrivate ? `Oi! Tudo bem? Vi que me chamou no privado.` : `E aí ${nickname}! Que bom ver você por aqui em ${cityName}!`,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isMe: false,
-          isPrivate: lastMsg.isPrivate,
-          type: 'text'
-        };
-        setMessagesList(prev => [...prev, reply]);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [messagesList]);
-
   const cityName = useMemo(() => {
     if (!roomId) return "nossa cidade";
     const parts = roomId.split('-');
@@ -106,24 +85,39 @@ const Room = () => {
     };
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
-    setTimeout(() => messageInputRef.current?.focus(), 10);
   };
 
   const startLiveCamera = async (mode: 'photo' | 'video') => {
     try {
       setCameraMode(mode);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: mode === 'video' });
+      // Solicita vídeo primeiro, áudio apenas se for modo vídeo e for possível
+      const constraints = { 
+        video: { facingMode: "user" }, 
+        audio: mode === 'video' 
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setCameraStream(stream);
-      if (videoRef.current) videoRef.current.srcObject = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(e => console.error("Erro ao dar play no vídeo:", e));
+        };
+      }
+      
       setIsLiveCameraOpen(true);
       setIsMediaDialogOpen(false);
     } catch (err) {
-      toast.error("Não foi possível acessar a câmera. Verifique as permissões.");
+      console.error("Erro ao acessar câmera:", err);
+      toast.error("Não foi possível acessar a câmera ou microfone. Verifique as permissões.");
     }
   };
 
   const stopLiveCamera = () => {
-    if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
     setCameraStream(null);
     setIsLiveCameraOpen(false);
   };
@@ -163,7 +157,7 @@ const Room = () => {
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-2">
             {onlineUsers.map(user => (
-              <button key={user} onClick={() => { setTargetUser(user); setIsPrivate(true); setTimeout(() => messageInputRef.current?.focus(), 10); }} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white", targetUser === user ? "bg-white shadow-md ring-1 ring-primary/10" : "")}>
+              <button key={user} onClick={() => { setTargetUser(user); setIsPrivate(true); }} className={cn("w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white", targetUser === user ? "bg-white shadow-md ring-1 ring-primary/10" : "")}>
                 <div className="relative">
                   <Avatar className="h-10 w-10 border-2 border-white shadow-sm"><AvatarFallback className="bg-slate-200 font-black text-xs">{user[0]}</AvatarFallback></Avatar>
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
@@ -244,7 +238,6 @@ const Room = () => {
         </div>
       </main>
 
-      {/* Seletor de Mídia */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[320px] rounded-[2.5rem] p-8 border-none shadow-2xl">
           <div className="text-center space-y-6">
@@ -258,7 +251,6 @@ const Room = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Câmera ao Vivo */}
       <Dialog open={isLiveCameraOpen} onOpenChange={(open) => !open && stopLiveCamera()}>
         <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] bg-black border-none p-0 overflow-hidden">
           <div className="relative h-full flex flex-col">
@@ -283,7 +275,6 @@ const Room = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Chamada de Vídeo */}
       <Dialog open={isCalling} onOpenChange={setIsCalling}>
         <DialogContent className="max-w-md h-[80vh] rounded-[2.5rem] bg-slate-900 border-none p-0 overflow-hidden shadow-2xl">
           <div className="h-full flex flex-col items-center justify-between py-20 px-10 text-center">
