@@ -53,10 +53,8 @@ const Dashboard = () => {
   const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
   const [isAdDialogOpen, setIsAdDialogOpen] = useState(false);
   
-  // Estado para novo admin
   const [newAdmin, setNewAdmin] = useState({ username: '', password: '' });
   
-  // Estado para novo anúncio
   const [newAd, setNewAd] = useState<Partial<Ad>>({
     imageUrl: '',
     link: '',
@@ -135,28 +133,38 @@ const Dashboard = () => {
   };
 
   const exportCSV = () => {
-    if (users.length === 0) return;
-    const headers = ["Data", "Nome", "CPF", "WhatsApp", "Rede Social", "Cidade", "Estado"];
-    const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, u.city, u.state]);
-    const csvContent = [headers.join(";"), ...rows.map(row => row.join(";"))].join("\r\n");
+    if (users.length === 0) {
+      toast({ variant: "destructive", title: "Sem dados", description: "Não há usuários para exportar." });
+      return;
+    }
+    const headers = ["Data", "Nome", "Nascimento", "CPF", "WhatsApp", "Rede Social/Email", "Cidade", "Estado"];
+    const rows = users.map(u => [u.date, u.name, u.birthDate || '', u.cpf, u.whatsapp, u.socialLink, u.city, u.state]);
+    
+    // Usando vírgula como separador padrão internacional ou ponto e vírgula para Excel PT-BR
+    const csvContent = [headers.join(";"), ...rows.map(row => row.map(cell => `"${cell}"`).join(";"))].join("\r\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `relatorio_kipapo.csv`;
+    link.download = `relatorio_usuarios_kipapo_${new Date().getTime()}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    toast({ title: "CSV Gerado com sucesso" });
   };
 
   const exportPDF = () => {
     if (users.length === 0) return;
     const doc = new jsPDF('landscape');
-    doc.text("Relatório Ki Papo", 14, 20);
+    doc.text("Relatório Geral de Usuários Ki Papo", 14, 20);
     autoTable(doc, {
-      head: [["Data", "Nome", "CPF", "WhatsApp", "Cidade"]],
-      body: users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.city]),
+      head: [["Data", "Nome", "CPF", "WhatsApp", "Rede Social/Email", "Cidade"]],
+      body: users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, u.city]),
       startY: 30,
+      styles: { fontSize: 8 },
     });
-    doc.save(`relatorio.pdf`);
+    doc.save(`relatorio_kipapo_${new Date().getTime()}.pdf`);
+    toast({ title: "PDF Gerado com sucesso" });
   };
 
   const handleLogout = () => { 
@@ -198,7 +206,7 @@ const Dashboard = () => {
               <div className="p-8 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="relative w-full md:w-96">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                  <Input placeholder="Buscar..." className="pl-12 h-14 rounded-2xl border-none shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                  <Input placeholder="Buscar por nome, CPF ou cidade..." className="pl-12 h-14 rounded-2xl border-none shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
                 <Badge className="bg-primary text-white px-5 py-2.5 rounded-xl font-black text-[10px]">{filteredUsers.length} TOTAL</Badge>
               </div>
@@ -310,7 +318,6 @@ const Dashboard = () => {
         </Tabs>
       </div>
 
-      {/* Modal Novo Anúncio */}
       <Dialog open={isAdDialogOpen} onOpenChange={setIsAdDialogOpen}>
         <DialogContent className="max-w-md rounded-[2.5rem] p-10 border-none shadow-2xl">
           <div className="space-y-6">
@@ -361,7 +368,6 @@ const Dashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Admin e Ficha (Código mantido) */}
       <Dialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen}>
         <DialogContent className="max-w-sm rounded-[2.5rem] p-10 border-none shadow-2xl">
           <div className="text-center space-y-6">
@@ -383,11 +389,21 @@ const Dashboard = () => {
               <div className="text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary"><ShieldCheck size={32} /></div>
                 <DialogTitle className="text-2xl font-black">{selectedUser.name}</DialogTitle>
-                <Badge className="mt-2">{selectedUser.date}</Badge>
+                <div className="flex justify-center gap-2 mt-2">
+                  <Badge>{selectedUser.date}</Badge>
+                  <Badge variant="outline">{selectedUser.birthDate || 'N/A'}</Badge>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                <div><Label className="text-[10px] uppercase font-black text-slate-400">CPF</Label><p className="font-bold">{selectedUser.cpf}</p></div>
-                <div><Label className="text-[10px] uppercase font-black text-slate-400">WhatsApp</Label><p className="font-bold text-primary">{selectedUser.whatsapp}</p></div>
+              <div className="space-y-4 pt-4 border-t">
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-[10px] uppercase font-black text-slate-400">CPF</Label><p className="font-bold">{selectedUser.cpf}</p></div>
+                  <div><Label className="text-[10px] uppercase font-black text-slate-400">WhatsApp</Label><p className="font-bold text-primary">{selectedUser.whatsapp}</p></div>
+                </div>
+                <div><Label className="text-[10px] uppercase font-black text-slate-400">Social Link / Email</Label><p className="font-bold text-xs break-all">{selectedUser.socialLink}</p></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-[10px] uppercase font-black text-slate-400">Cidade</Label><p className="font-bold">{selectedUser.city}</p></div>
+                  <div><Label className="text-[10px] uppercase font-black text-slate-400">Estado</Label><p className="font-bold">{selectedUser.state}</p></div>
+                </div>
               </div>
               <Button onClick={() => setSelectedUser(null)} className="w-full h-14 bg-slate-900 text-white rounded-xl font-black">Fechar</Button>
             </div>

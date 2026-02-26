@@ -10,11 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   ShieldCheck, 
   Loader2, 
-  Instagram as InstagramIcon, 
-  Facebook as FacebookIcon, 
-  Chrome as GoogleIcon, 
-  Apple as AppleIcon, 
-  Mail as MailIcon 
+  Calendar
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { fetchStates, IBGEState } from '@/services/ibge';
@@ -32,6 +28,7 @@ const Onboarding = () => {
     name: '',
     whatsapp: '+55 ',
     cpf: '', 
+    birthDate: '',
     state: '',
     city: '',
     socialLink: ''
@@ -82,7 +79,29 @@ const Onboarding = () => {
     return true;
   };
 
+  const validateAge = (dateStr: string) => {
+    const [day, month, year] = dateStr.split('/').map(Number);
+    if (!day || !month || !year) return false;
+    const birthDate = new Date(year, month - 1, day);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age >= 18;
+  };
+
   const maskCPF = (value: string) => value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1');
+  
+  const maskDate = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{2})(\d)/, "$1/$2")
+      .replace(/(\d{2})(\d)/, "$1/$2")
+      .replace(/(\d{4})(\d+?)$/, "$1");
+  };
+
   const maskPhone = (value: string) => {
     let v = value.replace(/\D/g, "");
     if (v.length >= 2 && v.startsWith("55")) v = v.slice(2);
@@ -91,15 +110,20 @@ const Onboarding = () => {
     if (v.length <= 7) return `+55 (${v.slice(0, 2)}) ${v.slice(2)}`;
     return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
   };
+
   const formatCityName = (value: string) => value.replace(/\b\w/g, (char) => char.toUpperCase());
 
   const handleVerify = () => {
-    if (!formData.name || formData.whatsapp.length < 18 || !formData.cpf || !formData.state || !formData.city) {
+    if (!formData.name || formData.whatsapp.length < 18 || !formData.cpf || !formData.state || !formData.city || !formData.birthDate) {
       toast({ variant: "destructive", title: "Dados incompletos", description: "Por favor, preencha todos os campos obrigatórios." });
       return;
     }
     if (!validateCPF(formData.cpf)) {
       toast({ variant: "destructive", title: "CPF Inválido", description: "O número de CPF informado não é válido." });
+      return;
+    }
+    if (!validateAge(formData.birthDate)) {
+      toast({ variant: "destructive", title: "Acesso Restrito", description: "Você precisa ter mais de 18 anos para acessar." });
       return;
     }
 
@@ -110,6 +134,7 @@ const Onboarding = () => {
       socialMedia: provider,
       socialLink: formData.socialLink,
       cpf: formData.cpf,
+      birthDate: formData.birthDate,
       state: formData.state,
       city: formData.city,
       date: new Date().toLocaleDateString('pt-BR'),
@@ -119,7 +144,6 @@ const Onboarding = () => {
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     localStorage.setItem('kipapo_users', JSON.stringify([newUser, ...savedUsers]));
     
-    // Salva a localização para redirecionamento automático no Lobby
     sessionStorage.setItem('kipapo_home_city', formData.city);
     sessionStorage.setItem('kipapo_home_state', formData.state);
     
@@ -129,7 +153,6 @@ const Onboarding = () => {
 
   const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    // Impede que o usuário delete o prefixo base
     if (!val.startsWith(baseUrl)) {
       setFormData(prev => ({ ...prev, socialLink: baseUrl }));
     } else {
@@ -155,6 +178,13 @@ const Onboarding = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
+              <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Data de Nascimento</Label>
+              <div className="relative">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                <Input placeholder="DD/MM/AAAA" value={formData.birthDate} onChange={(e) => setFormData({...formData, birthDate: maskDate(e.target.value)})} className="h-14 rounded-2xl border-slate-200 pl-12 font-bold" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
               <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Estado (UF)</Label>
               <Select onValueChange={(val) => setFormData({...formData, state: val})}>
                 <SelectTrigger className="h-14 rounded-2xl border-slate-200 font-bold">
@@ -169,30 +199,31 @@ const Onboarding = () => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Cidade</Label>
+            <Input placeholder="Sua cidade" value={formData.city} onChange={(e) => setFormData({...formData, city: formatCityName(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Cidade</Label>
-              <Input placeholder="Sua cidade" value={formData.city} onChange={(e) => setFormData({...formData, city: formatCityName(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
+              <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">CPF</Label>
+              <Input placeholder="000.000.000-00" value={formData.cpf} onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">WhatsApp</Label>
+              <Input placeholder="+55 (00) 00000-0000" value={formData.whatsapp} onChange={(e) => setFormData({...formData, whatsapp: maskPhone(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">CPF</Label>
-            <Input placeholder="000.000.000-00" value={formData.cpf} onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">WhatsApp</Label>
-            <Input placeholder="+55 (00) 00000-0000" value={formData.whatsapp} onChange={(e) => setFormData({...formData, whatsapp: maskPhone(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Perfil Social</Label>
+            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Perfil Social / E-mail</Label>
             <div className="relative">
               <Input 
                 value={formData.socialLink} 
                 onChange={handleSocialLinkChange} 
                 onFocus={(e) => {
-                  // Garante que o cursor comece após o prefixo se o campo estiver "vazio" (apenas o prefixo)
                   if (e.target.value === baseUrl) {
                     const len = e.target.value.length;
                     setTimeout(() => e.target.setSelectionRange(len, len), 0);
