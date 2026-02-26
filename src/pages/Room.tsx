@@ -97,7 +97,9 @@ const Room = () => {
     };
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
-    messageInputRef.current?.focus();
+    
+    // Pequeno delay para garantir o foco após o estado atualizar
+    setTimeout(() => messageInputRef.current?.focus(), 10);
   };
 
   const startLiveCamera = async (mode: 'photo' | 'video') => {
@@ -126,7 +128,10 @@ const Room = () => {
   const selectPrivateUser = (user: string) => {
     setTargetUser(user);
     setIsPrivate(true);
-    setTimeout(() => messageInputRef.current?.focus(), 100);
+    // Foca o input imediatamente quando clica no usuário
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 50);
   };
 
   const handleJoin = () => { if (nickname.trim().length >= 3) setHasJoined(true); };
@@ -162,7 +167,6 @@ const Room = () => {
               </button>
             ))}
           </div>
-          {/* Anúncio na lateral da sala (Slot 1) */}
           <div className="mt-10">
             <AdSlot city={cityName} slotIndex={1} className="h-64" />
           </div>
@@ -181,7 +185,6 @@ const Room = () => {
           <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full"><Video size={20} /></Button>
         </header>
 
-        {/* Anúncio Topo da Sala (Slot 0) */}
         <div className="bg-white px-6 py-2 border-b border-slate-50 shrink-0">
           <AdSlot city={cityName} slotIndex={0} className="h-14" />
         </div>
@@ -209,10 +212,16 @@ const Room = () => {
             )}
             <div className="flex items-center gap-3 bg-slate-100 rounded-[2rem] p-2 border border-transparent focus-within:border-primary/20">
               <Button variant="ghost" size="icon" className="text-slate-400" onClick={() => setIsMediaDialogOpen(true)}><CameraIcon size={20} /></Button>
-              <Input placeholder="Sua mensagem..." className="border-none bg-transparent font-bold text-slate-700 focus-visible:ring-0" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} />
+              <Input 
+                ref={messageInputRef}
+                placeholder="Sua mensagem..." 
+                className="border-none bg-transparent font-bold text-slate-700 focus-visible:ring-0" 
+                value={message} 
+                onChange={(e) => setMessage(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
+              />
               <Button onClick={() => handleSendMessage()} disabled={!message.trim()} className="bg-primary hover:bg-primary/90 text-white rounded-[1.25rem] w-12 h-12 shadow-xl shadow-primary/20 shrink-0 transition-transform active:scale-90"><SendHorizontal size={22} /></Button>
             </div>
-            {/* Anúncio Rodapé da Sala (Slot 2) */}
             <AdSlot city={cityName} slotIndex={2} className="h-14 mt-4" />
           </div>
         </div>

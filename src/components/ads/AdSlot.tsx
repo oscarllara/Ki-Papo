@@ -8,7 +8,7 @@ export interface Ad {
   id: string;
   imageUrl: string;
   link: string;
-  city: string; // Pode ser 'Global' ou cidades separadas por vírgula
+  city: string; 
   slotIndex: number; 
   type?: 'image' | 'video';
 }
@@ -26,8 +26,29 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
 
   useEffect(() => {
     const loadAds = () => {
-      const savedAds = JSON.parse(localStorage.getItem('kipapo_ads') || '[]');
+      let savedAds = JSON.parse(localStorage.getItem('kipapo_ads') || '[]');
       
+      // Se não houver anúncios, adiciona anúncios padrão para teste
+      if (savedAds.length === 0) {
+        savedAds = [
+          {
+            id: 'default-1',
+            imageUrl: 'https://images.unsplash.com/photo-1542744094-24638eff58bb?auto=format&fit=crop&q=80&w=800',
+            link: 'https://www.google.com',
+            city: 'Global',
+            slotIndex: 0
+          },
+          {
+            id: 'default-2',
+            imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=800',
+            link: 'https://www.google.com',
+            city: 'Global',
+            slotIndex: 1
+          }
+        ];
+        localStorage.setItem('kipapo_ads', JSON.stringify(savedAds));
+      }
+
       const filtered = savedAds.filter((ad: Ad) => {
         // Verifica se o slot coincide
         if (ad.slotIndex !== slotIndex) return false;
@@ -49,6 +70,7 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     };
 
     loadAds();
+    // Escuta mudanças em outras abas ou componentes
     window.addEventListener('storage', loadAds);
     return () => window.removeEventListener('storage', loadAds);
   }, [city, slotIndex]);
@@ -62,7 +84,6 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     return () => clearInterval(interval);
   }, [ads]);
 
-  // Regra solicitada: Se não houver propaganda, não incluir o banner
   if (ads.length === 0) return null;
 
   const activeAd = ads[currentAdIndex];
