@@ -127,6 +127,16 @@ const Onboarding = () => {
     navigate('/lobby');
   };
 
+  const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Impede que o usuário delete o prefixo base
+    if (!val.startsWith(baseUrl)) {
+      setFormData(prev => ({ ...prev, socialLink: baseUrl }));
+    } else {
+      setFormData(prev => ({ ...prev, socialLink: val }));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
       <Card className="w-full max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in duration-500">
@@ -178,7 +188,18 @@ const Onboarding = () => {
           <div className="space-y-1.5">
             <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Perfil Social</Label>
             <div className="relative">
-              <Input value={formData.socialLink} onChange={(e) => setFormData({...formData, socialLink: e.target.value})} className="h-14 rounded-2xl border-slate-200 font-bold" />
+              <Input 
+                value={formData.socialLink} 
+                onChange={handleSocialLinkChange} 
+                onFocus={(e) => {
+                  // Garante que o cursor comece após o prefixo se o campo estiver "vazio" (apenas o prefixo)
+                  if (e.target.value === baseUrl) {
+                    const len = e.target.value.length;
+                    setTimeout(() => e.target.setSelectionRange(len, len), 0);
+                  }
+                }}
+                className="h-14 rounded-2xl border-slate-200 font-bold" 
+              />
             </div>
           </div>
 
