@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
 
 export interface Ad {
   id: string;
-  imageUrl: string;
+  imageUrl?: string;
+  imageUrls?: string[]; // Suporte para múltiplas imagens
   link: string;
   city: string; 
   slotIndex: number; 
@@ -21,6 +22,7 @@ interface AdSlotProps {
 
 const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
+  const [currentImageSubIndex, setCurrentImageSubIndex] = useState(0);
   const [ads, setAds] = useState<Ad[]>([]);
   const [imgError, setImgError] = useState(false);
 
@@ -28,40 +30,25 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     const loadAds = () => {
       let savedAds = JSON.parse(localStorage.getItem('kipapo_ads') || '[]');
       
-      // Se não houver anúncios, adiciona anúncios padrão para teste
       if (savedAds.length === 0) {
         savedAds = [
           {
             id: 'default-1',
-            imageUrl: 'https://images.unsplash.com/photo-1542744094-24638eff58bb?auto=format&fit=crop&q=80&w=800',
+            imageUrls: ['https://images.unsplash.com/photo-1542744094-24638eff58bb?auto=format&fit=crop&q=80&w=800'],
             link: 'https://www.google.com',
             city: 'Global',
             slotIndex: 0
-          },
-          {
-            id: 'default-2',
-            imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=800',
-            link: 'https://www.google.com',
-            city: 'Global',
-            slotIndex: 1
           }
         ];
-        localStorage.setItem('kipapo_ads', JSON.stringify(savedAds));
       }
 
       const filtered = savedAds.filter((ad: Ad) => {
-        // Verifica se o slot coincide
         if (ad.slotIndex !== slotIndex) return false;
-
-        // Se for Global, sempre mostra
         if (ad.city.toLowerCase() === 'global') return true;
-
-        // Se houver uma cidade selecionada, verifica se ela está na lista de cidades do anúncio
         if (city) {
           const targetCities = ad.city.split(',').map(c => c.trim().toLowerCase());
           return targetCities.includes(city.toLowerCase());
         }
-
         return false;
       });
 
@@ -70,26 +57,46 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     };
 
     loadAds();
-    // Escuta mudanças em outras abas ou componentes
     window.addEventListener('storage', loadAds);
     return () => window.removeEventListener('storage', loadAds);
   }, [city, slotIndex]);
 
+  // Rotação de imagens dentro do mesmo anúncio ou troca de anúncios
   useEffect(() => {
-    if (ads.length <= 1) return;
+    if (ads.length === 0) return;
+    
     const interval = setInterval(() => {
+      const activeAd = ads[currentAdIndex];
+      const images = activeAd.imageUrls || (activeAd.imageUrl ? [activeAd.imageUrl] : []);
+      
+      if (images.length > 1 && currentImageSubIndex < images.length - 1) {
+        setCurrentImageSubIndex(prev => prev + 1);
+      } else {
+        setCurrentImageSubIndex(0);
+        setCurrentAdIndex((prev) => (prev + 1) % ads.length);
+      }
       setImgError(false);
-      setCurrentAdIndex((prev) => (prev + 1) % ads.length);
-    }, 7000);
+    }, 5000);
+    
     return () => clearInterval(interval);
-  }, [ads]);
+  }, [ads, currentAdIndex, currentImageSubIndex]);
 
   if (ads.length === 0) return null;
 
   const activeAd = ads[currentAdIndex];
-
-  const handleImageError = () => {
-    setImgError(true);
+  const allImages = activeAd.imageUrls || (activeAd.imageUrl ? [activeAd.imageUrl] : []);
+  
+  // Lógica de "puxar do site": Se não houver imagem, tenta usar o favicon do link como fallback
+  const getDisplayImage = () => {
+    if (allImages.length > 0 && allImages[currentImageSubIndex]) {
+      return allImages[currentImageSubIndex];
+    }
+    try {
+      const domain = new URL(activeAd.link).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    } catch {
+      return 'https://via.placeholder.com/800x400?text=Ki+Papo+Publicidade';
+    }
   };
 
   return (
@@ -98,47 +105,32 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
       target="_blank" 
       rel="noopener noreferrer"
       className={cn(
-        "block relative rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all hover:scale-[1.01] active:scale-[0.99] group bg-slate-50 border border-slate-100",
+        "block relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all group bg-slate-100 border border-slate-200",
         className
       )}
+      style={{ minHeight: '60px' }}
     >
-      {!imgError ? (
-        <img 
-          src={activeAd.imageUrl} 
-          alt="Publicidade" 
-          onError={handleImageError}
-          className="w-full h-full object-cover animate-in fade-in duration-700"
-        />
-      ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-300 p-4">
-          <AlertCircle size={20} className="mb-2 opacity-20" />
-          <span className="text-[9px] font-black uppercase tracking-widest">Publicidade Indisponível</span>
-        </div>
-      )}
+      <img 
+        src={getDisplayImage()} 
+        alt="Publicidade" 
+        onError={() => setImgError(true)}
+        className="w-full h-full object-cover transition-opacity duration-500"
+      />
       
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
-        <div className="flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-widest bg-primary px-4 py-2 rounded-full shadow-lg w-fit">
-          {activeAd.type === 'video' ? <PlayCircle size={14} /> : <ExternalLink size={14} />}
-          Acessar Oferta
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+        <div className="bg-white text-primary text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-2">
+          Ver Site <ExternalLink size={12} />
         </div>
       </div>
 
-      <div className="absolute top-4 left-4">
-        <div className="bg-white/90 backdrop-blur-md text-[8px] text-slate-900 px-3 py-1 rounded-full font-black uppercase tracking-widest shadow-sm border border-slate-100">
-          Publicidade
-        </div>
+      <div className="absolute top-2 left-2 bg-black/20 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
+        Anúncio
       </div>
 
-      {ads.length > 1 && (
-        <div className="absolute bottom-4 right-6 flex gap-1.5">
-          {ads.map((_, i) => (
-            <div 
-              key={i} 
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-500", 
-                i === currentAdIndex ? "w-6 bg-white" : "w-1.5 bg-white/30"
-              )} 
-            />
+      {allImages.length > 1 && (
+        <div className="absolute bottom-2 right-4 flex gap-1">
+          {allImages.map((_, i) => (
+            <div key={i} className={cn("h-1 rounded-full transition-all", i === currentImageSubIndex ? "w-4 bg-white" : "w-1 bg-white/40")} />
           ))}
         </div>
       )}
