@@ -12,21 +12,20 @@ const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showRecovery, setShowRecovery] = useState(false);
-  const [recoveryEmail, setRecoveryEmail] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const INITIAL_PASSWORD = 'fabi2411';
+  const DEFAULT_USER = 'oscarlarafg@hotmail.com';
+  const DEFAULT_PASS = 'fabi2411';
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Lista de admins cadastrados + Admin Padrão
+    // Lista de admins cadastrados via dashboard
     const admins = JSON.parse(localStorage.getItem('kipapo_admins') || '[]');
-    const storedPassword = localStorage.getItem('admin_password') || INITIAL_PASSWORD;
 
-    // Verifica se é o admin padrão (oscarlara) ou um dos novos cadastrados
-    const isValidAdmin = (username === 'oscarlara' && password === storedPassword) || 
+    // Verifica se é o admin fornecido ou um dos cadastrados
+    const isValidAdmin = (username === DEFAULT_USER && password === DEFAULT_PASS) || 
                        admins.some((a: any) => a.username === username && a.password === password);
 
     if (isValidAdmin) {
@@ -56,7 +55,7 @@ const AdminLogin = () => {
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                   <Input 
-                    placeholder="Usuário" 
+                    placeholder="E-mail ou Usuário" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="h-14 rounded-2xl border-slate-200 pl-12 font-bold"
