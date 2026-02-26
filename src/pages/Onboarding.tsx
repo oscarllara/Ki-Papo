@@ -66,39 +66,23 @@ const Onboarding = () => {
 
   const validateCPF = (cpf: string) => {
     const cleanCPF = cpf.replace(/\D/g, '');
-    
     if (cleanCPF.length !== 11) return false;
-    
-    // Bloqueia CPFs com todos os números iguais (ex: 111.111.111-11)
     if (/^(\d)\1+$/.test(cleanCPF)) return false;
-    
     let sum = 0;
     let remainder;
-    
-    // Validação do primeiro dígito
-    for (let i = 1; i <= 9; i++) {
-      sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
-    }
+    for (let i = 1; i <= 9; i++) sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
     remainder = (sum * 10) % 11;
     if ((remainder === 10) || (remainder === 11)) remainder = 0;
     if (remainder !== parseInt(cleanCPF.substring(9, 10))) return false;
-    
-    // Validação do segundo dígito
     sum = 0;
-    for (let i = 1; i <= 10; i++) {
-      sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
-    }
+    for (let i = 1; i <= 10; i++) sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
     remainder = (sum * 10) % 11;
     if ((remainder === 10) || (remainder === 11)) remainder = 0;
     if (remainder !== parseInt(cleanCPF.substring(10, 11))) return false;
-    
     return true;
   };
 
-  const maskCPF = (value: string) => {
-    return value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1');
-  };
-
+  const maskCPF = (value: string) => value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1');
   const maskPhone = (value: string) => {
     let v = value.replace(/\D/g, "");
     if (v.length >= 2 && v.startsWith("55")) v = v.slice(2);
@@ -107,58 +91,15 @@ const Onboarding = () => {
     if (v.length <= 7) return `+55 (${v.slice(0, 2)}) ${v.slice(2)}`;
     return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
   };
-
-  const formatCityName = (value: string) => {
-    return value.replace(/\b\w/g, (char) => char.toUpperCase());
-  };
-
-  const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value.startsWith(baseUrl)) {
-      setFormData({ ...formData, socialLink: value });
-    } else {
-      setFormData({ ...formData, socialLink: baseUrl });
-    }
-  };
-
-  const handleLinkFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    const len = e.target.value.length;
-    e.target.setSelectionRange(len, len);
-  };
-
-  const getSocialConfig = () => {
-    switch(provider) {
-      case 'Facebook':
-        return { label: 'Perfil do Facebook', icon: <FacebookIcon size={16} className="text-blue-600" /> };
-      case 'Instagram':
-        return { label: 'Perfil do Instagram', icon: <InstagramIcon size={16} className="text-pink-600" /> };
-      case 'Google':
-        return { label: 'Canal do YouTube', icon: <GoogleIcon size={16} className="text-red-500" /> };
-      case 'Apple':
-        return { label: 'Rede Social', icon: <AppleIcon size={16} className="text-slate-900" /> };
-      default:
-        return { label: 'Rede Social', icon: <MailIcon size={16} className="text-slate-400" /> };
-    }
-  };
-
-  const socialConfig = getSocialConfig();
+  const formatCityName = (value: string) => value.replace(/\b\w/g, (char) => char.toUpperCase());
 
   const handleVerify = () => {
     if (!formData.name || formData.whatsapp.length < 18 || !formData.cpf || !formData.state || !formData.city) {
-      toast({ 
-        variant: "destructive", 
-        title: "Dados incompletos", 
-        description: "Por favor, preencha todos os campos obrigatórios." 
-      });
+      toast({ variant: "destructive", title: "Dados incompletos", description: "Por favor, preencha todos os campos obrigatórios." });
       return;
     }
-
     if (!validateCPF(formData.cpf)) {
-      toast({ 
-        variant: "destructive", 
-        title: "CPF Inválido", 
-        description: "O número de CPF informado não é válido. Verifique os dados." 
-      });
+      toast({ variant: "destructive", title: "CPF Inválido", description: "O número de CPF informado não é válido." });
       return;
     }
 
@@ -178,11 +119,11 @@ const Onboarding = () => {
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     localStorage.setItem('kipapo_users', JSON.stringify([newUser, ...savedUsers]));
     
-    toast({
-      title: "Cadastro Concluído",
-      description: "Sua identidade foi validada com sucesso.",
-    });
+    // Salva a localização para redirecionamento automático no Lobby
+    sessionStorage.setItem('kipapo_home_city', formData.city);
+    sessionStorage.setItem('kipapo_home_state', formData.state);
     
+    toast({ title: "Cadastro Concluído", description: "Sua identidade foi validada com sucesso." });
     navigate('/lobby');
   };
 
@@ -199,12 +140,7 @@ const Onboarding = () => {
         <CardContent className="space-y-5 p-10 pt-4 bg-white">
           <div className="space-y-1.5">
             <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Nome Completo</Label>
-            <Input 
-              placeholder={namePlaceholder} 
-              value={formData.name} 
-              onChange={(e) => setFormData({...formData, name: e.target.value})} 
-              className="h-14 rounded-2xl border-slate-200 font-bold" 
-            />
+            <Input placeholder={namePlaceholder} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-14 rounded-2xl border-slate-200 font-bold" />
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -225,55 +161,29 @@ const Onboarding = () => {
             </div>
             <div className="space-y-1.5">
               <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Cidade</Label>
-              <Input 
-                placeholder="Sua cidade" 
-                value={formData.city} 
-                onChange={(e) => setFormData({...formData, city: formatCityName(e.target.value)})} 
-                className="h-14 rounded-2xl border-slate-200 font-bold" 
-              />
+              <Input placeholder="Sua cidade" value={formData.city} onChange={(e) => setFormData({...formData, city: formatCityName(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">CPF</Label>
-            <Input 
-              placeholder="000.000.000-00" 
-              value={formData.cpf} 
-              onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})} 
-              className="h-14 rounded-2xl border-slate-200 font-bold" 
-            />
+            <Input placeholder="000.000.000-00" value={formData.cpf} onChange={(e) => setFormData({...formData, cpf: maskCPF(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
           </div>
 
           <div className="space-y-1.5">
             <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">WhatsApp</Label>
-            <Input 
-              placeholder="+55 (00) 00000-0000" 
-              value={formData.whatsapp} 
-              onChange={(e) => setFormData({...formData, whatsapp: maskPhone(e.target.value)})} 
-              className="h-14 rounded-2xl border-slate-200 font-bold" 
-            />
+            <Input placeholder="+55 (00) 00000-0000" value={formData.whatsapp} onChange={(e) => setFormData({...formData, whatsapp: maskPhone(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">{socialConfig.label}</Label>
+            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Perfil Social</Label>
             <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50">
-                {socialConfig.icon}
-              </div>
-              <Input 
-                value={formData.socialLink} 
-                onChange={handleSocialLinkChange}
-                onFocus={handleLinkFocus}
-                className="h-14 rounded-2xl border-slate-200 pl-10 font-bold" 
-              />
+              <Input value={formData.socialLink} onChange={(e) => setFormData({...formData, socialLink: e.target.value})} className="h-14 rounded-2xl border-slate-200 font-bold" />
             </div>
           </div>
 
           <div className="pt-4">
-            <Button 
-              onClick={handleVerify} 
-              className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-[1.5rem] font-black text-lg shadow-xl shadow-primary/20 transition-all active:scale-95"
-            >
+            <Button onClick={handleVerify} className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-[1.5rem] font-black text-lg shadow-xl shadow-primary/20 transition-all active:scale-95">
               Validar e Entrar
             </Button>
           </div>

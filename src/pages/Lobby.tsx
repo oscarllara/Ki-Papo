@@ -16,8 +16,6 @@ import {
   MessageSquare, 
   Flame, 
   Settings, 
-  Plus, 
-  ChevronRight,
   Search,
   Globe,
   Loader2,
@@ -36,14 +34,23 @@ const Lobby = () => {
   const [citySearch, setCitySearch] = useState("");
   const [loadingStates, setLoadingStates] = useState(true);
   const [loadingCities, setLoadingCities] = useState(false);
-  const [expandedStates, setExpandedStates] = useState(false);
 
   useEffect(() => {
     const loadStates = async () => {
       try {
         const data = await fetchStates();
         setStates(data);
-        if (data.length > 0) setSelectedState(data[0]); 
+        
+        // Verifica se há um estado salvo do onboarding
+        const homeStateSigla = sessionStorage.getItem('kipapo_home_state');
+        if (homeStateSigla) {
+          const found = data.find(s => s.sigla === homeStateSigla);
+          if (found) setSelectedState(found);
+          else if (data.length > 0) setSelectedState(data[0]);
+          sessionStorage.removeItem('kipapo_home_state');
+        } else if (data.length > 0) {
+          setSelectedState(data[0]);
+        }
       } catch (error) {
         console.error("Erro ao carregar estados", error);
       } finally {
@@ -60,7 +67,16 @@ const Lobby = () => {
       try {
         const data = await fetchCitiesByState(selectedState.sigla);
         setCities(data);
-        setSelectedCity(null);
+        
+        // Verifica se há uma cidade salva do onboarding para auto-seleção
+        const homeCity = sessionStorage.getItem('kipapo_home_city');
+        if (homeCity) {
+          setSelectedCity(homeCity);
+          sessionStorage.removeItem('kipapo_home_city');
+        } else {
+          setSelectedCity(null);
+        }
+        
         setCitySearch("");
       } catch (error) {
         console.error("Erro ao carregar cidades", error);
@@ -70,8 +86,6 @@ const Lobby = () => {
     };
     loadCities();
   }, [selectedState]);
-
-  const displayedStates = expandedStates ? states : states.slice(0, 8);
 
   const filteredCities = useMemo(() => {
     if (!citySearch.trim()) return cities;
@@ -100,13 +114,12 @@ const Lobby = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-           <Button variant="ghost" size="icon" onClick={() => navigate('/admin-login')} className="rounded-2xl text-slate-300 hover:text-primary transition-colors h-12 w-12">
+           <Button variant="ghost" size="icon" onClick={() => navigate('/admin-login')} className="rounded-2xl text-slate-300 hover:text-primary h-12 w-12">
             <Settings size={22} />
           </Button>
         </div>
       </header>
 
-      {/* Espaço de Anúncio Topo (Slot 0) */}
       <div className="px-10 py-4 bg-white border-b border-slate-50 shrink-0">
         <AdSlot city={selectedCity} slotIndex={0} className="h-20 max-w-6xl mx-auto" />
       </div>
@@ -119,7 +132,7 @@ const Lobby = () => {
           <ScrollArea className="flex-1 px-4">
             <div className="space-y-2 pb-6">
               {loadingStates ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-2xl" />) : (
-                displayedStates.map((state) => (
+                states.map((state) => (
                   <button key={state.sigla} onClick={() => setSelectedState(state)} className={cn("w-full flex items-center gap-4 p-4 rounded-[1.25rem] transition-all group", selectedState?.sigla === state.sigla ? "bg-primary text-white shadow-xl scale-[1.02]" : "text-slate-600 hover:bg-slate-50")}>
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0", selectedState?.sigla === state.sigla ? "bg-white/20" : "bg-slate-100")}>{state.sigla}</div>
                     <span className="hidden md:block font-bold text-sm truncate">{state.nome}</span>
@@ -127,7 +140,6 @@ const Lobby = () => {
                 ))
               )}
             </div>
-            {/* Espaço de Anúncio Lateral (Slot 1) */}
             <div className="mt-8 pb-10">
               <AdSlot city={selectedCity} slotIndex={1} className="h-64 rounded-3xl" />
             </div>
@@ -181,16 +193,12 @@ const Lobby = () => {
                       </Card>
                     ))}
                   </div>
-                  
-                  {/* Espaço de Anúncio Entre Conteúdo (Slot 3) */}
                   <div className="py-6">
                     <AdSlot city={selectedCity} slotIndex={3} className="h-40 w-full" />
                   </div>
                 </>
               )}
             </div>
-            
-            {/* Espaço de Anúncio Rodapé (Slot 2) */}
             <div className="max-w-6xl mx-auto mt-10 pb-10">
               <AdSlot city={selectedCity} slotIndex={2} className="h-24 w-full" />
             </div>
