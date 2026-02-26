@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/select";
 import { 
   ShieldCheck, 
   Loader2, 
@@ -64,6 +64,37 @@ const Onboarding = () => {
     }
   }, []);
 
+  const validateCPF = (cpf: string) => {
+    const cleanCPF = cpf.replace(/\D/g, '');
+    
+    if (cleanCPF.length !== 11) return false;
+    
+    // Bloqueia CPFs com todos os números iguais (ex: 111.111.111-11)
+    if (/^(\d)\1+$/.test(cleanCPF)) return false;
+    
+    let sum = 0;
+    let remainder;
+    
+    // Validação do primeiro dígito
+    for (let i = 1; i <= 9; i++) {
+      sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if ((remainder === 10) || (remainder === 11)) remainder = 0;
+    if (remainder !== parseInt(cleanCPF.substring(9, 10))) return false;
+    
+    // Validação do segundo dígito
+    sum = 0;
+    for (let i = 1; i <= 10; i++) {
+      sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if ((remainder === 10) || (remainder === 11)) remainder = 0;
+    if (remainder !== parseInt(cleanCPF.substring(10, 11))) return false;
+    
+    return true;
+  };
+
   const maskCPF = (value: string) => {
     return value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1');
   };
@@ -118,6 +149,15 @@ const Onboarding = () => {
         variant: "destructive", 
         title: "Dados incompletos", 
         description: "Por favor, preencha todos os campos obrigatórios." 
+      });
+      return;
+    }
+
+    if (!validateCPF(formData.cpf)) {
+      toast({ 
+        variant: "destructive", 
+        title: "CPF Inválido", 
+        description: "O número de CPF informado não é válido. Verifique os dados." 
       });
       return;
     }
