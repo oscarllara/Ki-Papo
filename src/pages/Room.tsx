@@ -18,10 +18,10 @@ import {
   X, 
   Mic,
   RefreshCw,
-  ImageIcon,
-  VideoIcon,
+  Image as GalleryIcon,
+  Video as VideoIcon,
   Menu,
-  Image as GalleryIcon
+  FileImage as ImageIcon
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -116,7 +116,7 @@ const Room = () => {
       setIsLiveCameraOpen(true);
       setIsMediaDialogOpen(false);
     } catch (err) {
-      toast.error("Erro ao acessar câmera. Verifique as permissões do navegador.");
+      toast.error("Erro ao acessar câmera. Verifique as permissões.");
     }
   };
 
@@ -202,7 +202,6 @@ const Room = () => {
 
   return (
     <div className="flex h-screen bg-white overflow-hidden font-sans">
-      {/* Desktop Sidebar */}
       <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
         <div className="p-8 border-b border-slate-100 bg-white">
           <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Contatos Online</h3>
@@ -229,10 +228,9 @@ const Room = () => {
           
           <div className="flex items-center gap-1 md:gap-2">
             <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full h-10 w-10">
-              <Video size={20} />
+              <VideoIcon size={20} />
             </Button>
             
-            {/* Mobile Users Toggle */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="lg:hidden text-slate-400 hover:text-primary rounded-full h-10 w-10">
@@ -245,7 +243,7 @@ const Room = () => {
                 </SheetHeader>
                 <ScrollArea className="h-full p-4 bg-slate-50">
                   <UserList />
-                </SheetArea>
+                </ScrollArea>
               </SheetContent>
             </Sheet>
           </div>
@@ -318,28 +316,23 @@ const Room = () => {
                 disabled={!message.trim()} 
                 className="bg-primary hover:bg-primary/90 text-white rounded-full md:rounded-[1.25rem] w-10 h-10 md:w-12 md:h-12 shadow-xl shadow-primary/20 shrink-0 transition-transform active:scale-90"
               >
-                <SendHorizontal size={20} md:size={22} />
+                <SendHorizontal size={20} />
               </Button>
-            </div>
-            
-            <div className="hidden md:block">
-              <AdSlot city={cityName} slotIndex={2} className="h-14 mt-4" />
             </div>
           </div>
         </div>
       </main>
 
-      {/* Media Options Dialog */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[320px] rounded-[2rem] p-6 md:p-8 border-none shadow-2xl">
           <DialogHeader className="mb-4">
             <DialogTitle className="text-center text-xl font-black">Enviar Mídia</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3">
-            <Button onClick={() => startLiveCamera('photo')} className="h-14 bg-primary text-white rounded-2xl font-black gap-3 shadow-lg shadow-primary/20 transition-transform active:scale-95">
+            <Button onClick={() => startLiveCamera('photo')} className="h-14 bg-primary text-white rounded-2xl font-black gap-3 shadow-lg shadow-primary/20">
               <CameraIcon size={18} /> Tirar Foto
             </Button>
-            <Button onClick={() => startLiveCamera('video')} variant="outline" className="h-14 rounded-2xl font-black gap-3 border-slate-200 transition-transform active:scale-95">
+            <Button onClick={() => startLiveCamera('video')} variant="outline" className="h-14 rounded-2xl font-black gap-3 border-slate-200">
               <VideoIcon size={18} /> Gravar Vídeo
             </Button>
             <div className="relative">
@@ -353,7 +346,7 @@ const Room = () => {
               <Button 
                 onClick={() => fileInputRef.current?.click()} 
                 variant="secondary" 
-                className="w-full h-14 rounded-2xl font-black gap-3 transition-transform active:scale-95"
+                className="w-full h-14 rounded-2xl font-black gap-3"
               >
                 <GalleryIcon size={18} /> Galeria de Fotos
               </Button>
@@ -362,7 +355,6 @@ const Room = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Live Camera Dialog */}
       <Dialog open={isLiveCameraOpen} onOpenChange={(open) => !open && stopLiveCamera()}>
         <DialogContent className="max-w-md h-[90vh] md:h-[80vh] rounded-[2.5rem] bg-black border-none p-0 overflow-hidden">
           <div className="relative h-full flex flex-col">
@@ -383,16 +375,13 @@ const Room = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Call Mock Dialog */}
       <Dialog open={isCalling} onOpenChange={setIsCalling}>
         <DialogContent className="max-w-md h-[90vh] md:h-[80vh] rounded-[2.5rem] bg-slate-900 border-none p-0 overflow-hidden shadow-2xl">
           <div className="h-full flex flex-col items-center justify-between py-16 md:py-20 text-white">
             <div className="space-y-6 text-center">
-              <div className="relative mx-auto">
-                <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-primary animate-pulse">
-                  <AvatarFallback>?</AvatarFallback>
-                </Avatar>
-              </div>
+              <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-primary animate-pulse mx-auto">
+                <AvatarFallback>?</AvatarFallback>
+              </Avatar>
               <h3 className="text-2xl md:text-3xl font-black">Vídeo Chamada</h3>
               <p className="text-primary font-black uppercase tracking-widest text-[10px] animate-bounce">Encaminhando...</p>
             </div>
