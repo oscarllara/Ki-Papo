@@ -170,22 +170,34 @@ const Room = () => {
   const AvatarPreview = ({ traits, name }: { traits?: AvatarTraits, name: string }) => {
     if (!traits) {
       return (
-        <Avatar className="h-8 w-8 shrink-0">
+        <Avatar className="h-9 w-9 shrink-0 shadow-sm">
           <AvatarFallback className="bg-slate-200 text-[10px] font-black">{name[0]}</AvatarFallback>
         </Avatar>
       );
     }
 
-    const hairColors: Record<string, string> = { 'Preto': 'bg-slate-900', 'Castanho': 'bg-amber-900', 'Loiro': 'bg-yellow-400', 'Ruivo': 'bg-orange-600' };
-    const hairColorClass = hairColors[traits.hairColor] || 'bg-slate-900';
-
+    const skinTones: Record<string, string> = { 'Claro': '#ffdbac', 'Pardo': '#e0ac69', 'Escuro': '#8d5524' };
+    const hairColors: Record<string, string> = { 'Preto': '#090806', 'Castanho': '#4e2d11', 'Loiro': '#d6b37a', 'Ruivo': '#a5452d' };
+    
     return (
-      <div className="h-8 w-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
+      <div 
+        className="h-9 w-9 rounded-full border-2 border-white shadow-md relative overflow-hidden shrink-0"
+        style={{ backgroundColor: skinTones[traits.skinTone] || '#e0ac69' }}
+      >
         {traits.hairStyle !== 'Careca' && (
-          <div className={cn("absolute -top-1 w-6 h-3 rounded-t-full opacity-60", hairColorClass)} />
+          <div 
+            className="absolute top-0 left-0 w-full h-[40%] opacity-80"
+            style={{ backgroundColor: hairColors[traits.hairColor] || '#090806' }}
+          />
         )}
-        <UserRound size={18} className="text-slate-300" />
-        {traits.glasses && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1.5 text-slate-900"><Glasses size={8} /></div>}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+           <UserRound size={18} className="text-slate-900/10" />
+        </div>
+        {traits.glasses && (
+           <div className="absolute top-[40%] left-1/2 -translate-x-1/2 text-slate-900/60 scale-[0.6]">
+             <Glasses size={14} />
+           </div>
+        )}
       </div>
     );
   };
