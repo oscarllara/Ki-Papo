@@ -22,7 +22,8 @@ import {
   Video as VideoIcon,
   Menu,
   FileImage as ImageIcon,
-  UserRound
+  UserRound,
+  Glasses
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -166,6 +167,29 @@ const Room = () => {
     setIsCreatingAvatar(false);
   };
 
+  const AvatarPreview = ({ traits, name }: { traits?: AvatarTraits, name: string }) => {
+    if (!traits) {
+      return (
+        <Avatar className="h-8 w-8 shrink-0">
+          <AvatarFallback className="bg-slate-200 text-[10px] font-black">{name[0]}</AvatarFallback>
+        </Avatar>
+      );
+    }
+
+    const hairColors: Record<string, string> = { 'Preto': 'bg-slate-900', 'Castanho': 'bg-amber-900', 'Loiro': 'bg-yellow-400', 'Ruivo': 'bg-orange-600' };
+    const hairColorClass = hairColors[traits.hairColor] || 'bg-slate-900';
+
+    return (
+      <div className="h-8 w-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 relative">
+        {traits.hairStyle !== 'Careca' && (
+          <div className={cn("absolute -top-1 w-6 h-3 rounded-t-full opacity-60", hairColorClass)} />
+        )}
+        <UserRound size={18} className="text-slate-300" />
+        {traits.glasses && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1.5 text-slate-900"><Glasses size={8} /></div>}
+      </div>
+    );
+  };
+
   const UserList = () => (
     <div className="space-y-2">
       {onlineUsers.map(user => (
@@ -297,11 +321,7 @@ const Room = () => {
                   {msg.isPrivate && <Lock size={10} className="text-primary" />}
                 </div>
                 <div className="flex items-end gap-2">
-                  {msg.isMe && msg.avatarTraits && (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
-                      <UserRound size={16} className="text-primary" />
-                    </div>
-                  )}
+                  {msg.isMe && <AvatarPreview traits={msg.avatarTraits} name={msg.sender} />}
                   <div className={cn(
                     "p-3 md:p-4 rounded-[1.25rem] md:rounded-[1.5rem] shadow-sm", 
                     msg.isMe ? (msg.isPrivate ? "bg-indigo-700 text-white rounded-tr-none" : "bg-primary text-white rounded-tr-none") : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
@@ -315,11 +335,7 @@ const Room = () => {
                       </div>
                     )}
                   </div>
-                  {!msg.isMe && (
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className="bg-slate-200 text-[10px] font-black">{msg.sender[0]}</AvatarFallback>
-                    </Avatar>
-                  )}
+                  {!msg.isMe && <AvatarPreview name={msg.sender} />}
                 </div>
               </div>
             ))}

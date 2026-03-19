@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Glasses, Ruler, Weight, Palette, UserRound } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -34,31 +33,41 @@ const AvatarCreator = ({ onSave, onCancel }: AvatarCreatorProps) => {
 
   const hairStyles = ['Curto', 'Longo', 'Careca', 'De Lado', 'Arrepiado'];
   const colors = [
-    { name: 'Preto', bg: 'bg-slate-900' },
-    { name: 'Castanho', bg: 'bg-amber-900' },
-    { name: 'Loiro', bg: 'bg-yellow-400' },
-    { name: 'Ruivo', bg: 'bg-orange-600' }
+    { name: 'Preto', bg: 'bg-slate-900', text: 'text-slate-900' },
+    { name: 'Castanho', bg: 'bg-amber-900', text: 'text-amber-900' },
+    { name: 'Loiro', bg: 'bg-yellow-400', text: 'text-yellow-400' },
+    { name: 'Ruivo', bg: 'bg-orange-600', text: 'text-orange-600' }
   ];
+  
   const eyeColors = [
-    { name: 'Castanho', bg: 'bg-amber-900' },
-    { name: 'Azul', bg: 'bg-blue-500' },
-    { name: 'Verde', bg: 'bg-emerald-600' }
+    { name: 'Castanho', bg: 'bg-amber-900', text: 'text-amber-900' },
+    { name: 'Azul', bg: 'bg-blue-500', text: 'text-blue-500' },
+    { name: 'Verde', bg: 'bg-emerald-600', text: 'text-emerald-600' }
   ];
+
+  const activeHairColor = colors.find(c => c.name === traits.hairColor)?.text || 'text-slate-900';
+  const activeEyeColor = eyeColors.find(c => c.name === traits.eyeColor)?.text || 'text-amber-900';
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in duration-300">
       <div className="flex justify-center mb-8">
         <div className="relative">
           <div className={cn(
-            "w-32 h-32 rounded-full border-4 border-primary flex items-center justify-center bg-slate-50 overflow-hidden shadow-xl",
+            "w-32 h-32 rounded-full border-4 flex items-center justify-center bg-white overflow-hidden shadow-xl transition-colors",
             traits.hairStyle === 'Careca' ? "pt-4" : ""
-          )}>
-            <UserRound size={80} className={cn("text-slate-400", traits.glasses ? "mt-2" : "")} />
-            {traits.glasses && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-4 text-slate-900">
-                <Glasses size={40} />
-              </div>
-            )}
+          )} style={{ borderColor: eyeColors.find(c => c.name === traits.eyeColor)?.bg.replace('bg-', '') || '#e2e8f0' }}>
+            <div className="relative flex flex-col items-center">
+              {/* Representação visual do estilo de cabelo */}
+              {traits.hairStyle !== 'Careca' && (
+                <div className={cn("absolute -top-6 w-16 h-8 rounded-t-full opacity-80", activeHairColor.replace('text-', 'bg-'))} />
+              )}
+              <UserRound size={80} className="text-slate-300" />
+              {traits.glasses && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-6 text-slate-900">
+                  <Glasses size={32} />
+                </div>
+              )}
+            </div>
           </div>
           <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-xl shadow-lg">
             <User size={20} />
@@ -116,7 +125,27 @@ const AvatarCreator = ({ onSave, onCancel }: AvatarCreatorProps) => {
                   className={cn(
                     "w-8 h-8 rounded-full border-2 transition-all",
                     c.bg,
-                    traits.hairColor === c.name ? "border-primary scale-110 shadow-md" : "border-transparent"
+                    traits.hairColor === c.name ? "border-primary scale-110 shadow-md" : "border-slate-200"
+                  )}
+                  title={c.name}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+               Olhos
+            </Label>
+            <div className="flex gap-2">
+              {eyeColors.map(c => (
+                <button
+                  key={c.name}
+                  onClick={() => setTraits({...traits, eyeColor: c.name})}
+                  className={cn(
+                    "w-8 h-8 rounded-full border-2 transition-all",
+                    c.bg,
+                    traits.eyeColor === c.name ? "border-primary scale-110 shadow-md" : "border-slate-200"
                   )}
                   title={c.name}
                 />
