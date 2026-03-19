@@ -21,13 +21,16 @@ import {
   Image as GalleryIcon,
   Video as VideoIcon,
   Menu,
-  FileImage as ImageIcon
+  FileImage as ImageIcon,
+  UserCircle2,
+  Sparkles
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import AdSlot from '@/components/ads/AdSlot';
+import AvatarCreator, { AvatarData } from '@/components/chat/AvatarCreator';
 
 interface ChatMessage {
   id: string;
@@ -50,6 +53,16 @@ const Room = () => {
   
   const [nickname, setNickname] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
+  const [showAvatarCreator, setShowAvatarCreator] = useState(false);
+  const [avatarData, setAvatarData] = useState<AvatarData>({
+    height: 'media',
+    weight: 'atletico',
+    hairColor: 'preto',
+    eyeColor: 'castanho',
+    glasses: false,
+    hairStyle: 'short'
+  });
+
   const [message, setMessage] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [targetUser, setTargetUser] = useState<string | null>(null);
@@ -148,7 +161,16 @@ const Room = () => {
     }, 50);
   };
 
-  const handleJoin = () => { if (nickname.trim().length >= 3) setHasJoined(true); };
+  const handleJoin = () => { 
+    if (nickname.trim().length >= 3) {
+      setShowAvatarCreator(true);
+    }
+  };
+
+  const finalizeJoin = () => {
+    setHasJoined(true);
+    setShowAvatarCreator(false);
+  };
 
   const UserList = () => (
     <div className="space-y-2">
@@ -178,23 +200,41 @@ const Room = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-sm p-8 md:p-10 rounded-[2.5rem] border-none shadow-2xl text-center space-y-6">
-          <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary"><Users size={40} /></div>
-          <h2 className="text-2xl font-black text-slate-800">Entrar na Sala</h2>
-          <Input 
-            placeholder="Seu apelido..." 
-            value={nickname} 
-            onChange={(e) => setNickname(e.target.value)} 
-            onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
-            className="h-14 rounded-2xl text-center font-bold" 
-            autoFocus 
-          />
-          <Button 
-            onClick={handleJoin} 
-            disabled={nickname.trim().length < 3} 
-            className="w-full h-16 bg-primary rounded-2xl font-black text-white shadow-xl transition-transform active:scale-95"
-          >
-            Entrar
-          </Button>
+          {!showAvatarCreator ? (
+            <>
+              <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary"><UserCircle2 size={40} /></div>
+              <h2 className="text-2xl font-black text-slate-800">Entrar na Sala</h2>
+              <Input 
+                placeholder="Seu apelido..." 
+                value={nickname} 
+                onChange={(e) => setNickname(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
+                className="h-14 rounded-2xl text-center font-bold" 
+                autoFocus 
+              />
+              <Button 
+                onClick={handleJoin} 
+                disabled={nickname.trim().length < 3} 
+                className="w-full h-16 bg-primary rounded-2xl font-black text-white shadow-xl transition-transform active:scale-95"
+              >
+                Continuar
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <div className="bg-primary/10 p-3 rounded-2xl text-primary"><Sparkles size={24} /></div>
+                <h2 className="text-2xl font-black text-slate-800">Crie seu Avatar</h2>
+              </div>
+              <p className="text-xs font-bold text-slate-400 -mt-2">Opcional: Personalize como os outros te veem</p>
+              <AvatarCreator 
+                data={avatarData} 
+                onChange={setAvatarData} 
+                onConfirm={finalizeJoin} 
+                onCancel={finalizeJoin} 
+              />
+            </>
+          )}
         </Card>
       </div>
     );
