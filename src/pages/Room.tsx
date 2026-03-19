@@ -167,35 +167,39 @@ const Room = () => {
     setIsCreatingAvatar(false);
   };
 
-  const AvatarPreview = ({ traits, name }: { traits?: AvatarTraits, name: string }) => {
+  const CaricaturePreview = ({ traits, name }: { traits?: AvatarTraits, name: string }) => {
     if (!traits) {
       return (
-        <Avatar className="h-9 w-9 shrink-0 shadow-sm">
+        <Avatar className="h-10 w-10 shrink-0 border-2 border-white shadow-sm">
           <AvatarFallback className="bg-slate-200 text-[10px] font-black">{name[0]}</AvatarFallback>
         </Avatar>
       );
     }
 
-    const skinTones: Record<string, string> = { 'Claro': '#ffdbac', 'Pardo': '#e0ac69', 'Escuro': '#8d5524' };
-    const hairColors: Record<string, string> = { 'Preto': '#090806', 'Castanho': '#4e2d11', 'Loiro': '#d6b37a', 'Ruivo': '#a5452d' };
+    const skinTones: Record<string, string> = { 'Claro': '#ffdbac', 'Pardo': '#e0ac69', 'Moreno': '#8d5524', 'Negro': '#4b2c20' };
+    const hairColors: Record<string, string> = { 'Preto': '#090806', 'Castanho': '#4e2d11', 'Loiro': '#d6b37a', 'Ruivo': '#a5452d', 'Grisalho': '#b8b8b8' };
     
+    const skin = skinTones[traits.skinTone] || '#e0ac69';
+    const hair = hairColors[traits.hairColor] || '#4e2d11';
+
     return (
       <div 
-        className="h-9 w-9 rounded-full border-2 border-white shadow-md relative overflow-hidden shrink-0"
-        style={{ backgroundColor: skinTones[traits.skinTone] || '#e0ac69' }}
+        className="h-10 w-10 rounded-xl border-2 border-white shadow-md relative overflow-hidden shrink-0 transition-transform hover:scale-110 active:scale-95"
+        style={{ backgroundColor: skin }}
       >
         {traits.hairStyle !== 'Careca' && (
           <div 
-            className="absolute top-0 left-0 w-full h-[40%] opacity-80"
-            style={{ backgroundColor: hairColors[traits.hairColor] || '#090806' }}
+            className="absolute top-0 left-0 w-full h-[40%] opacity-90"
+            style={{ backgroundColor: hair }}
           />
         )}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-           <UserRound size={18} className="text-slate-900/10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20">
+           <UserRound size={18} className="text-black" />
         </div>
         {traits.glasses && (
-           <div className="absolute top-[40%] left-1/2 -translate-x-1/2 text-slate-900/60 scale-[0.6]">
-             <Glasses size={14} />
+           <div className="absolute top-[40%] left-1/2 -translate-x-1/2 flex gap-1 scale-[0.5]">
+             <div className="w-4 h-4 border-2 border-black/80 rounded-sm" />
+             <div className="w-4 h-4 border-2 border-black/80 rounded-sm" />
            </div>
         )}
       </div>
@@ -232,7 +236,7 @@ const Room = () => {
         <Card className="w-full max-w-lg p-8 md:p-10 rounded-[2.5rem] border-none shadow-2xl space-y-6">
           {!isCreatingAvatar ? (
             <div className="text-center space-y-6">
-              <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary"><Users size={40} /></div>
+              <div className="bg-[#2377bb]/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-[#2377bb]"><Users size={40} /></div>
               <h2 className="text-2xl font-black text-slate-800">Entrar na Sala</h2>
               <Input 
                 placeholder="Seu apelido..." 
@@ -245,7 +249,7 @@ const Room = () => {
               <Button 
                 onClick={handleJoin} 
                 disabled={nickname.trim().length < 3} 
-                className="w-full h-16 bg-primary rounded-2xl font-black text-white shadow-xl transition-transform active:scale-95"
+                className="w-full h-16 bg-[#2377bb] rounded-2xl font-black text-white shadow-xl transition-transform active:scale-95"
               >
                 Próximo
               </Button>
@@ -253,8 +257,8 @@ const Room = () => {
           ) : (
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-2xl font-black text-slate-800">Crie seu Avatar</h2>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Personalize como os outros te veem</p>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Sua Caricatura</h2>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Crie seu personagem para o chat</p>
               </div>
               <AvatarCreator onSave={finalizeJoin} onCancel={() => finalizeJoin()} />
             </div>
@@ -268,7 +272,7 @@ const Room = () => {
     <div className="flex h-screen bg-white overflow-hidden font-sans">
       <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
         <div className="p-8 border-b border-slate-100 bg-white">
-          <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Contatos Online</h3>
+          <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Pessoas na Sala</h3>
         </div>
         <ScrollArea className="flex-1 p-4">
           <UserList />
@@ -291,13 +295,13 @@ const Room = () => {
           </div>
           
           <div className="flex items-center gap-1 md:gap-2">
-            <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-full h-10 w-10">
+            <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-[#2377bb] rounded-full h-10 w-10">
               <VideoIcon size={20} />
             </Button>
             
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden text-slate-400 hover:text-primary rounded-full h-10 w-10">
+                <Button variant="ghost" size="icon" className="lg:hidden text-slate-400 hover:text-[#2377bb] rounded-full h-10 w-10">
                   <Users size={20} />
                 </Button>
               </SheetTrigger>
@@ -330,13 +334,13 @@ const Room = () => {
                   <span className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-tight">
                     {msg.isPrivate ? `PARA ${msg.receiver}` : msg.sender} • {msg.time}
                   </span>
-                  {msg.isPrivate && <Lock size={10} className="text-primary" />}
+                  {msg.isPrivate && <Lock size={10} className="text-[#2377bb]" />}
                 </div>
                 <div className="flex items-end gap-2">
-                  {msg.isMe && <AvatarPreview traits={msg.avatarTraits} name={msg.sender} />}
+                  {msg.isMe && <CaricaturePreview traits={msg.avatarTraits} name={msg.sender} />}
                   <div className={cn(
                     "p-3 md:p-4 rounded-[1.25rem] md:rounded-[1.5rem] shadow-sm", 
-                    msg.isMe ? (msg.isPrivate ? "bg-indigo-700 text-white rounded-tr-none" : "bg-primary text-white rounded-tr-none") : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
+                    msg.isMe ? (msg.isPrivate ? "bg-indigo-700 text-white rounded-tr-none" : "bg-[#2377bb] text-white rounded-tr-none") : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
                   )}>
                     {msg.type === 'text' ? (
                       <p className="text-sm font-medium leading-relaxed break-words">{msg.content}</p>
@@ -347,7 +351,7 @@ const Room = () => {
                       </div>
                     )}
                   </div>
-                  {!msg.isMe && <AvatarPreview name={msg.sender} />}
+                  {!msg.isMe && <CaricaturePreview name={msg.sender} />}
                 </div>
               </div>
             ))}
@@ -357,16 +361,16 @@ const Room = () => {
         <div className="p-3 md:p-6 bg-white border-t border-slate-100 shrink-0 pb-safe">
           <div className="max-w-4xl mx-auto space-y-3">
             {isPrivate && (
-              <div className="flex items-center justify-between bg-primary text-white text-[9px] md:text-[10px] font-black uppercase px-4 py-2 rounded-xl animate-in slide-in-from-bottom-2">
+              <div className="flex items-center justify-between bg-[#2377bb] text-white text-[9px] md:text-[10px] font-black uppercase px-4 py-2 rounded-xl animate-in slide-in-from-bottom-2">
                 <span className="flex items-center gap-2"><Lock size={12}/> Privado para: {targetUser}</span>
                 <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="hover:underline">CANCELAR</button>
               </div>
             )}
-            <div className="flex items-center gap-2 md:gap-3 bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] p-1.5 border border-transparent focus-within:border-primary/20">
+            <div className="flex items-center gap-2 md:gap-3 bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] p-1.5 border border-transparent focus-within:border-[#2377bb]/20">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-slate-400 hover:text-primary rounded-full h-10 w-10 shrink-0" 
+                className="text-slate-400 hover:text-[#2377bb] rounded-full h-10 w-10 shrink-0" 
                 onClick={() => setIsMediaDialogOpen(true)}
               >
                 <CameraIcon size={20} />
@@ -382,7 +386,7 @@ const Room = () => {
               <Button 
                 onClick={() => handleSendMessage()} 
                 disabled={!message.trim()} 
-                className="bg-primary hover:bg-primary/90 text-white rounded-full md:rounded-[1.25rem] w-10 h-10 md:w-12 md:h-12 shadow-xl shadow-primary/20 shrink-0 transition-transform active:scale-90"
+                className="bg-[#2377bb] hover:bg-[#1c629d] text-white rounded-full md:rounded-[1.25rem] w-10 h-10 md:w-12 md:h-12 shadow-xl shadow-blue-200 shrink-0 transition-transform active:scale-90"
               >
                 <SendHorizontal size={20} />
               </Button>
@@ -397,7 +401,7 @@ const Room = () => {
             <DialogTitle className="text-center text-xl font-black">Enviar Mídia</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3">
-            <Button onClick={() => startLiveCamera('photo')} className="h-14 bg-primary text-white rounded-2xl font-black gap-3 shadow-lg shadow-primary/20">
+            <Button onClick={() => startLiveCamera('photo')} className="h-14 bg-[#2377bb] text-white rounded-2xl font-black gap-3 shadow-lg shadow-blue-100">
               <CameraIcon size={18} /> Tirar Foto
             </Button>
             <Button onClick={() => startLiveCamera('video')} variant="outline" className="h-14 rounded-2xl font-black gap-3 border-slate-200">
