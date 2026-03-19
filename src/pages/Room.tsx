@@ -21,13 +21,15 @@ import {
   Image as GalleryIcon,
   Video as VideoIcon,
   Menu,
-  FileImage as ImageIcon
+  FileImage as ImageIcon,
+  UserRound
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import AdSlot from '@/components/ads/AdSlot';
+import AvatarCreator, { AvatarTraits } from '@/components/chat/AvatarCreator';
 
 interface ChatMessage {
   id: string;
@@ -38,6 +40,7 @@ interface ChatMessage {
   isMe: boolean;
   isPrivate?: boolean;
   type?: 'text' | 'image' | 'video';
+  avatarTraits?: AvatarTraits;
 }
 
 const Room = () => {
@@ -49,6 +52,8 @@ const Room = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [nickname, setNickname] = useState('');
+  const [isCreatingAvatar, setIsCreatingAvatar] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<AvatarTraits | null>(null);
   const [hasJoined, setHasJoined] = useState(false);
   const [message, setMessage] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -97,7 +102,8 @@ const Room = () => {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
       isPrivate,
-      type
+      type,
+      avatarTraits: userAvatar || undefined
     };
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
@@ -148,7 +154,17 @@ const Room = () => {
     }, 50);
   };
 
-  const handleJoin = () => { if (nickname.trim().length >= 3) setHasJoined(true); };
+  const handleJoin = () => { 
+    if (nickname.trim().length >= 3) {
+      setIsCreatingAvatar(true);
+    } 
+  };
+
+  const finalizeJoin = (traits?: AvatarTraits) => {
+    if (traits) setUserAvatar(traits);
+    setHasJoined(true);
+    setIsCreatingAvatar(false);
+  };
 
   const UserList = () => (
     <div className="space-y-2">
@@ -177,24 +193,36 @@ const Room = () => {
   if (!hasJoined) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm p-8 md:p-10 rounded-[2.5rem] border-none shadow-2xl text-center space-y-6">
-          <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary"><Users size={40} /></div>
-          <h2 className="text-2xl font-black text-slate-800">Entrar na Sala</h2>
-          <Input 
-            placeholder="Seu apelido..." 
-            value={nickname} 
-            onChange={(e) => setNickname(e.target.value)} 
-            onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
-            className="h-14 rounded-2xl text-center font-bold" 
-            autoFocus 
-          />
-          <Button 
-            onClick={handleJoin} 
-            disabled={nickname.trim().length < 3} 
-            className="w-full h-16 bg-primary rounded-2xl font-black text-white shadow-xl transition-transform active:scale-95"
-          >
-            Entrar
-          </Button>
+        <Card className="w-full max-w-lg p-8 md:p-10 rounded-[2.5rem] border-none shadow-2xl space-y-6">
+          {!isCreatingAvatar ? (
+            <div className="text-center space-y-6">
+              <div className="bg-primary/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-primary"><Users size={40} /></div>
+              <h2 className="text-2xl font-black text-slate-800">Entrar na Sala</h2>
+              <Input 
+                placeholder="Seu apelido..." 
+                value={nickname} 
+                onChange={(e) => setNickname(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
+                className="h-14 rounded-2xl text-center font-bold" 
+                autoFocus 
+              />
+              <Button 
+                onClick={handleJoin} 
+                disabled={nickname.trim().length < 3} 
+                className="w-full h-16 bg-primary rounded-2xl font-black text-white shadow-xl transition-transform active:scale-95"
+              >
+                Próximo
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-black text-slate-800">Crie seu Avatar</h2>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Personalize como os outros te veem</p>
+              </div>
+              <AvatarCreator onSave={finalizeJoin} onCancel={() => finalizeJoin()} />
+            </div>
+          )}
         </Card>
       </div>
     );
@@ -268,17 +296,29 @@ const Room = () => {
                   </span>
                   {msg.isPrivate && <Lock size={10} className="text-primary" />}
                 </div>
-                <div className={cn(
-                  "p-3 md:p-4 rounded-[1.25rem] md:rounded-[1.5rem] shadow-sm", 
-                  msg.isMe ? (msg.isPrivate ? "bg-indigo-700 text-white rounded-tr-none" : "bg-primary text-white rounded-tr-none") : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
-                )}>
-                  {msg.type === 'text' ? (
-                    <p className="text-sm font-medium leading-relaxed break-words">{msg.content}</p>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      {msg.type === 'image' ? <ImageIcon size={20} /> : <VideoIcon size={20} />}
-                      <p className="text-xs font-black italic">{msg.content}</p>
+                <div className="flex items-end gap-2">
+                  {msg.isMe && msg.avatarTraits && (
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                      <UserRound size={16} className="text-primary" />
                     </div>
+                  )}
+                  <div className={cn(
+                    "p-3 md:p-4 rounded-[1.25rem] md:rounded-[1.5rem] shadow-sm", 
+                    msg.isMe ? (msg.isPrivate ? "bg-indigo-700 text-white rounded-tr-none" : "bg-primary text-white rounded-tr-none") : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
+                  )}>
+                    {msg.type === 'text' ? (
+                      <p className="text-sm font-medium leading-relaxed break-words">{msg.content}</p>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        {msg.type === 'image' ? <ImageIcon size={20} /> : <VideoIcon size={20} />}
+                        <p className="text-xs font-black italic">{msg.content}</p>
+                      </div>
+                    )}
+                  </div>
+                  {!msg.isMe && (
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback className="bg-slate-200 text-[10px] font-black">{msg.sender[0]}</AvatarFallback>
+                    </Avatar>
                   )}
                 </div>
               </div>
