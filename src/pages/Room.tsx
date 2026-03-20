@@ -176,32 +176,31 @@ const Room = () => {
       );
     }
 
-    const skinTones: Record<string, string> = { 'Claro': '#FFDBAC', 'Pardo': '#C68642', 'Moreno': '#8D5524', 'Negro': '#3C2E28' };
-    const hairColors: Record<string, string> = { 'Azul Acinzentado': '#3D4551', 'Preto': '#1A1A1A', 'Castanho': '#4E2D11', 'Loiro': '#E5C453' };
-    
-    const skin = skinTones[traits.skinTone] || '#C68642';
-    const hair = hairColors[traits.hairColor] || '#3D4551';
-
     return (
       <div 
-        className="h-10 w-10 rounded-xl border-2 border-white shadow-md relative overflow-hidden shrink-0 transition-transform hover:scale-110"
-        style={{ backgroundColor: skin }}
+        className="h-11 w-11 rounded-xl border-2 border-white shadow-md relative overflow-hidden shrink-0 transition-all hover:scale-110"
+        style={{ backgroundColor: traits.skinTone }}
       >
+        {/* Cabelo */}
         {traits.hairStyle !== 'Careca' && (
           <div 
             className="absolute top-0 left-0 w-full h-[45%] z-10 opacity-90"
-            style={{ backgroundColor: hair }}
+            style={{ backgroundColor: traits.hairColor }}
           />
         )}
+        {/* Olhos e detalhes */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
            <div className="flex gap-1.5">
-             <div className="w-1.5 h-1 bg-white rounded-full opacity-60" />
-             <div className="w-1.5 h-1 bg-white rounded-full opacity-60" />
+             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
+             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
            </div>
-           {traits.glasses && (
-             <div className="absolute top-[40%] w-6 h-3 border border-black/20 rounded-sm bg-white/10" />
+           {/* Barba pequena */}
+           {traits.facialHair !== 'Nenhuma' && (
+             <div className="absolute bottom-1 w-6 h-3 bg-black/20 rounded-full" />
            )}
-           <div className="w-3 h-1 border-b border-black/10 mt-1" />
+           {traits.glasses && (
+             <div className="absolute top-[40%] w-8 h-3 border border-black/20 rounded-sm bg-white/10" />
+           )}
         </div>
       </div>
     );
@@ -258,8 +257,8 @@ const Room = () => {
           ) : (
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Personalizar Caricatura</h2>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Personalize para ficar parecido com você</p>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Criar Avatar</h2>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Personalize seu estilo no Ki Papo</p>
               </div>
               <AvatarCreator onSave={finalizeJoin} onCancel={() => finalizeJoin()} />
             </div>
