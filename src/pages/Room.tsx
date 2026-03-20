@@ -176,32 +176,33 @@ const Room = () => {
       );
     }
 
-    const skinTones: Record<string, string> = { 'Claro': '#ffdbac', 'Pardo': '#e0ac69', 'Moreno': '#8d5524', 'Negro': '#4b2c20' };
-    const hairColors: Record<string, string> = { 'Preto': '#090806', 'Castanho': '#4e2d11', 'Loiro': '#d6b37a', 'Ruivo': '#a5452d', 'Grisalho': '#b8b8b8' };
+    const skinTones: Record<string, string> = { 'Claro': '#FFDBAC', 'Pardo': '#F1C27D', 'Moreno': '#8D5524', 'Negro': '#4B2C20' };
+    const hairColors: Record<string, string> = { 'Preto': '#1A1A1A', 'Castanho': '#4E2D11', 'Loiro': '#E5C453', 'Ruivo': '#B55239', 'Grisalho': '#A0A0A0' };
     
-    const skin = skinTones[traits.skinTone] || '#e0ac69';
-    const hair = hairColors[traits.hairColor] || '#4e2d11';
+    const skin = skinTones[traits.skinTone] || '#F1C27D';
+    const hair = hairColors[traits.hairColor] || '#4E2D11';
 
     return (
       <div 
-        className="h-10 w-10 rounded-xl border-2 border-white shadow-md relative overflow-hidden shrink-0 transition-transform hover:scale-110 active:scale-95"
+        className="h-10 w-10 rounded-[40%] border-2 border-white shadow-md relative overflow-hidden shrink-0 transition-transform hover:scale-110"
         style={{ backgroundColor: skin }}
       >
         {traits.hairStyle !== 'Careca' && (
           <div 
-            className="absolute top-0 left-0 w-full h-[40%] opacity-90"
+            className="absolute top-0 left-0 w-full h-[40%] z-10"
             style={{ backgroundColor: hair }}
           />
         )}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20">
-           <UserRound size={18} className="text-black" />
-        </div>
-        {traits.glasses && (
-           <div className="absolute top-[40%] left-1/2 -translate-x-1/2 flex gap-1 scale-[0.5]">
-             <div className="w-4 h-4 border-2 border-black/80 rounded-sm" />
-             <div className="w-4 h-4 border-2 border-black/80 rounded-sm" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
+           <div className="flex gap-1.5">
+             <div className="w-1.5 h-1.5 bg-white rounded-full shadow-inner border border-black/5" />
+             <div className="w-1.5 h-1.5 bg-white rounded-full shadow-inner border border-black/5" />
            </div>
-        )}
+           {traits.glasses && (
+             <div className="absolute top-[35%] w-6 h-3 border border-black rounded-sm bg-black/5" />
+           )}
+           <div className="w-3 h-1 border-b border-black/10 mt-1" />
+        </div>
       </div>
     );
   };
@@ -258,7 +259,7 @@ const Room = () => {
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">Sua Caricatura</h2>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Crie seu personagem para o chat</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Crie seu personagem estilo Bitmoji</p>
               </div>
               <AvatarCreator onSave={finalizeJoin} onCancel={() => finalizeJoin()} />
             </div>
