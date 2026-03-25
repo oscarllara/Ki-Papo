@@ -20,7 +20,8 @@ import {
   Globe,
   Loader2,
   Music,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { fetchStates, fetchCitiesByState, IBGEState, IBGECity } from '@/services/ibge';
