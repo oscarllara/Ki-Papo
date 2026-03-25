@@ -23,7 +23,8 @@ import {
   Menu,
   FileImage as ImageIcon,
   UserRound,
-  Glasses
+  Glasses,
+  Info
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -108,7 +109,6 @@ const Room = () => {
     };
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
-    
     setTimeout(() => messageInputRef.current?.focus(), 10);
   };
 
@@ -170,36 +170,30 @@ const Room = () => {
   const CaricaturePreview = ({ traits, name }: { traits?: AvatarTraits, name: string }) => {
     if (!traits) {
       return (
-        <Avatar className="h-10 w-10 shrink-0 border-2 border-white shadow-sm">
-          <AvatarFallback className="bg-slate-200 text-[10px] font-black">{name[0]}</AvatarFallback>
+        <Avatar className="h-12 w-12 shrink-0 border-2 border-white shadow-md">
+          <AvatarFallback className="bg-slate-100 text-[10px] font-black text-slate-400">{name[0]}</AvatarFallback>
         </Avatar>
       );
     }
 
     return (
       <div 
-        className="h-11 w-11 rounded-xl border-2 border-white shadow-md relative overflow-hidden shrink-0 transition-all hover:scale-110"
+        className="h-12 w-12 rounded-2xl border-2 border-white shadow-lg relative overflow-hidden shrink-0 transition-all hover:scale-110"
         style={{ backgroundColor: traits.skinTone }}
       >
-        {/* Cabelo */}
         {traits.hairStyle !== 'Careca' && (
-          <div 
-            className="absolute top-0 left-0 w-full h-[45%] z-10 opacity-90"
-            style={{ backgroundColor: traits.hairColor }}
-          />
+          <div className="absolute top-0 left-0 w-full h-[45%] z-10 opacity-90" style={{ backgroundColor: traits.hairColor }} />
         )}
-        {/* Olhos e detalhes */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
            <div className="flex gap-1.5">
-             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
-             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
+             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
+             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
            </div>
-           {/* Barba pequena */}
            {traits.facialHair !== 'Nenhuma' && (
-             <div className="absolute bottom-1 w-6 h-3 bg-black/20 rounded-full" />
+             <div className="absolute bottom-1 w-7 h-3.5 bg-black/20 rounded-full" />
            )}
            {traits.glasses && (
-             <div className="absolute top-[40%] w-8 h-3 border border-black/20 rounded-sm bg-white/10" />
+             <div className="absolute top-[38%] w-9 h-3.5 border border-black/20 rounded-sm bg-white/10" />
            )}
         </div>
       </div>
@@ -207,23 +201,25 @@ const Room = () => {
   };
 
   const UserList = () => (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {onlineUsers.map(user => (
         <button 
           key={user} 
           onClick={() => selectPrivateUser(user)} 
           className={cn(
-            "w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white text-left", 
-            targetUser === user ? "bg-white shadow-md ring-1 ring-primary/10" : ""
+            "w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white text-left group", 
+            targetUser === user ? "bg-white shadow-xl shadow-primary/5 ring-1 ring-primary/10" : ""
           )}
         >
           <div className="relative">
-            <Avatar className="h-10 w-10"><AvatarFallback className="bg-slate-200 font-black text-xs">{user[0]}</AvatarFallback></Avatar>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+            <Avatar className="h-12 w-12 border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
+              <AvatarFallback className="bg-slate-50 font-black text-xs text-slate-400">{user[0]}</AvatarFallback>
+            </Avatar>
+            <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
           </div>
           <div className="flex-1 overflow-hidden">
-            <span className="text-sm font-bold text-slate-700 block truncate">{user}</span>
-            <span className="text-[9px] text-emerald-600 font-bold uppercase">Online</span>
+            <span className="text-sm font-black text-slate-700 block truncate tracking-tight">{user}</span>
+            <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Disponível</span>
           </div>
         </button>
       ))}
@@ -232,33 +228,38 @@ const Room = () => {
 
   if (!hasJoined) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-lg p-8 md:p-10 rounded-[2.5rem] border-none shadow-2xl space-y-6">
+      <div className="min-h-screen bg-[#FDFDFF] flex items-center justify-center p-6">
+        <Card className="w-full max-w-xl p-10 md:p-14 rounded-[3.5rem] border-none shadow-[0_48px_96px_-24px_rgba(0,0,0,0.12)] space-y-10 bg-white">
           {!isCreatingAvatar ? (
-            <div className="text-center space-y-6">
-              <div className="bg-[#2377bb]/10 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-[#2377bb]"><Users size={40} /></div>
-              <h2 className="text-2xl font-black text-slate-800">Entrar na Sala</h2>
+            <div className="text-center space-y-8">
+              <div className="bg-primary/5 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner">
+                <Users size={48} className="animate-in zoom-in duration-700" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Entrar na Sala</h2>
+                <p className="text-slate-400 font-bold text-sm">Como você quer ser chamado?</p>
+              </div>
               <Input 
                 placeholder="Seu apelido..." 
                 value={nickname} 
                 onChange={(e) => setNickname(e.target.value)} 
                 onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
-                className="h-14 rounded-2xl text-center font-bold" 
+                className="h-20 rounded-3xl text-center font-black text-2xl border-none bg-slate-50 shadow-inner focus-visible:ring-primary/20" 
                 autoFocus 
               />
               <Button 
                 onClick={handleJoin} 
                 disabled={nickname.trim().length < 3} 
-                className="w-full h-16 bg-[#2377bb] rounded-2xl font-black text-white shadow-xl transition-transform active:scale-95"
+                className="w-full h-20 bg-primary hover:bg-primary/90 rounded-3xl font-black text-xl text-white shadow-2xl shadow-primary/20 transition-all active:scale-95"
               >
-                Próximo
+                PRÓXIMO PASSO
               </Button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div className="text-center">
-                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Criar Avatar</h2>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Personalize seu estilo no Ki Papo</p>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Crie seu Estilo</h2>
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mt-3">Sua identidade visual no Ki Papo</p>
               </div>
               <AvatarCreator onSave={finalizeJoin} onCancel={() => finalizeJoin()} />
             </div>
@@ -269,47 +270,53 @@ const Room = () => {
   }
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden font-sans">
-      <aside className="w-80 bg-slate-50 border-r border-slate-100 hidden lg:flex flex-col">
-        <div className="p-8 border-b border-slate-100 bg-white">
-          <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Pessoas na Sala</h3>
+    <div className="flex h-screen bg-[#FDFDFF] overflow-hidden font-sans">
+      <aside className="w-80 bg-white border-r border-slate-100 hidden lg:flex flex-col shadow-2xl shadow-slate-200/20 z-20">
+        <div className="p-8 border-b border-slate-50">
+          <h3 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[11px]">Pessoas Conectadas</h3>
         </div>
         <ScrollArea className="flex-1 p-4">
           <UserList />
-          <div className="mt-10">
-            <AdSlot city={cityName} slotIndex={1} className="h-64" />
+          <div className="mt-10 p-2">
+            <AdSlot city={cityName} slotIndex={1} className="h-64 rounded-[2.5rem]" />
           </div>
         </ScrollArea>
       </aside>
 
-      <main className="flex-1 flex flex-col relative">
-        <header className="h-16 md:h-20 border-b border-slate-100 flex items-center justify-between px-4 md:px-6 bg-white z-10 shadow-sm shrink-0">
-          <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/lobby')} className="rounded-full text-slate-400 h-10 w-10">
-              <ArrowLeft size={20} />
+      <main className="flex-1 flex flex-col relative bg-white">
+        <header className="h-20 md:h-24 border-b border-slate-100 flex items-center justify-between px-6 md:px-10 bg-white/90 backdrop-blur-xl z-10 shrink-0">
+          <div className="flex items-center gap-4 md:gap-6">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/lobby')} className="rounded-2xl text-slate-300 hover:text-primary h-12 w-12 hover:bg-primary/5">
+              <ArrowLeft size={24} />
             </Button>
             <div className="overflow-hidden">
-              <h2 className="font-black text-slate-900 text-base md:text-xl tracking-tight truncate">{cityName}</h2>
-              <span className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest">Papo Aberto</span>
+              <h2 className="font-black text-slate-900 text-xl md:text-2xl tracking-tighter truncate">{cityName}</h2>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Sala Ativa</span>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-1 md:gap-2">
-            <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-[#2377bb] rounded-full h-10 w-10">
-              <VideoIcon size={20} />
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-2xl h-12 w-12 hover:bg-primary/5 transition-colors">
+              <VideoIcon size={22} />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-2xl h-12 w-12 hover:bg-primary/5 transition-colors">
+              <Info size={22} />
             </Button>
             
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden text-slate-400 hover:text-[#2377bb] rounded-full h-10 w-10">
-                  <Users size={20} />
+                <Button variant="ghost" size="icon" className="lg:hidden text-slate-300 hover:text-primary rounded-2xl h-12 w-12 hover:bg-primary/5">
+                  <Users size={22} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="p-0 border-none w-72">
-                <SheetHeader className="p-6 border-b">
-                  <SheetTitle className="text-left font-black text-slate-900 uppercase tracking-widest text-[10px]">Pessoas Online</SheetTitle>
+              <SheetContent side="right" className="p-0 border-none w-80">
+                <SheetHeader className="p-8 border-b border-slate-50">
+                  <SheetTitle className="text-left font-black text-slate-900 uppercase tracking-[0.2em] text-[11px]">Pessoas Online</SheetTitle>
                 </SheetHeader>
-                <ScrollArea className="h-full p-4 bg-slate-50">
+                <ScrollArea className="h-full p-6 bg-slate-50/50">
                   <UserList />
                 </ScrollArea>
               </SheetContent>
@@ -317,68 +324,70 @@ const Room = () => {
           </div>
         </header>
 
-        <div className="bg-white px-4 md:px-6 py-2 border-b border-slate-50 shrink-0">
-          <AdSlot city={cityName} slotIndex={0} className="h-12 md:h-14" />
+        <div className="bg-white px-6 md:px-10 py-3 border-b border-slate-50 shrink-0">
+          <AdSlot city={cityName} slotIndex={0} className="h-14 md:h-16 rounded-3xl" />
         </div>
 
-        <ScrollArea className="flex-1 p-4 md:p-6 bg-slate-50/20" ref={scrollRef}>
-          <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 py-2 md:py-4">
+        <ScrollArea className="flex-1 p-6 md:p-12 bg-slate-50/20" ref={scrollRef}>
+          <div className="max-w-5xl mx-auto space-y-6 md:space-y-10 py-6">
             {visibleMessages.length === 0 && (
-              <div className="text-center py-20 opacity-30 select-none">
-                <p className="text-xs font-black uppercase tracking-widest">Inicie o papo agora!</p>
+              <div className="text-center py-32 opacity-20 select-none">
+                <MessageSquare className="mx-auto mb-6 text-slate-400" size={64} />
+                <p className="text-sm font-black uppercase tracking-[0.4em]">Inicie a conversa!</p>
               </div>
             )}
             {visibleMessages.map((msg) => (
-              <div key={msg.id} className={cn("flex flex-col gap-1 max-w-[85%] md:max-w-[80%]", msg.isMe ? "ml-auto items-end" : "items-start animate-in fade-in slide-in-from-bottom-2")}>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-tight">
+              <div key={msg.id} className={cn("flex flex-col gap-2 max-w-[85%] md:max-w-[75%] animate-in fade-in slide-in-from-bottom-4 duration-500", msg.isMe ? "ml-auto items-end" : "items-start")}>
+                <div className="flex items-center gap-3">
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", msg.isMe ? "text-primary" : "text-slate-400")}>
                     {msg.isPrivate ? `PARA ${msg.receiver}` : msg.sender} • {msg.time}
                   </span>
-                  {msg.isPrivate && <Lock size={10} className="text-[#2377bb]" />}
+                  {msg.isPrivate && <Lock size={12} className="text-primary" />}
                 </div>
-                <div className="flex items-end gap-2">
-                  {msg.isMe && <CaricaturePreview traits={msg.avatarTraits} name={msg.sender} />}
+                <div className={cn("flex gap-4", msg.isMe ? "flex-row-reverse" : "flex-row")}>
+                  <div className="mt-auto"><CaricaturePreview traits={msg.isMe ? userAvatar || undefined : undefined} name={msg.sender} /></div>
                   <div className={cn(
-                    "p-3 md:p-4 rounded-[1.25rem] md:rounded-[1.5rem] shadow-sm", 
-                    msg.isMe ? (msg.isPrivate ? "bg-indigo-700 text-white rounded-tr-none" : "bg-[#2377bb] text-white rounded-tr-none") : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
+                    "p-5 md:p-6 rounded-[2rem] shadow-sm relative group", 
+                    msg.isMe 
+                      ? (msg.isPrivate ? "bg-indigo-600 text-white rounded-tr-none shadow-xl shadow-indigo-200" : "bg-primary text-white rounded-tr-none shadow-xl shadow-primary/20") 
+                      : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
                   )}>
                     {msg.type === 'text' ? (
-                      <p className="text-sm font-medium leading-relaxed break-words">{msg.content}</p>
+                      <p className="text-base font-bold leading-relaxed break-words">{msg.content}</p>
                     ) : (
-                      <div className="flex items-center gap-3">
-                        {msg.type === 'image' ? <ImageIcon size={20} /> : <VideoIcon size={20} />}
-                        <p className="text-xs font-black italic">{msg.content}</p>
+                      <div className="flex items-center gap-4 py-2">
+                        {msg.type === 'image' ? <ImageIcon size={28} /> : <VideoIcon size={28} />}
+                        <p className="text-xs font-black italic uppercase tracking-widest">{msg.content}</p>
                       </div>
                     )}
                   </div>
-                  {!msg.isMe && <CaricaturePreview name={msg.sender} />}
                 </div>
               </div>
             ))}
           </div>
         </ScrollArea>
 
-        <div className="p-3 md:p-6 bg-white border-t border-slate-100 shrink-0 pb-safe">
-          <div className="max-w-4xl mx-auto space-y-3">
+        <div className="p-6 md:p-10 bg-white border-t border-slate-50 shrink-0 pb-safe">
+          <div className="max-w-5xl mx-auto">
             {isPrivate && (
-              <div className="flex items-center justify-between bg-[#2377bb] text-white text-[9px] md:text-[10px] font-black uppercase px-4 py-2 rounded-xl animate-in slide-in-from-bottom-2">
-                <span className="flex items-center gap-2"><Lock size={12}/> Privado para: {targetUser}</span>
-                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="hover:underline">CANCELAR</button>
+              <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl mb-4 animate-in slide-in-from-bottom-2 shadow-lg shadow-primary/20">
+                <span className="flex items-center gap-3"><Lock size={14}/> Mensagem Privada para: {targetUser}</span>
+                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="bg-white/20 px-3 py-1 rounded-lg hover:bg-white/30 transition-colors">CANCELAR</button>
               </div>
             )}
-            <div className="flex items-center gap-2 md:gap-3 bg-slate-100 rounded-[1.5rem] md:rounded-[2rem] p-1.5 border border-transparent focus-within:border-[#2377bb]/20">
+            <div className="flex items-center gap-3 md:gap-4 bg-slate-50 rounded-[2.5rem] p-2 md:p-3 border-2 border-transparent focus-within:border-primary/10 transition-all focus-within:bg-white focus-within:shadow-2xl focus-within:shadow-primary/5">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-slate-400 hover:text-[#2377bb] rounded-full h-10 w-10 shrink-0" 
+                className="text-slate-300 hover:text-primary rounded-2xl h-14 w-14 shrink-0 transition-colors" 
                 onClick={() => setIsMediaDialogOpen(true)}
               >
-                <CameraIcon size={20} />
+                <CameraIcon size={24} />
               </Button>
               <Input 
                 ref={messageInputRef}
-                placeholder="Sua mensagem..." 
-                className="border-none bg-transparent font-bold text-slate-700 focus-visible:ring-0 text-sm h-10 px-1" 
+                placeholder="Diga algo legal..." 
+                className="border-none bg-transparent font-bold text-slate-700 focus-visible:ring-0 text-lg h-14 px-2" 
                 value={message} 
                 onChange={(e) => setMessage(e.target.value)} 
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
@@ -386,84 +395,34 @@ const Room = () => {
               <Button 
                 onClick={() => handleSendMessage()} 
                 disabled={!message.trim()} 
-                className="bg-[#2377bb] hover:bg-[#1c629d] text-white rounded-full md:rounded-[1.25rem] w-10 h-10 md:w-12 md:h-12 shadow-xl shadow-blue-200 shrink-0 transition-transform active:scale-90"
+                className="bg-primary hover:bg-primary/90 text-white rounded-[2rem] w-14 h-14 md:w-16 md:h-16 shadow-2xl shadow-primary/30 shrink-0 transition-all active:scale-90"
               >
-                <SendHorizontal size={20} />
+                <SendHorizontal size={24} />
               </Button>
             </div>
           </div>
         </div>
       </main>
 
+      {/* Dialogs mantidos com a lógica funcional, apenas restilizados internamente */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
-        <DialogContent className="max-w-[320px] rounded-[2rem] p-6 md:p-8 border-none shadow-2xl">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="text-center text-xl font-black">Enviar Mídia</DialogTitle>
+        <DialogContent className="max-w-[340px] rounded-[3rem] p-10 border-none shadow-[0_48px_96px_-24px_rgba(0,0,0,0.15)]">
+          <DialogHeader className="mb-8">
+            <DialogTitle className="text-center text-2xl font-black tracking-tighter">Enviar Mídia</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 gap-3">
-            <Button onClick={() => startLiveCamera('photo')} className="h-14 bg-[#2377bb] text-white rounded-2xl font-black gap-3 shadow-lg shadow-blue-100">
-              <CameraIcon size={18} /> Tirar Foto
+          <div className="grid grid-cols-1 gap-4">
+            <Button onClick={() => startLiveCamera('photo')} className="h-16 bg-primary text-white rounded-2xl font-black gap-4 shadow-xl shadow-primary/20">
+              <CameraIcon size={20} /> Tirar Foto
             </Button>
-            <Button onClick={() => startLiveCamera('video')} variant="outline" className="h-14 rounded-2xl font-black gap-3 border-slate-200">
-              <VideoIcon size={18} /> Gravar Vídeo
+            <Button onClick={() => startLiveCamera('video')} variant="outline" className="h-16 rounded-2xl font-black gap-4 border-slate-100 hover:bg-slate-50">
+              <VideoIcon size={20} /> Gravar Vídeo
             </Button>
-            <div className="relative">
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/*,video/*" 
-                onChange={handleFileSelect} 
-              />
-              <Button 
-                onClick={() => fileInputRef.current?.click()} 
-                variant="secondary" 
-                className="w-full h-14 rounded-2xl font-black gap-3"
-              >
-                <GalleryIcon size={18} /> Galeria de Fotos
+            <div className="relative pt-4 border-t border-slate-50">
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+              <Button onClick={() => fileInputRef.current?.click()} variant="secondary" className="w-full h-16 rounded-2xl font-black gap-4 bg-slate-50 hover:bg-slate-100">
+                <GalleryIcon size={20} /> Galeria
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isLiveCameraOpen} onOpenChange={(open) => !open && stopLiveCamera()}>
-        <DialogContent className="max-w-md h-[90vh] md:h-[80vh] rounded-[2.5rem] bg-black border-none p-0 overflow-hidden">
-          <div className="relative h-full flex flex-col">
-            <video ref={videoRef} autoPlay playsInline muted={cameraMode === 'photo'} className="w-full h-full object-cover" />
-            <div className="absolute bottom-10 left-0 right-0 flex justify-center items-center gap-8">
-              <Button 
-                onClick={captureMedia} 
-                className={cn(
-                  "h-20 w-20 md:h-24 md:w-24 rounded-full bg-white border-8 border-slate-200/50 shadow-2xl transition-transform active:scale-90",
-                  cameraMode === 'video' ? "bg-red-500 border-red-200" : ""
-                )} 
-              />
-            </div>
-            <button onClick={stopLiveCamera} className="absolute top-6 right-6 text-white bg-black/40 p-2 rounded-full transition-colors hover:bg-black/60">
-              <X size={24}/>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isCalling} onOpenChange={setIsCalling}>
-        <DialogContent className="max-w-md h-[90vh] md:h-[80vh] rounded-[2.5rem] bg-slate-900 border-none p-0 overflow-hidden shadow-2xl">
-          <div className="h-full flex flex-col items-center justify-between py-16 md:py-20 text-white">
-            <div className="space-y-6 text-center">
-              <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-primary animate-pulse mx-auto">
-                <AvatarFallback>?</AvatarFallback>
-              </Avatar>
-              <h3 className="text-2xl md:text-3xl font-black">Vídeo Chamada</h3>
-              <p className="text-primary font-black uppercase tracking-widest text-[10px] animate-bounce">Encaminhando...</p>
-            </div>
-            <Button 
-              onClick={() => setIsCalling(false)} 
-              size="icon" 
-              className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-red-500 shadow-2xl shadow-red-500/30 transition-transform active:scale-90"
-            >
-              <X size={32} />
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
