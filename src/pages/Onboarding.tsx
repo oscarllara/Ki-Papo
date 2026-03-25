@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   ShieldCheck, 
   Loader2, 
-  Calendar
+  Calendar,
+  UserPlus
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { fetchStates, IBGEState } from '@/services/ibge';
@@ -31,7 +32,8 @@ const Onboarding = () => {
     birthDate: '',
     state: '',
     city: '',
-    socialLink: ''
+    socialLink: '',
+    indicatedBy: ''
   });
 
   useEffect(() => {
@@ -127,8 +129,16 @@ const Onboarding = () => {
       return;
     }
 
+    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
+    
+    // Gera ID sequencial iniciando em 1000
+    const lastId = savedUsers.length > 0 
+      ? Math.max(...savedUsers.map((u: any) => u.id || 999)) 
+      : 999;
+    const nextId = lastId + 1;
+
     const newUser = {
-      id: Date.now(),
+      id: nextId,
       name: formData.name,
       whatsapp: formData.whatsapp,
       socialMedia: provider,
@@ -137,17 +147,17 @@ const Onboarding = () => {
       birthDate: formData.birthDate,
       state: formData.state,
       city: formData.city,
+      indicatedBy: formData.indicatedBy,
       date: new Date().toLocaleDateString('pt-BR'),
       status: 'Verificado'
     };
     
-    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     localStorage.setItem('kipapo_users', JSON.stringify([newUser, ...savedUsers]));
     
     sessionStorage.setItem('kipapo_home_city', formData.city);
     sessionStorage.setItem('kipapo_home_state', formData.state);
     
-    toast({ title: "Cadastro Concluído", description: "Sua identidade foi validada com sucesso." });
+    toast({ title: "Cadastro Concluído", description: `Seu ID é ${nextId}. Identidade validada.` });
     navigate('/lobby');
   };
 
@@ -219,17 +229,18 @@ const Onboarding = () => {
 
           <div className="space-y-1.5">
             <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Perfil Social / E-mail</Label>
+            <Input value={formData.socialLink} onChange={handleSocialLinkChange} className="h-14 rounded-2xl border-slate-200 font-bold" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Indicado por (Opcional)</Label>
             <div className="relative">
+              <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
               <Input 
-                value={formData.socialLink} 
-                onChange={handleSocialLinkChange} 
-                onFocus={(e) => {
-                  if (e.target.value === baseUrl) {
-                    const len = e.target.value.length;
-                    setTimeout(() => e.target.setSelectionRange(len, len), 0);
-                  }
-                }}
-                className="h-14 rounded-2xl border-slate-200 font-bold" 
+                placeholder="ID ou Nome do indicador" 
+                value={formData.indicatedBy} 
+                onChange={(e) => setFormData({...formData, indicatedBy: e.target.value})} 
+                className="h-14 rounded-2xl border-slate-200 pl-12 font-bold" 
               />
             </div>
           </div>

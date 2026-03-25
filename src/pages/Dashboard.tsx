@@ -5,15 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
   LogOut, 
-  Eye, 
   Search,
   FileText,
   Table as TableIcon,
   Trash2,
-  UserPlus,
-  Megaphone,
   Plus,
-  Image as ImageIcon,
   MapPin,
   Link as LinkIcon
 } from 'lucide-react';
@@ -25,21 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { useToast } from "@/hooks/use-toast";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Ad } from '@/components/ads/AdSlot';
 
 const Dashboard = () => {
@@ -50,10 +34,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
   const [isAdDialogOpen, setIsAdDialogOpen] = useState(false);
-  
-  const [newAdmin, setNewAdmin] = useState({ username: '', password: '' });
   
   const [newAd, setNewAd] = useState({
     imageUrls: ['', '', '', ''],
@@ -81,19 +62,17 @@ const Dashboard = () => {
     const search = searchTerm.toLowerCase();
     return (
       (user.name || '').toLowerCase().includes(search) || 
-      (user.cpf || '').includes(searchTerm) || 
+      (user.id?.toString() || '').includes(searchTerm) || 
       (user.city || '').toLowerCase().includes(search)
     );
   });
 
   const handleCreateAd = () => {
     if (!newAd.link) {
-      toast({ variant: "destructive", title: "Link obrigatório", description: "O link de destino deve ser preenchido." });
+      toast({ variant: "destructive", title: "Link obrigatório" });
       return;
     }
-
     const validImages = newAd.imageUrls.filter(url => url.trim() !== '');
-    
     const adToAdd: Ad = {
       id: Date.now().toString(),
       imageUrls: validImages,
@@ -101,13 +80,12 @@ const Dashboard = () => {
       city: newAd.city || 'Global',
       slotIndex: Number(newAd.slotIndex) || 0
     };
-
     const updatedAds = [...ads, adToAdd];
     localStorage.setItem('kipapo_ads', JSON.stringify(updatedAds));
     setAds(updatedAds);
-    toast({ title: "Anúncio Publicado" });
     setIsAdDialogOpen(false);
     setNewAd({ imageUrls: ['', '', '', ''], link: '', city: 'Global', slotIndex: 0 });
+    toast({ title: "Anúncio Publicado" });
   };
 
   const deleteAd = (id: string) => {
@@ -117,26 +95,16 @@ const Dashboard = () => {
     toast({ title: "Anúncio Removido" });
   };
 
-  const handleLogout = () => { 
-    sessionStorage.removeItem('admin_auth'); 
-    navigate('/'); 
-  };
-
-  const getSlotName = (index: number) => {
-    const slots = ["Topo (Banner)", "Lateral (Sidebar)", "Rodapé", "Entre Conteúdo"];
-    return slots[index] || "Geral";
-  };
-
   const exportCSV = () => {
     if (users.length === 0) return;
-    const headers = ["Data", "Nome", "CPF", "WhatsApp", "Social/Email", "Cidade"];
-    const rows = users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, u.city]);
+    const headers = ["ID", "Data", "Nome", "CPF", "WhatsApp", "Cidade", "Indicado Por"];
+    const rows = users.map(u => [u.id, u.date, u.name, u.cpf, u.whatsapp, u.city, u.indicatedBy || "-"]);
     const csvContent = [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "usuarios.csv");
+    link.setAttribute("download", "usuarios_kipapo.csv");
     link.click();
   };
 
@@ -145,8 +113,8 @@ const Dashboard = () => {
     const doc = new jsPDF('landscape');
     doc.text("Relatório Geral de Usuários Ki Papo", 14, 20);
     autoTable(doc, {
-      head: [["Data", "Nome", "CPF", "WhatsApp", "Rede Social/Email", "Cidade"]],
-      body: users.map(u => [u.date, u.name, u.cpf, u.whatsapp, u.socialLink, u.city]),
+      head: [["ID", "Data", "Nome", "WhatsApp", "Cidade", "Indicado Por"]],
+      body: users.map(u => [u.id, u.date, u.name, u.whatsapp, u.city, u.indicatedBy || "-"]),
       startY: 30,
     });
     doc.save(`relatorio_kipapo.pdf`);
@@ -160,7 +128,7 @@ const Dashboard = () => {
             <div className="bg-primary/10 p-4 rounded-3xl"><ShieldCheck className="text-primary" size={32} /></div>
             <div><h1 className="text-2xl font-black text-slate-900">Gestão Ki Papo</h1></div>
           </div>
-          <Button onClick={handleLogout} variant="ghost" className="text-red-500 font-bold gap-2 rounded-2xl"><LogOut size={16} /> Sair</Button>
+          <Button onClick={() => { sessionStorage.removeItem('admin_auth'); navigate('/'); }} variant="ghost" className="text-red-500 font-bold gap-2 rounded-2xl"><LogOut size={16} /> Sair</Button>
         </div>
 
         <Tabs defaultValue="users" className="w-full">
@@ -173,17 +141,36 @@ const Dashboard = () => {
           <TabsContent value="users">
             <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
               <div className="p-8 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
-                <Input placeholder="Buscar..." className="max-w-md h-14 rounded-2xl border-none shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input placeholder="Buscar por ID, Nome ou Cidade..." className="max-w-md h-14 rounded-2xl border-none shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
               <Table>
-                <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>WhatsApp</TableHead><TableHead>Cidade</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-20">ID</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>WhatsApp</TableHead>
+                    <TableHead>Cidade</TableHead>
+                    <TableHead>Indicado Por</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id}>
+                      <TableCell className="font-black text-primary">{user.id}</TableCell>
                       <TableCell className="font-bold">{user.name}</TableCell>
                       <TableCell>{user.whatsapp}</TableCell>
                       <TableCell>{user.city}</TableCell>
-                      <TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => setSelectedUser(user)} className="rounded-xl">Ver</Button></TableCell>
+                      <TableCell>
+                        {user.indicatedBy ? (
+                          <Badge variant="secondary" className="font-bold">{user.indicatedBy}</Badge>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)} className="rounded-xl font-bold">Ver</Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -206,14 +193,16 @@ const Dashboard = () => {
                         <div className="flex -space-x-3">
                           {(ad.imageUrls || [ad.imageUrl]).map((url, i) => (
                             <div key={i} className="w-10 h-10 rounded-lg border-2 border-white bg-slate-100 overflow-hidden">
-                              <img src={url || `https://www.google.com/s2/favicons?domain=${new URL(ad.link).hostname}&sz=64`} className="w-full h-full object-cover" />
+                              <img src={url} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/40')} />
                             </div>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell><Badge variant="outline">{ad.city}</Badge></TableCell>
-                      <TableCell>{getSlotName(ad.slotIndex)}</TableCell>
-                      <TableCell className="text-right"><Button variant="ghost" onClick={() => deleteAd(ad.id)} className="text-red-500"><Trash2 size={18} /></Button></TableCell>
+                      <TableCell>{ad.slotIndex === 0 ? "Topo" : ad.slotIndex === 1 ? "Lateral" : "Geral"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" onClick={() => deleteAd(ad.id)} className="text-red-500"><Trash2 size={18} /></Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -222,69 +211,75 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="logs">
-            <div className="grid grid-cols-2 gap-8">
-              <Card className="p-10 rounded-[3rem]"><Button onClick={exportPDF} className="w-full h-16 font-black rounded-2xl"><FileText className="mr-2"/> Exportar PDF</Button></Card>
-              <Card className="p-10 rounded-[3rem]"><Button onClick={exportCSV} variant="outline" className="w-full h-16 font-black rounded-2xl"><TableIcon className="mr-2"/> Exportar CSV</Button></Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-center space-y-4">
+                <div className="bg-red-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-red-600"><FileText size={32} /></div>
+                <h3 className="text-xl font-black">Relatório em PDF</h3>
+                <p className="text-slate-400 text-sm">Gere um documento pronto para impressão com ID e indicações.</p>
+                <Button onClick={exportPDF} className="w-full h-16 font-black rounded-2xl bg-red-600 hover:bg-red-700">Exportar PDF</Button>
+              </Card>
+              <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-center space-y-4">
+                <div className="bg-emerald-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-emerald-600"><TableIcon size={32} /></div>
+                <h3 className="text-xl font-black">Base em CSV/Excel</h3>
+                <p className="text-slate-400 text-sm">Exporte a base completa de dados para planilhas.</p>
+                <Button onClick={exportCSV} variant="outline" className="w-full h-16 font-black rounded-2xl border-emerald-200 text-emerald-600 hover:bg-emerald-50">Exportar CSV</Button>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
-      <Dialog open={isAdDialogOpen} onOpenChange={setIsAdDialogOpen}>
-        <DialogContent className="max-w-lg rounded-[2.5rem] p-10">
-          <DialogTitle className="text-2xl font-black text-center mb-6">Cadastrar Banner</DialogTitle>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {newAd.imageUrls.map((url, i) => (
-                <div key={i} className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase text-slate-400">Imagem {i+1} (URL)</Label>
-                  <Input 
-                    placeholder="https://..." 
-                    value={url} 
-                    onChange={(e) => {
-                      const newUrls = [...newAd.imageUrls];
-                      newUrls[i] = e.target.value;
-                      setNewAd({...newAd, imageUrls: newUrls});
-                    }}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-slate-400 font-bold italic">Se nenhuma imagem for adicionada, buscaremos o ícone do site automaticamente.</p>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase">Link de Destino</Label>
-              <Input placeholder="https://..." value={newAd.link} onChange={(e) => setNewAd({...newAd, link: e.target.value})} className="h-14 rounded-xl font-bold" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase">Cidade</Label><Input value={newAd.city} onChange={(e) => setNewAd({...newAd, city: e.target.value})} className="h-12 rounded-xl" /></div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase">Posição</Label>
-                <select value={newAd.slotIndex} onChange={(e) => setNewAd({...newAd, slotIndex: Number(e.target.value)})} className="w-full h-12 rounded-xl border px-3 text-sm">
-                  <option value={0}>Topo (Banner)</option><option value={1}>Lateral (Sidebar)</option><option value={2}>Rodapé</option><option value={3}>Entre Conteúdo</option>
-                </select>
-              </div>
-            </div>
-            <Button onClick={handleCreateAd} className="w-full h-16 bg-primary rounded-xl font-black text-lg">PUBLICAR ANÚNCIO</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="rounded-[3rem] p-10">
+        <DialogContent className="rounded-[3rem] p-10 max-w-md">
           {selectedUser && (
-            <div className="space-y-4 text-center">
-              <h2 className="text-2xl font-black">{selectedUser.name}</h2>
-              <div className="text-left bg-slate-50 p-6 rounded-2xl space-y-2">
-                <p><strong>WhatsApp:</strong> {selectedUser.whatsapp}</p>
-                <p><strong>Social/E-mail:</strong> {selectedUser.socialLink}</p>
-                <p><strong>Cidade:</strong> {selectedUser.city}/{selectedUser.state}</p>
-                <p><strong>CPF:</strong> {selectedUser.cpf}</p>
-                <p><strong>Nascimento:</strong> {selectedUser.birthDate}</p>
+            <div className="space-y-6">
+              <div className="text-center space-y-1">
+                <Badge className="bg-primary text-white h-8 px-4 rounded-full font-black mb-2">ID: {selectedUser.id}</Badge>
+                <h2 className="text-2xl font-black text-slate-800">{selectedUser.name}</h2>
+                <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Cadastrado em {selectedUser.date}</p>
               </div>
-              <Button onClick={() => setSelectedUser(null)} className="w-full h-14 rounded-xl">Fechar</Button>
+              
+              <div className="bg-slate-50 p-6 rounded-[2rem] space-y-4 border border-slate-100">
+                <div className="flex justify-between border-b border-slate-200/50 pb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Indicado por</span>
+                  <span className="font-bold text-primary">{selectedUser.indicatedBy || "Ninguém"}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200/50 pb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">WhatsApp</span>
+                  <span className="font-bold">{selectedUser.whatsapp}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200/50 pb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Cidade/UF</span>
+                  <span className="font-bold">{selectedUser.city}/{selectedUser.state}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200/50 pb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">CPF</span>
+                  <span className="font-bold">{selectedUser.cpf}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Nascimento</span>
+                  <span className="font-bold">{selectedUser.birthDate}</span>
+                </div>
+              </div>
+              
+              <Button onClick={() => setSelectedUser(null)} className="w-full h-14 rounded-2xl font-black">Fechar Detalhes</Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAdDialogOpen} onOpenChange={setIsAdDialogOpen}>
+        <DialogContent className="max-w-lg rounded-[2.5rem] p-10">
+          <DialogTitle className="text-2xl font-black text-center mb-6">Novo Banner</DialogTitle>
+          <div className="space-y-4">
+            {newAd.imageUrls.map((url, i) => (
+              <Input key={i} placeholder={`URL da Imagem ${i+1}`} value={url} onChange={(e) => {
+                const n = [...newAd.imageUrls]; n[i] = e.target.value; setNewAd({...newAd, imageUrls: n});
+              }} className="h-12 rounded-xl" />
+            ))}
+            <Input placeholder="Link de Destino" value={newAd.link} onChange={(e) => setNewAd({...newAd, link: e.target.value})} className="h-14 rounded-xl font-bold" />
+            <Button onClick={handleCreateAd} className="w-full h-16 bg-primary rounded-xl font-black">PUBLICAR</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
