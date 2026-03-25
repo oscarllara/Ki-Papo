@@ -97,8 +97,8 @@ const Dashboard = () => {
 
   const exportCSV = () => {
     if (users.length === 0) return;
-    const headers = ["ID", "Data", "Nome", "CPF", "WhatsApp", "Cidade", "Indicado Por"];
-    const rows = users.map(u => [u.id, u.date, u.name, u.cpf, u.whatsapp, u.city, u.indicatedBy || "-"]);
+    const headers = ["ID", "Data", "Nome", "CPF", "WhatsApp", "Cidade", "Contato Social", "Indicado Por"];
+    const rows = users.map(u => [u.id, u.date, u.name, u.cpf, u.whatsapp, u.city, u.socialLink || "-", u.indicatedBy || "-"]);
     const csvContent = [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -113,9 +113,10 @@ const Dashboard = () => {
     const doc = new jsPDF('landscape');
     doc.text("Relatório Geral de Usuários Ki Papo", 14, 20);
     autoTable(doc, {
-      head: [["ID", "Data", "Nome", "WhatsApp", "Cidade", "Indicado Por"]],
-      body: users.map(u => [u.id, u.date, u.name, u.whatsapp, u.city, u.indicatedBy || "-"]),
+      head: [["ID", "Data", "Nome", "WhatsApp", "Cidade", "Rede Social / E-mail", "Indicado Por"]],
+      body: users.map(u => [u.id, u.date, u.name, u.whatsapp, u.city, u.socialLink || "-", u.indicatedBy || "-"]),
       startY: 30,
+      styles: { fontSize: 8 }
     });
     doc.save(`relatorio_kipapo.pdf`);
   };
@@ -150,6 +151,7 @@ const Dashboard = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead>WhatsApp</TableHead>
                     <TableHead>Cidade</TableHead>
+                    <TableHead>Rede Social / E-mail</TableHead>
                     <TableHead>Indicado Por</TableHead>
                     <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
@@ -161,6 +163,9 @@ const Dashboard = () => {
                       <TableCell className="font-bold">{user.name}</TableCell>
                       <TableCell>{user.whatsapp}</TableCell>
                       <TableCell>{user.city}</TableCell>
+                      <TableCell className="max-w-[200px] truncate text-slate-500 font-medium">
+                        {user.socialLink || "-"}
+                      </TableCell>
                       <TableCell>
                         {user.indicatedBy ? (
                           <Badge variant="secondary" className="font-bold">{user.indicatedBy}</Badge>
@@ -215,7 +220,7 @@ const Dashboard = () => {
               <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-center space-y-4">
                 <div className="bg-red-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-red-600"><FileText size={32} /></div>
                 <h3 className="text-xl font-black">Relatório em PDF</h3>
-                <p className="text-slate-400 text-sm">Gere um documento pronto para impressão com ID e indicações.</p>
+                <p className="text-slate-400 text-sm">Gere um documento pronto para impressão com ID, Rede Social e indicações.</p>
                 <Button onClick={exportPDF} className="w-full h-16 font-black rounded-2xl bg-red-600 hover:bg-red-700">Exportar PDF</Button>
               </Card>
               <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-center space-y-4">
@@ -240,6 +245,10 @@ const Dashboard = () => {
               </div>
               
               <div className="bg-slate-50 p-6 rounded-[2rem] space-y-4 border border-slate-100">
+                <div className="flex justify-between border-b border-slate-200/50 pb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">Rede Social / E-mail</span>
+                  <span className="font-bold text-indigo-600 break-all ml-4 text-right">{selectedUser.socialLink || "-"}</span>
+                </div>
                 <div className="flex justify-between border-b border-slate-200/50 pb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase">Indicado por</span>
                   <span className="font-bold text-primary">{selectedUser.indicatedBy || "Ninguém"}</span>
