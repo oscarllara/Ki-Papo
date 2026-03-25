@@ -23,15 +23,14 @@ import {
   Menu,
   FileImage as ImageIcon,
   UserRound,
-  Glasses,
-  Info
+  Info,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import AdSlot from '@/components/ads/AdSlot';
-import AvatarCreator, { AvatarTraits } from '@/components/chat/AvatarCreator';
 
 interface ChatMessage {
   id: string;
@@ -42,7 +41,6 @@ interface ChatMessage {
   isMe: boolean;
   isPrivate?: boolean;
   type?: 'text' | 'image' | 'video';
-  avatarTraits?: AvatarTraits;
 }
 
 const Room = () => {
@@ -54,8 +52,6 @@ const Room = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [nickname, setNickname] = useState('');
-  const [isCreatingAvatar, setIsCreatingAvatar] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<AvatarTraits | null>(null);
   const [hasJoined, setHasJoined] = useState(false);
   const [message, setMessage] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -63,7 +59,6 @@ const Room = () => {
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(false);
   const [cameraMode, setCameraMode] = useState<'photo' | 'video'>('photo');
-  const [isCalling, setIsCalling] = useState(false);
   const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
@@ -104,8 +99,7 @@ const Room = () => {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
       isPrivate,
-      type,
-      avatarTraits: userAvatar || undefined
+      type
     };
     setMessagesList(prev => [...prev, newMessage]);
     if (type === 'text') setMessage('');
@@ -133,11 +127,6 @@ const Room = () => {
     setIsLiveCameraOpen(false);
   };
 
-  const captureMedia = () => {
-    handleSendMessage(cameraMode === 'photo' ? "Enviou uma foto!" : "Enviou um vídeo!", cameraMode === 'photo' ? 'image' : 'video');
-    stopLiveCamera();
-  };
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -157,47 +146,8 @@ const Room = () => {
 
   const handleJoin = () => { 
     if (nickname.trim().length >= 3) {
-      setIsCreatingAvatar(true);
+      setHasJoined(true);
     } 
-  };
-
-  const finalizeJoin = (traits?: AvatarTraits) => {
-    if (traits) setUserAvatar(traits);
-    setHasJoined(true);
-    setIsCreatingAvatar(false);
-  };
-
-  const CaricaturePreview = ({ traits, name }: { traits?: AvatarTraits, name: string }) => {
-    if (!traits) {
-      return (
-        <Avatar className="h-12 w-12 shrink-0 border-2 border-white shadow-md">
-          <AvatarFallback className="bg-slate-100 text-[10px] font-black text-slate-400">{name[0]}</AvatarFallback>
-        </Avatar>
-      );
-    }
-
-    return (
-      <div 
-        className="h-12 w-12 rounded-2xl border-2 border-white shadow-lg relative overflow-hidden shrink-0 transition-all hover:scale-110"
-        style={{ backgroundColor: traits.skinTone }}
-      >
-        {traits.hairStyle !== 'Careca' && (
-          <div className="absolute top-0 left-0 w-full h-[45%] z-10 opacity-90" style={{ backgroundColor: traits.hairColor }} />
-        )}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
-           <div className="flex gap-1.5">
-             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
-             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: traits.eyeColor }} />
-           </div>
-           {traits.facialHair !== 'Nenhuma' && (
-             <div className="absolute bottom-1 w-7 h-3.5 bg-black/20 rounded-full" />
-           )}
-           {traits.glasses && (
-             <div className="absolute top-[38%] w-9 h-3.5 border border-black/20 rounded-sm bg-white/10" />
-           )}
-        </div>
-      </div>
-    );
   };
 
   const UserList = () => (
@@ -230,40 +180,30 @@ const Room = () => {
     return (
       <div className="min-h-screen bg-[#FDFDFF] flex items-center justify-center p-6">
         <Card className="w-full max-w-xl p-10 md:p-14 rounded-[3.5rem] border-none shadow-[0_48px_96px_-24px_rgba(0,0,0,0.12)] space-y-10 bg-white">
-          {!isCreatingAvatar ? (
-            <div className="text-center space-y-8">
-              <div className="bg-primary/5 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner">
-                <Users size={48} className="animate-in zoom-in duration-700" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Entrar na Sala</h2>
-                <p className="text-slate-400 font-bold text-sm">Como você quer ser chamado?</p>
-              </div>
-              <Input 
-                placeholder="Seu apelido..." 
-                value={nickname} 
-                onChange={(e) => setNickname(e.target.value)} 
-                onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
-                className="h-20 rounded-3xl text-center font-black text-2xl border-none bg-slate-50 shadow-inner focus-visible:ring-primary/20" 
-                autoFocus 
-              />
-              <Button 
-                onClick={handleJoin} 
-                disabled={nickname.trim().length < 3} 
-                className="w-full h-20 bg-primary hover:bg-primary/90 rounded-3xl font-black text-xl text-white shadow-2xl shadow-primary/20 transition-all active:scale-95"
-              >
-                PRÓXIMO PASSO
-              </Button>
+          <div className="text-center space-y-8">
+            <div className="bg-primary/5 w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto text-primary shadow-inner">
+              <Users size={48} className="animate-in zoom-in duration-700" />
             </div>
-          ) : (
-            <div className="space-y-8">
-              <div className="text-center">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Crie seu Estilo</h2>
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mt-3">Sua identidade visual no Ki Papo</p>
-              </div>
-              <AvatarCreator onSave={finalizeJoin} onCancel={() => finalizeJoin()} />
+            <div className="space-y-2">
+              <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Entrar na Sala</h2>
+              <p className="text-slate-400 font-bold text-sm">Como você quer ser chamado?</p>
             </div>
-          )}
+            <Input 
+              placeholder="Seu apelido..." 
+              value={nickname} 
+              onChange={(e) => setNickname(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
+              className="h-20 rounded-3xl text-center font-black text-2xl border-none bg-slate-50 shadow-inner focus-visible:ring-primary/20" 
+              autoFocus 
+            />
+            <Button 
+              onClick={handleJoin} 
+              disabled={nickname.trim().length < 3} 
+              className="w-full h-20 bg-primary hover:bg-primary/90 rounded-3xl font-black text-xl text-white shadow-2xl shadow-primary/20 transition-all active:scale-95"
+            >
+              ENTRAR NO CHAT
+            </Button>
+          </div>
         </Card>
       </div>
     );
@@ -299,7 +239,7 @@ const Room = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            <Button onClick={() => setIsCalling(true)} variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-2xl h-12 w-12 hover:bg-primary/5 transition-colors">
+            <Button variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-2xl h-12 w-12 hover:bg-primary/5 transition-colors">
               <VideoIcon size={22} />
             </Button>
             <Button variant="ghost" size="icon" className="text-slate-300 hover:text-primary rounded-2xl h-12 w-12 hover:bg-primary/5 transition-colors">
@@ -345,7 +285,11 @@ const Room = () => {
                   {msg.isPrivate && <Lock size={12} className="text-primary" />}
                 </div>
                 <div className={cn("flex gap-4", msg.isMe ? "flex-row-reverse" : "flex-row")}>
-                  <div className="mt-auto"><CaricaturePreview traits={msg.isMe ? userAvatar || undefined : undefined} name={msg.sender} /></div>
+                  <div className="mt-auto">
+                    <Avatar className="h-12 w-12 shrink-0 border-2 border-white shadow-md">
+                      <AvatarFallback className="bg-indigo-50 text-indigo-600 font-black text-sm">{msg.sender[0]}</AvatarFallback>
+                    </Avatar>
+                  </div>
                   <div className={cn(
                     "p-5 md:p-6 rounded-[2rem] shadow-sm relative group", 
                     msg.isMe 
@@ -404,7 +348,7 @@ const Room = () => {
         </div>
       </main>
 
-      {/* Dialogs mantidos com a lógica funcional, apenas restilizados internamente */}
+      {/* Dialogs mantidos com a lógica funcional */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[340px] rounded-[3rem] p-10 border-none shadow-[0_48px_96px_-24px_rgba(0,0,0,0.15)]">
           <DialogHeader className="mb-8">
