@@ -62,6 +62,53 @@ const Room = () => {
     }
   }, [messagesList]);
 
+  // Lógica de Mensagem Padrão e Repetição
+  useEffect(() => {
+    if (!hasJoined) return;
+
+    const loadMsgConfig = () => {
+      const config = JSON.parse(localStorage.getItem('kipapo_msg_config') || '{"content":"","interval":"0"}');
+      setRoomAnnouncement(config.content || '');
+      return config;
+    };
+
+    const config = loadMsgConfig();
+
+    // Se houver um intervalo definido, configurar a repetição
+    let intervalId: NodeJS.Timeout | null = null;
+    const intervalMinutes = parseInt(config.interval || '0');
+
+    if (intervalMinutes > 0 && config.content) {
+      intervalId = setInterval(() => {
+        const currentConfig = JSON.parse(localStorage.getItem('kipapo_msg_config') || '{"content":"","interval":"0"}');
+        if (currentConfig.content) {
+          const systemMsg: ChatMessage = {
+            id: `system-${Date.now()}`,
+            sender: "Administrador",
+            content: currentConfig.content,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isMe: false,
+            type: 'system'
+          };
+          setMessagesList(prev => [...prev, systemMsg]);
+        }
+      }, intervalMinutes * 60 * 1000);
+    }
+
+    // Escutar mudanças no localStorage (caso o admin mude a msg em outra aba)
+    const handleStorageChange = () => {
+      loadMsgConfig();
+      // Em uma aplicação real com servidor, isso seria via WebSocket
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [hasJoined]);
+
   const cityName = useMemo(() => {
     if (!roomId) return "Local";
     const parts = roomId.split('-');
@@ -93,10 +140,6 @@ const Room = () => {
   const handleJoin = () => { 
     if (nickname.trim().length >= 3) {
       setHasJoined(true);
-      const savedMsg = localStorage.getItem('kipapo_default_message');
-      if (savedMsg) {
-         setRoomAnnouncement(savedMsg);
-      }
     } 
   };
 
@@ -202,16 +245,36 @@ const Room = () => {
 
         <ScrollArea className="flex-1 p-6 md:p-12 bg-slate-50/20" ref={scrollRef}>
           <div className="max-w-5xl mx-auto space-y-6">
-            {visibleMessages.map((msg) => (
-              <div key={msg.id} className={cn("flex flex-col gap-2 max-w-[85%] animate-in fade-in", msg.isMe ? "ml-auto items-end" : "items-start")}>
-                <div className="flex items-center gap-3">
-                  <span className={cn("text-[10px] font-black uppercase", msg.isMe ? "text-primary" : "text-slate-400")}>
-                    {msg.sender} • {msg.time}
-                  </span>
-                </div>
-                <div className={cn("p-5 rounded-[2rem] shadow-sm", msg.isMe ? "bg-primary text-white rounded-tr-none" : "bg-white text-slate-700 border border-slate-100 rounded-tl-none")}>
-                  <p className="font-bold leading-relaxed break-words">{msg.content}</p>
-                </div>
+            {messagesList.map((msg) => (
+              <div 
+                key={msg.id} 
+                className={cn(
+                  "flex flex-col gap-2 max-w-[85%] animate-in fade-in", 
+                  msg.type === 'system' ? "mx-auto items-center w-full max-w-full" : 
+                  msg.isMe ? "ml-auto items-end" : "items-start"
+                )}
+              >
+                {msg.type === 'system' ? (
+                  <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 rounded-3xl p-6 text-center shadow-sm w-full md:w-3/4">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      <Megaphone className="text-indigo-600" size={16} />
+                      <span className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em]">Comunicado do Sistema</span>
+                    </div>
+                    <p className="text-indigo-900 font-bold leading-relaxed">{msg.content}</p>
+                    <span className="text-[9px] text-indigo-300 mt-2 block">{msg.time}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <span className={cn("text-[10px] font-black uppercase", msg.isMe ? "text-primary" : "text-slate-400")}>
+                        {msg.sender} • {msg.time}
+                      </span>
+                    </div>
+                    <div className={cn("p-5 rounded-[2rem] shadow-sm", msg.isMe ? "bg-primary text-white rounded-tr-none" : "bg-white text-slate-700 border border-slate-100 rounded-tl-none")}>
+                      <p className="font-bold leading-relaxed break-words">{msg.content}</p>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>

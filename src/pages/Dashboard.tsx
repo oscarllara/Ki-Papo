@@ -12,7 +12,8 @@ import {
   Plus,
   Upload,
   MessageCircle,
-  Settings
+  Settings,
+  Clock
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,8 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
-import { jsPDF } from "jspdf";
-import autoTable from 'jspdf-autotable';
 import { useToast } from "@/hooks/use-toast";
 import { Ad } from '@/components/ads/AdSlot';
 
@@ -37,7 +36,10 @@ const Dashboard = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAdDialogOpen, setIsAdDialogOpen] = useState(false);
+  
+  // Configurações de Mensagem
   const [defaultMessage, setDefaultMessage] = useState('');
+  const [messageInterval, setMessageInterval] = useState('0'); // em minutos
   
   const [newAd, setNewAd] = useState({
     imageUrls: ['', '', '', ''],
@@ -47,7 +49,6 @@ const Dashboard = () => {
     text: ''
   });
 
-  // Usando refs individuais para evitar erros de renderização
   const fileRef0 = useRef<HTMLInputElement>(null);
   const fileRef1 = useRef<HTMLInputElement>(null);
   const fileRef2 = useRef<HTMLInputElement>(null);
@@ -62,23 +63,18 @@ const Dashboard = () => {
     }
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     const savedAds = JSON.parse(localStorage.getItem('kipapo_ads') || '[]');
-    const savedMsg = localStorage.getItem('kipapo_default_message') || '';
+    
+    // Carregar configurações de mensagem
+    const config = JSON.parse(localStorage.getItem('kipapo_msg_config') || '{"content":"","interval":"0"}');
+    setDefaultMessage(config.content || '');
+    setMessageInterval(config.interval || '0');
+    
     setUsers(savedUsers);
     setAds(savedAds);
-    setDefaultMessage(savedMsg);
     setIsLoaded(true);
   }, [navigate]);
 
   if (!isLoaded) return null;
-
-  const filteredUsers = users.filter(user => {
-    const search = searchTerm.toLowerCase();
-    return (
-      (user.name || '').toLowerCase().includes(search) || 
-      (user.id?.toString() || '').includes(searchTerm) || 
-      (user.city || '').toLowerCase().includes(search)
-    );
-  });
 
   const handleFileUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,21 +91,30 @@ const Dashboard = () => {
   };
 
   const handleSaveMessage = () => {
-    localStorage.setItem('kipapo_default_message', defaultMessage);
-    toast({ title: "Mensagem Salva", description: "A mensagem aparecerá nas salas de chat." });
+    const config = {
+      content: defaultMessage,
+      interval: messageInterval,
+      updatedAt: Date.now()
+    };
+    localStorage.setItem('kipapo_msg_config', JSON.stringify(config));
+    
+    // Disparar evento para as salas abertas (mesma aba/janela)
+    window.dispatchEvent(new Event('storage'));
+    
+    toast({ 
+      title: "Configurações Salvas", 
+      description: messageInterval === '0' 
+        ? "A mensagem será exibida apenas na entrada." 
+        : `A mensagem será repetida a cada ${messageInterval} minutos em todas as salas.` 
+    });
   };
 
   const handleCreateAd = () => {
     if (!newAd.link || newAd.link === 'https://') {
-      toast({ variant: "destructive", title: "Link obrigatório", description: "O site de destino é obrigatório." });
+      toast({ variant: "destructive", title: "Link obrigatório" });
       return;
     }
     const validImages = newAd.imageUrls.filter(url => url.trim() !== '');
-    if (validImages.length === 0) {
-      toast({ variant: "destructive", title: "Imagem obrigatória", description: "Adicione pelo menos uma imagem ou URL." });
-      return;
-    }
-
     const adToAdd: Ad = {
       id: Date.now().toString(),
       imageUrls: validImages,
@@ -118,7 +123,6 @@ const Dashboard = () => {
       slotIndex: Number(newAd.slotIndex) || 0,
       text: newAd.text
     };
-
     const updatedAds = [...ads, adToAdd];
     localStorage.setItem('kipapo_ads', JSON.stringify(updatedAds));
     setAds(updatedAds);
@@ -220,25 +224,52 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="config">
-            <Card className="border-none shadow-2xl rounded-[3rem] p-10 bg-white space-y-8">
-              <div className="flex items-center gap-4">
-                 <div className="bg-primary/10 p-4 rounded-3xl text-primary"><Settings size={32} /></div>
-                 <div>
-                    <h3 className="text-2xl font-black text-slate-800">Mensagem Padrão</h3>
-                    <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Aparece ao entrar na sala</p>
-                 </div>
+            <Card className="border-none shadow-2xl rounded-[3rem] p-10 md:p-14 bg-white space-y-12">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                   <div className="bg-primary/10 p-5 rounded-[2rem] text-primary shadow-inner"><Settings size={36} /></div>
+                   <div>
+                      <h3 className="text-3xl font-black text-slate-800 tracking-tight">Mensagem Padrão</h3>
+                      <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Aparece automaticamente em todas as salas</p>
+                   </div>
+                </div>
+                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                  <Clock className="text-slate-300" size={24} />
+                  <div className="space-y-1">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Repetir a cada (minutos)</Label>
+                    <Input 
+                      type="number" 
+                      value={messageInterval} 
+                      onChange={(e) => setMessageInterval(e.target.value)} 
+                      className="h-10 w-24 border-none bg-transparent font-black text-lg p-0 focus-visible:ring-0" 
+                      min="0"
+                    />
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-300 uppercase max-w-[80px] leading-tight">
+                    {messageInterval === '0' ? 'Mostrar apenas ao entrar' : 'Intervalo de repetição'}
+                  </div>
+                </div>
               </div>
-              <div className="space-y-4">
-                 <Label className="text-xs font-black uppercase tracking-widest text-slate-500">Texto de Boas-vindas</Label>
-                 <Textarea 
-                   value={defaultMessage} 
-                   onChange={(e) => setDefaultMessage(e.target.value)} 
-                   placeholder="Ex: Bem-vindos ao Bate Papo! Respeite as regras..." 
-                   className="min-h-[160px] rounded-[2rem] border-slate-100 p-8 font-bold text-lg focus-visible:ring-primary/10 shadow-inner bg-slate-50/50"
-                 />
-                 <Button onClick={handleSaveMessage} className="h-16 px-10 rounded-2xl bg-primary font-black text-white hover:bg-primary/90 transition-all shadow-xl shadow-primary/20">
-                    <MessageCircle className="mr-2" size={20} /> Salvar Mensagem
-                 </Button>
+
+              <div className="space-y-6">
+                 <div className="space-y-3">
+                    <Label className="text-xs font-black uppercase tracking-widest text-slate-500 ml-4">Texto da Mensagem</Label>
+                    <Textarea 
+                      value={defaultMessage} 
+                      onChange={(e) => setDefaultMessage(e.target.value)} 
+                      placeholder="Ex: Sejam bem-vindos ao Ki Papo! Respeitem as regras e divirtam-se..." 
+                      className="min-h-[200px] rounded-[2.5rem] border-slate-100 p-10 font-bold text-xl focus-visible:ring-primary/10 shadow-inner bg-slate-50/50 leading-relaxed"
+                    />
+                 </div>
+                 
+                 <div className="flex flex-col md:flex-row items-center gap-6 pt-4">
+                    <Button onClick={handleSaveMessage} className="h-20 px-12 rounded-3xl bg-primary font-black text-xl text-white hover:bg-primary/90 transition-all active:scale-95 shadow-2xl shadow-primary/30 gap-3">
+                       <MessageCircle size={24} /> Salvar Mensagem
+                    </Button>
+                    <p className="text-xs text-slate-400 font-medium italic max-w-sm">
+                      * Ao salvar, a mensagem será atualizada instantaneamente para todos os usuários nas salas.
+                    </p>
+                 </div>
               </div>
             </Card>
           </TabsContent>
@@ -323,25 +354,6 @@ const Dashboard = () => {
                PUBLICAR ANÚNCIO
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="rounded-[3rem] p-10 max-w-md">
-          {selectedUser && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <Badge className="bg-primary text-white h-8 px-4 rounded-full font-black mb-2">ID: {selectedUser.id}</Badge>
-                <h2 className="text-2xl font-black text-slate-800">{selectedUser.name}</h2>
-              </div>
-              <div className="bg-slate-50 p-6 rounded-[2rem] space-y-4">
-                <div className="flex justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Social/E-mail</span><span className="font-bold">{selectedUser.socialLink || "-"}</span></div>
-                <div className="flex justify-between"><span className="text-[10px] font-black uppercase text-slate-400">WhatsApp</span><span className="font-bold">{selectedUser.whatsapp}</span></div>
-                <div className="flex justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Cidade</span><span className="font-bold">{selectedUser.city}</span></div>
-              </div>
-              <Button onClick={() => setSelectedUser(null)} className="w-full h-14 rounded-2xl font-black">Fechar</Button>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>
