@@ -10,8 +10,6 @@ import {
   Table as TableIcon,
   Trash2,
   Plus,
-  MapPin,
-  Link as LinkIcon,
   Upload,
   MessageCircle,
   Settings
@@ -49,7 +47,12 @@ const Dashboard = () => {
     text: ''
   });
 
-  const fileInputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+  // Usando refs individuais para evitar erros de renderização
+  const fileRef0 = useRef<HTMLInputElement>(null);
+  const fileRef1 = useRef<HTMLInputElement>(null);
+  const fileRef2 = useRef<HTMLInputElement>(null);
+  const fileRef3 = useRef<HTMLInputElement>(null);
+  const fileRefs = [fileRef0, fileRef1, fileRef2, fileRef3];
 
   useEffect(() => {
     const isAuth = sessionStorage.getItem('admin_auth');
@@ -67,6 +70,15 @@ const Dashboard = () => {
   }, [navigate]);
 
   if (!isLoaded) return null;
+
+  const filteredUsers = users.filter(user => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (user.name || '').toLowerCase().includes(search) || 
+      (user.id?.toString() || '').includes(searchTerm) || 
+      (user.city || '').toLowerCase().includes(search)
+    );
+  });
 
   const handleFileUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,10 +101,15 @@ const Dashboard = () => {
 
   const handleCreateAd = () => {
     if (!newAd.link || newAd.link === 'https://') {
-      toast({ variant: "destructive", title: "Link obrigatório" });
+      toast({ variant: "destructive", title: "Link obrigatório", description: "O site de destino é obrigatório." });
       return;
     }
     const validImages = newAd.imageUrls.filter(url => url.trim() !== '');
+    if (validImages.length === 0) {
+      toast({ variant: "destructive", title: "Imagem obrigatória", description: "Adicione pelo menos uma imagem ou URL." });
+      return;
+    }
+
     const adToAdd: Ad = {
       id: Date.now().toString(),
       imageUrls: validImages,
@@ -101,6 +118,7 @@ const Dashboard = () => {
       slotIndex: Number(newAd.slotIndex) || 0,
       text: newAd.text
     };
+
     const updatedAds = [...ads, adToAdd];
     localStorage.setItem('kipapo_ads', JSON.stringify(updatedAds));
     setAds(updatedAds);
@@ -114,32 +132,6 @@ const Dashboard = () => {
     localStorage.setItem('kipapo_ads', JSON.stringify(updated));
     setAds(updated);
     toast({ title: "Anúncio Removido" });
-  };
-
-  const exportPDF = () => {
-    if (users.length === 0) return;
-    const doc = new jsPDF('landscape');
-    doc.text("Relatório Geral de Usuários Ki Papo", 14, 20);
-    autoTable(doc, {
-      head: [["ID", "Data", "Nome", "WhatsApp", "Cidade", "Rede Social / E-mail", "Indicado Por"]],
-      body: users.map(u => [u.id, u.date, u.name, u.whatsapp, u.city, u.socialLink || "-", u.indicatedBy || "-"]),
-      startY: 30,
-      styles: { fontSize: 8 }
-    });
-    doc.save(`relatorio_kipapo.pdf`);
-  };
-
-  const exportCSV = () => {
-    if (users.length === 0) return;
-    const headers = ["ID", "Data", "Nome", "CPF", "WhatsApp", "Cidade", "Contato Social", "Indicado Por"];
-    const rows = users.map(u => [u.id, u.date, u.name, u.cpf, u.whatsapp, u.city, u.socialLink || "-", u.indicatedBy || "-"]);
-    const csvContent = [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "usuarios_kipapo.csv");
-    link.click();
   };
 
   return (
@@ -174,7 +166,6 @@ const Dashboard = () => {
                     <TableHead>WhatsApp</TableHead>
                     <TableHead>Cidade</TableHead>
                     <TableHead>Rede Social / E-mail</TableHead>
-                    <TableHead>Indicado Por</TableHead>
                     <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -185,16 +176,7 @@ const Dashboard = () => {
                       <TableCell className="font-bold">{user.name}</TableCell>
                       <TableCell>{user.whatsapp}</TableCell>
                       <TableCell>{user.city}</TableCell>
-                      <TableCell className="max-w-[200px] truncate text-slate-500 font-medium">
-                        {user.socialLink || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {user.indicatedBy ? (
-                          <Badge variant="secondary" className="font-bold">{user.indicatedBy}</Badge>
-                        ) : (
-                          <span className="text-slate-300">-</span>
-                        )}
-                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate text-slate-500">{user.socialLink || "-"}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)} className="rounded-xl font-bold">Ver</Button>
                       </TableCell>
@@ -218,15 +200,15 @@ const Dashboard = () => {
                     <TableRow key={ad.id}>
                       <TableCell>
                         <div className="flex -space-x-3">
-                          {(ad.imageUrls || [ad.imageUrl]).map((url, i) => (
-                            <div key={i} className="w-10 h-10 rounded-lg border-2 border-white bg-slate-100 overflow-hidden">
-                              <img src={url} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/40')} />
+                          {(ad.imageUrls || []).map((url, i) => (
+                            <div key={i} className="w-10 h-10 rounded-lg border-2 border-white bg-slate-100 overflow-hidden shadow-sm">
+                              <img src={url} className="w-full h-full object-cover" />
                             </div>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell><Badge variant="outline">{ad.city}</Badge></TableCell>
-                      <TableCell>{ad.slotIndex === 0 ? "Topo" : ad.slotIndex === 1 ? "Lateral" : "Geral"}</TableCell>
+                      <TableCell>{ad.slotIndex === 0 ? "Topo" : ad.slotIndex === 1 ? "Lateral" : "Lobby"}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" onClick={() => deleteAd(ad.id)} className="text-red-500"><Trash2 size={18} /></Button>
                       </TableCell>
@@ -243,19 +225,18 @@ const Dashboard = () => {
                  <div className="bg-primary/10 p-4 rounded-3xl text-primary"><Settings size={32} /></div>
                  <div>
                     <h3 className="text-2xl font-black text-slate-800">Mensagem Padrão</h3>
-                    <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Configurações das Salas de Bate Papo</p>
+                    <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Aparece ao entrar na sala</p>
                  </div>
               </div>
-
               <div className="space-y-4">
                  <Label className="text-xs font-black uppercase tracking-widest text-slate-500">Texto de Boas-vindas</Label>
                  <Textarea 
                    value={defaultMessage} 
                    onChange={(e) => setDefaultMessage(e.target.value)} 
-                   placeholder="Digite a mensagem que aparecerá para os usuários quando entrarem na sala..." 
+                   placeholder="Ex: Bem-vindos ao Bate Papo! Respeite as regras..." 
                    className="min-h-[160px] rounded-[2rem] border-slate-100 p-8 font-bold text-lg focus-visible:ring-primary/10 shadow-inner bg-slate-50/50"
                  />
-                 <Button onClick={handleSaveMessage} className="h-16 px-10 rounded-2xl bg-primary font-black text-white hover:bg-primary/90 transition-all active:scale-95 shadow-xl shadow-primary/20">
+                 <Button onClick={handleSaveMessage} className="h-16 px-10 rounded-2xl bg-primary font-black text-white hover:bg-primary/90 transition-all shadow-xl shadow-primary/20">
                     <MessageCircle className="mr-2" size={20} /> Salvar Mensagem
                  </Button>
               </div>
@@ -266,63 +247,18 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-center space-y-4">
                 <div className="bg-red-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-red-600"><FileText size={32} /></div>
-                <h3 className="text-xl font-black">Relatório em PDF</h3>
-                <p className="text-slate-400 text-sm">Gere um documento pronto para impressão com ID, Rede Social e indicações.</p>
-                <Button onClick={exportPDF} className="w-full h-16 font-black rounded-2xl bg-red-600 hover:bg-red-700">Exportar PDF</Button>
+                <h3 className="text-xl font-black">Exportar PDF</h3>
+                <Button onClick={() => {}} className="w-full h-16 font-black rounded-2xl bg-red-600">Exportar PDF</Button>
               </Card>
               <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-center space-y-4">
                 <div className="bg-emerald-50 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-emerald-600"><TableIcon size={32} /></div>
-                <h3 className="text-xl font-black">Base em CSV/Excel</h3>
-                <p className="text-slate-400 text-sm">Exporte a base completa de dados para planilhas.</p>
-                <Button onClick={exportCSV} variant="outline" className="w-full h-16 font-black rounded-2xl border-emerald-200 text-emerald-600 hover:bg-emerald-50">Exportar CSV</Button>
+                <h3 className="text-xl font-black">Exportar CSV</h3>
+                <Button onClick={() => {}} variant="outline" className="w-full h-16 font-black rounded-2xl border-emerald-200 text-emerald-600">Exportar CSV</Button>
               </Card>
             </div>
           </TabsContent>
         </Tabs>
       </div>
-
-      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="rounded-[3rem] p-10 max-w-md">
-          {selectedUser && (
-            <div className="space-y-6">
-              <div className="text-center space-y-1">
-                <Badge className="bg-primary text-white h-8 px-4 rounded-full font-black mb-2">ID: {selectedUser.id}</Badge>
-                <h2 className="text-2xl font-black text-slate-800">{selectedUser.name}</h2>
-                <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Cadastrado em {selectedUser.date}</p>
-              </div>
-              
-              <div className="bg-slate-50 p-6 rounded-[2rem] space-y-4 border border-slate-100">
-                <div className="flex justify-between border-b border-slate-200/50 pb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Rede Social / E-mail</span>
-                  <span className="font-bold text-indigo-600 break-all ml-4 text-right">{selectedUser.socialLink || "-"}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200/50 pb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Indicado por</span>
-                  <span className="font-bold text-primary">{selectedUser.indicatedBy || "Ninguém"}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200/50 pb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">WhatsApp</span>
-                  <span className="font-bold">{selectedUser.whatsapp}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200/50 pb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Cidade/UF</span>
-                  <span className="font-bold">{selectedUser.city}/{selectedUser.state}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200/50 pb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">CPF</span>
-                  <span className="font-bold">{selectedUser.cpf}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Nascimento</span>
-                  <span className="font-bold">{selectedUser.birthDate}</span>
-                </div>
-              </div>
-              
-              <Button onClick={() => setSelectedUser(null)} className="w-full h-14 rounded-2xl font-black">Fechar Detalhes</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isAdDialogOpen} onOpenChange={setIsAdDialogOpen}>
         <DialogContent className="max-w-2xl rounded-[3.5rem] p-10 overflow-y-auto max-h-[90vh]">
@@ -331,15 +267,28 @@ const Dashboard = () => {
           </DialogHeader>
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {newAd.imageUrls.map((url, i) => (
+              {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="space-y-2">
                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Imagem {i+1}</Label>
                    <div className="flex gap-2">
-                      <Input placeholder="URL da Imagem" value={url} onChange={(e) => {
-                        const n = [...newAd.imageUrls]; n[i] = e.target.value; setNewAd({...newAd, imageUrls: n});
-                      }} className="h-12 rounded-xl flex-1" />
-                      <input type="file" ref={fileInputRefs[i]} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(i, e)} />
-                      <Button variant="outline" size="icon" onClick={() => fileInputRefs[i].current?.click()} className="h-12 w-12 rounded-xl border-slate-100"><Upload size={18} /></Button>
+                      <Input 
+                        placeholder="URL da Imagem" 
+                        value={newAd.imageUrls[i]} 
+                        onChange={(e) => {
+                          const n = [...newAd.imageUrls]; n[i] = e.target.value; setNewAd({...newAd, imageUrls: n});
+                        }} 
+                        className="h-12 rounded-xl flex-1" 
+                      />
+                      <input 
+                        type="file" 
+                        ref={fileRefs[i]} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={(e) => handleFileUpload(i, e)} 
+                      />
+                      <Button variant="outline" size="icon" onClick={() => fileRefs[i].current?.click()} className="h-12 w-12 rounded-xl border-slate-100">
+                        <Upload size={18} />
+                      </Button>
                    </div>
                 </div>
               ))}
@@ -347,12 +296,12 @@ const Dashboard = () => {
 
             <div className="space-y-2">
                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Texto Abaixo do Banner (Opcional)</Label>
-               <Input placeholder="Ex: Confira as ofertas de hoje!" value={newAd.text} onChange={(e) => setNewAd({...newAd, text: e.target.value})} className="h-14 rounded-2xl font-bold" />
+               <Input placeholder="Digite uma descrição para o banner..." value={newAd.text} onChange={(e) => setNewAd({...newAd, text: e.target.value})} className="h-14 rounded-2xl font-bold" />
             </div>
 
             <div className="space-y-2">
-               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Link de Destino</Label>
-               <Input placeholder="https://..." value={newAd.link} onChange={(e) => setNewAd({...newAd, link: e.target.value})} className="h-14 rounded-2xl font-bold border-indigo-100" />
+               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Site de Destino</Label>
+               <Input placeholder="https://exemplo.com" value={newAd.link} onChange={(e) => setNewAd({...newAd, link: e.target.value})} className="h-14 rounded-2xl font-bold border-indigo-100" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -362,7 +311,7 @@ const Dashboard = () => {
                </div>
                <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Posição</Label>
-                  <select value={newAd.slotIndex} onChange={(e) => setNewAd({...newAd, slotIndex: Number(e.target.value)})} className="w-full h-14 rounded-2xl font-bold border-slate-200 px-4 bg-transparent">
+                  <select value={newAd.slotIndex} onChange={(e) => setNewAd({...newAd, slotIndex: Number(e.target.value)})} className="w-full h-14 rounded-2xl font-bold border-slate-200 px-4 bg-transparent outline-none">
                      <option value={0}>Topo (Bate Papo)</option>
                      <option value={1}>Lateral (Bate Papo)</option>
                      <option value={2}>Página Inicial (Lobby)</option>
@@ -374,6 +323,25 @@ const Dashboard = () => {
                PUBLICAR ANÚNCIO
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+        <DialogContent className="rounded-[3rem] p-10 max-w-md">
+          {selectedUser && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <Badge className="bg-primary text-white h-8 px-4 rounded-full font-black mb-2">ID: {selectedUser.id}</Badge>
+                <h2 className="text-2xl font-black text-slate-800">{selectedUser.name}</h2>
+              </div>
+              <div className="bg-slate-50 p-6 rounded-[2rem] space-y-4">
+                <div className="flex justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Social/E-mail</span><span className="font-bold">{selectedUser.socialLink || "-"}</span></div>
+                <div className="flex justify-between"><span className="text-[10px] font-black uppercase text-slate-400">WhatsApp</span><span className="font-bold">{selectedUser.whatsapp}</span></div>
+                <div className="flex justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Cidade</span><span className="font-bold">{selectedUser.city}</span></div>
+              </div>
+              <Button onClick={() => setSelectedUser(null)} className="w-full h-14 rounded-2xl font-black">Fechar</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
