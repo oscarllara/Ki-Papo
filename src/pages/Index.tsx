@@ -5,7 +5,17 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Facebook, Instagram, Chrome, Apple, ShieldCheck, Loader2, Mail, Sparkles } from 'lucide-react';
+import { 
+  MessageSquare, 
+  Facebook, 
+  Instagram, 
+  Chrome, 
+  Apple, 
+  ShieldCheck, 
+  Loader2, 
+  Settings, 
+  Sparkles 
+} from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -144,12 +154,18 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-center pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 pt-4">
           <button 
             onClick={() => navigate('/admin-login')}
             className="text-slate-400 hover:text-primary transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] group"
           >
             <ShieldCheck size={16} className="group-hover:scale-110 transition-transform" /> Acesso Administrativo
+          </button>
+          <button 
+            onClick={() => navigate('/admin-login')}
+            className="text-slate-400 hover:text-primary transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] group"
+          >
+            <Settings size={16} className="group-hover:rotate-90 transition-transform duration-500" /> Configurações
           </button>
         </div>
       </div>
