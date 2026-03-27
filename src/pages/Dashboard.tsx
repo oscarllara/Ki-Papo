@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
@@ -11,7 +11,10 @@ import {
   Trash2,
   Plus,
   MapPin,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Upload,
+  MessageCircle,
+  Settings
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,7 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { useToast } from "@/hooks/use-toast";
@@ -35,13 +39,17 @@ const Dashboard = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAdDialogOpen, setIsAdDialogOpen] = useState(false);
+  const [defaultMessage, setDefaultMessage] = useState('');
   
   const [newAd, setNewAd] = useState({
     imageUrls: ['', '', '', ''],
-    link: '',
+    link: 'https://',
     city: 'Global',
-    slotIndex: 0
+    slotIndex: 0,
+    text: ''
   });
+
+  const fileInputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
   useEffect(() => {
     const isAuth = sessionStorage.getItem('admin_auth');
@@ -51,24 +59,36 @@ const Dashboard = () => {
     }
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     const savedAds = JSON.parse(localStorage.getItem('kipapo_ads') || '[]');
+    const savedMsg = localStorage.getItem('kipapo_default_message') || '';
     setUsers(savedUsers);
     setAds(savedAds);
+    setDefaultMessage(savedMsg);
     setIsLoaded(true);
   }, [navigate]);
 
   if (!isLoaded) return null;
 
-  const filteredUsers = users.filter(user => {
-    const search = searchTerm.toLowerCase();
-    return (
-      (user.name || '').toLowerCase().includes(search) || 
-      (user.id?.toString() || '').includes(searchTerm) || 
-      (user.city || '').toLowerCase().includes(search)
-    );
-  });
+  const handleFileUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const n = [...newAd.imageUrls];
+        n[index] = base64String;
+        setNewAd({...newAd, imageUrls: n});
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveMessage = () => {
+    localStorage.setItem('kipapo_default_message', defaultMessage);
+    toast({ title: "Mensagem Salva", description: "A mensagem aparecerá nas salas de chat." });
+  };
 
   const handleCreateAd = () => {
-    if (!newAd.link) {
+    if (!newAd.link || newAd.link === 'https://') {
       toast({ variant: "destructive", title: "Link obrigatório" });
       return;
     }
@@ -78,13 +98,14 @@ const Dashboard = () => {
       imageUrls: validImages,
       link: newAd.link,
       city: newAd.city || 'Global',
-      slotIndex: Number(newAd.slotIndex) || 0
+      slotIndex: Number(newAd.slotIndex) || 0,
+      text: newAd.text
     };
     const updatedAds = [...ads, adToAdd];
     localStorage.setItem('kipapo_ads', JSON.stringify(updatedAds));
     setAds(updatedAds);
     setIsAdDialogOpen(false);
-    setNewAd({ imageUrls: ['', '', '', ''], link: '', city: 'Global', slotIndex: 0 });
+    setNewAd({ imageUrls: ['', '', '', ''], link: 'https://', city: 'Global', slotIndex: 0, text: '' });
     toast({ title: "Anúncio Publicado" });
   };
 
@@ -93,19 +114,6 @@ const Dashboard = () => {
     localStorage.setItem('kipapo_ads', JSON.stringify(updated));
     setAds(updated);
     toast({ title: "Anúncio Removido" });
-  };
-
-  const exportCSV = () => {
-    if (users.length === 0) return;
-    const headers = ["ID", "Data", "Nome", "CPF", "WhatsApp", "Cidade", "Contato Social", "Indicado Por"];
-    const rows = users.map(u => [u.id, u.date, u.name, u.cpf, u.whatsapp, u.city, u.socialLink || "-", u.indicatedBy || "-"]);
-    const csvContent = [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "usuarios_kipapo.csv");
-    link.click();
   };
 
   const exportPDF = () => {
@@ -121,6 +129,19 @@ const Dashboard = () => {
     doc.save(`relatorio_kipapo.pdf`);
   };
 
+  const exportCSV = () => {
+    if (users.length === 0) return;
+    const headers = ["ID", "Data", "Nome", "CPF", "WhatsApp", "Cidade", "Contato Social", "Indicado Por"];
+    const rows = users.map(u => [u.id, u.date, u.name, u.cpf, u.whatsapp, u.city, u.socialLink || "-", u.indicatedBy || "-"]);
+    const csvContent = [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "usuarios_kipapo.csv");
+    link.click();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -133,10 +154,11 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="bg-slate-200/50 p-1.5 rounded-[2rem] mb-8 w-fit">
-            <TabsTrigger value="users" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest">Usuários</TabsTrigger>
-            <TabsTrigger value="ads" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest">Publicidade</TabsTrigger>
-            <TabsTrigger value="logs" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest">Relatórios</TabsTrigger>
+          <TabsList className="bg-slate-200/50 p-1.5 rounded-[2rem] mb-8 w-fit overflow-x-auto max-w-full">
+            <TabsTrigger value="users" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest shrink-0">Usuários</TabsTrigger>
+            <TabsTrigger value="ads" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest shrink-0">Publicidade</TabsTrigger>
+            <TabsTrigger value="config" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest shrink-0">Configurações</TabsTrigger>
+            <TabsTrigger value="logs" className="rounded-2xl px-8 py-3 font-black text-[10px] uppercase tracking-widest shrink-0">Relatórios</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -215,6 +237,31 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="config">
+            <Card className="border-none shadow-2xl rounded-[3rem] p-10 bg-white space-y-8">
+              <div className="flex items-center gap-4">
+                 <div className="bg-primary/10 p-4 rounded-3xl text-primary"><Settings size={32} /></div>
+                 <div>
+                    <h3 className="text-2xl font-black text-slate-800">Mensagem Padrão</h3>
+                    <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Configurações das Salas de Bate Papo</p>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 <Label className="text-xs font-black uppercase tracking-widest text-slate-500">Texto de Boas-vindas</Label>
+                 <Textarea 
+                   value={defaultMessage} 
+                   onChange={(e) => setDefaultMessage(e.target.value)} 
+                   placeholder="Digite a mensagem que aparecerá para os usuários quando entrarem na sala..." 
+                   className="min-h-[160px] rounded-[2rem] border-slate-100 p-8 font-bold text-lg focus-visible:ring-primary/10 shadow-inner bg-slate-50/50"
+                 />
+                 <Button onClick={handleSaveMessage} className="h-16 px-10 rounded-2xl bg-primary font-black text-white hover:bg-primary/90 transition-all active:scale-95 shadow-xl shadow-primary/20">
+                    <MessageCircle className="mr-2" size={20} /> Salvar Mensagem
+                 </Button>
+              </div>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="logs">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <Card className="p-10 rounded-[3rem] border-none shadow-xl bg-white text-center space-y-4">
@@ -278,16 +325,54 @@ const Dashboard = () => {
       </Dialog>
 
       <Dialog open={isAdDialogOpen} onOpenChange={setIsAdDialogOpen}>
-        <DialogContent className="max-w-lg rounded-[2.5rem] p-10">
-          <DialogTitle className="text-2xl font-black text-center mb-6">Novo Banner</DialogTitle>
-          <div className="space-y-4">
-            {newAd.imageUrls.map((url, i) => (
-              <Input key={i} placeholder={`URL da Imagem ${i+1}`} value={url} onChange={(e) => {
-                const n = [...newAd.imageUrls]; n[i] = e.target.value; setNewAd({...newAd, imageUrls: n});
-              }} className="h-12 rounded-xl" />
-            ))}
-            <Input placeholder="Link de Destino" value={newAd.link} onChange={(e) => setNewAd({...newAd, link: e.target.value})} className="h-14 rounded-xl font-bold" />
-            <Button onClick={handleCreateAd} className="w-full h-16 bg-primary rounded-xl font-black">PUBLICAR</Button>
+        <DialogContent className="max-w-2xl rounded-[3.5rem] p-10 overflow-y-auto max-h-[90vh]">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-3xl font-black text-center tracking-tighter">Novo Banner</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {newAd.imageUrls.map((url, i) => (
+                <div key={i} className="space-y-2">
+                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Imagem {i+1}</Label>
+                   <div className="flex gap-2">
+                      <Input placeholder="URL da Imagem" value={url} onChange={(e) => {
+                        const n = [...newAd.imageUrls]; n[i] = e.target.value; setNewAd({...newAd, imageUrls: n});
+                      }} className="h-12 rounded-xl flex-1" />
+                      <input type="file" ref={fileInputRefs[i]} className="hidden" accept="image/*" onChange={(e) => handleFileUpload(i, e)} />
+                      <Button variant="outline" size="icon" onClick={() => fileInputRefs[i].current?.click()} className="h-12 w-12 rounded-xl border-slate-100"><Upload size={18} /></Button>
+                   </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Texto Abaixo do Banner (Opcional)</Label>
+               <Input placeholder="Ex: Confira as ofertas de hoje!" value={newAd.text} onChange={(e) => setNewAd({...newAd, text: e.target.value})} className="h-14 rounded-2xl font-bold" />
+            </div>
+
+            <div className="space-y-2">
+               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Link de Destino</Label>
+               <Input placeholder="https://..." value={newAd.link} onChange={(e) => setNewAd({...newAd, link: e.target.value})} className="h-14 rounded-2xl font-bold border-indigo-100" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cidade</Label>
+                  <Input placeholder="Global ou Nome da Cidade" value={newAd.city} onChange={(e) => setNewAd({...newAd, city: e.target.value})} className="h-14 rounded-2xl font-bold" />
+               </div>
+               <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Posição</Label>
+                  <select value={newAd.slotIndex} onChange={(e) => setNewAd({...newAd, slotIndex: Number(e.target.value)})} className="w-full h-14 rounded-2xl font-bold border-slate-200 px-4 bg-transparent">
+                     <option value={0}>Topo (Bate Papo)</option>
+                     <option value={1}>Lateral (Bate Papo)</option>
+                     <option value={2}>Página Inicial (Lobby)</option>
+                  </select>
+               </div>
+            </div>
+
+            <Button onClick={handleCreateAd} className="w-full h-20 bg-primary hover:bg-primary/90 text-white rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/20 transition-all active:scale-95">
+               PUBLICAR ANÚNCIO
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

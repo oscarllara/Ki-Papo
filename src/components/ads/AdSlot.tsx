@@ -7,11 +7,12 @@ import { cn } from "@/lib/utils";
 export interface Ad {
   id: string;
   imageUrl?: string;
-  imageUrls?: string[]; // Suporte para múltiplas imagens
+  imageUrls?: string[]; 
   link: string;
   city: string; 
   slotIndex: number; 
   type?: 'image' | 'video';
+  text?: string; // Novo campo para texto abaixo da imagem
 }
 
 interface AdSlotProps {
@@ -30,18 +31,6 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     const loadAds = () => {
       let savedAds = JSON.parse(localStorage.getItem('kipapo_ads') || '[]');
       
-      if (savedAds.length === 0) {
-        savedAds = [
-          {
-            id: 'default-1',
-            imageUrls: ['https://images.unsplash.com/photo-1542744094-24638eff58bb?auto=format&fit=crop&q=80&w=800'],
-            link: 'https://www.google.com',
-            city: 'Global',
-            slotIndex: 0
-          }
-        ];
-      }
-
       const filtered = savedAds.filter((ad: Ad) => {
         if (ad.slotIndex !== slotIndex) return false;
         if (ad.city.toLowerCase() === 'global') return true;
@@ -61,7 +50,6 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     return () => window.removeEventListener('storage', loadAds);
   }, [city, slotIndex]);
 
-  // Rotação de imagens dentro do mesmo anúncio ou troca de anúncios
   useEffect(() => {
     if (ads.length === 0) return;
     
@@ -86,7 +74,6 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
   const activeAd = ads[currentAdIndex];
   const allImages = activeAd.imageUrls || (activeAd.imageUrl ? [activeAd.imageUrl] : []);
   
-  // Lógica de "puxar do site": Se não houver imagem, tenta usar o favicon do link como fallback
   const getDisplayImage = () => {
     if (allImages.length > 0 && allImages[currentImageSubIndex]) {
       return allImages[currentImageSubIndex];
@@ -100,41 +87,44 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
   };
 
   return (
-    <a 
-      href={activeAd.link} 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className={cn(
-        "block relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all group bg-slate-100 border border-slate-200",
-        className
-      )}
-      style={{ minHeight: '60px' }}
-    >
-      <img 
-        src={getDisplayImage()} 
-        alt="Publicidade" 
-        onError={() => setImgError(true)}
-        className="w-full h-full object-cover transition-opacity duration-500"
-      />
-      
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-        <div className="bg-white text-primary text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-2">
-          Ver Site <ExternalLink size={12} />
+    <div className={cn("flex flex-col gap-2", className)}>
+      <a 
+        href={activeAd.link} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="block relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all group bg-slate-100 border border-slate-200 aspect-[2/1]"
+      >
+        <img 
+          src={getDisplayImage()} 
+          alt="Publicidade" 
+          onError={() => setImgError(true)}
+          className="w-full h-full object-cover transition-opacity duration-500"
+        />
+        
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+          <div className="bg-white text-primary text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-2">
+            Ver Site <ExternalLink size={12} />
+          </div>
         </div>
-      </div>
 
-      <div className="absolute top-2 left-2 bg-black/20 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
-        Anúncio
-      </div>
-
-      {allImages.length > 1 && (
-        <div className="absolute bottom-2 right-4 flex gap-1">
-          {allImages.map((_, i) => (
-            <div key={i} className={cn("h-1 rounded-full transition-all", i === currentImageSubIndex ? "w-4 bg-white" : "w-1 bg-white/40")} />
-          ))}
+        <div className="absolute top-2 left-2 bg-black/20 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
+          Anúncio
         </div>
+
+        {allImages.length > 1 && (
+          <div className="absolute bottom-2 right-4 flex gap-1">
+            {allImages.map((_, i) => (
+              <div key={i} className={cn("h-1 rounded-full transition-all", i === currentImageSubIndex ? "w-4 bg-white" : "w-1 bg-white/40")} />
+            ))}
+          </div>
+        )}
+      </a>
+      {activeAd.text && (
+        <p className="text-center text-xs font-bold text-slate-500 px-4 line-clamp-2">
+          {activeAd.text}
+        </p>
       )}
-    </a>
+    </div>
   );
 };
 

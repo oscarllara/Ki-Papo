@@ -24,7 +24,8 @@ import {
   FileImage as ImageIcon,
   UserRound,
   Info,
-  MessageSquare
+  MessageSquare,
+  Megaphone
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -40,7 +41,7 @@ interface ChatMessage {
   time: string;
   isMe: boolean;
   isPrivate?: boolean;
-  type?: 'text' | 'image' | 'video';
+  type?: 'text' | 'image' | 'video' | 'system';
 }
 
 const Room = () => {
@@ -61,6 +62,7 @@ const Room = () => {
   const [cameraMode, setCameraMode] = useState<'photo' | 'video'>('photo');
   const [messagesList, setMessagesList] = useState<ChatMessage[]>([]);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [roomAnnouncement, setRoomAnnouncement] = useState('');
 
   const onlineUsers = ["Maria_22", "Joao_Silva", "Gabi_BH", "Paulo_Vila", "Nanda_Fit"];
 
@@ -89,15 +91,15 @@ const Room = () => {
     return messagesList.filter(msg => !msg.isPrivate || msg.sender === nickname || msg.receiver === nickname);
   }, [messagesList, nickname]);
 
-  const handleSendMessage = (content: string = message, type: 'text' | 'image' | 'video' = 'text') => {
+  const handleSendMessage = (content: string = message, type: 'text' | 'image' | 'video' | 'system' = 'text') => {
     if (!content.trim() && type === 'text') return;
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
-      sender: nickname,
+      sender: type === 'system' ? 'Sistema' : nickname,
       receiver: isPrivate ? (targetUser || undefined) : undefined,
       content,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
+      isMe: type === 'system' ? false : true,
       isPrivate,
       type
     };
@@ -147,6 +149,10 @@ const Room = () => {
   const handleJoin = () => { 
     if (nickname.trim().length >= 3) {
       setHasJoined(true);
+      const savedMsg = localStorage.getItem('kipapo_default_message');
+      if (savedMsg) {
+         setRoomAnnouncement(savedMsg);
+      }
     } 
   };
 
@@ -218,7 +224,7 @@ const Room = () => {
         <ScrollArea className="flex-1 p-4">
           <UserList />
           <div className="mt-10 p-2">
-            <AdSlot city={cityName} slotIndex={1} className="h-64 rounded-[2.5rem]" />
+            <AdSlot city={cityName} slotIndex={1} className="h-full rounded-[2.5rem]" />
           </div>
         </ScrollArea>
       </aside>
@@ -265,12 +271,19 @@ const Room = () => {
         </header>
 
         <div className="bg-white px-6 md:px-10 py-3 border-b border-slate-50 shrink-0">
-          <AdSlot city={cityName} slotIndex={0} className="h-14 md:h-16 rounded-3xl" />
+          <AdSlot city={cityName} slotIndex={0} className="h-full rounded-3xl" />
         </div>
+
+        {roomAnnouncement && (
+          <div className="bg-indigo-50 border-b border-indigo-100 p-4 md:px-10 flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+             <div className="bg-indigo-600 p-2 rounded-xl text-white shrink-0 shadow-lg shadow-indigo-200"><Megaphone size={18} /></div>
+             <p className="text-indigo-900 text-sm font-bold leading-relaxed">{roomAnnouncement}</p>
+          </div>
+        )}
 
         <ScrollArea className="flex-1 p-6 md:p-12 bg-slate-50/20" ref={scrollRef}>
           <div className="max-w-5xl mx-auto space-y-6 md:space-y-10 py-6">
-            {visibleMessages.length === 0 && (
+            {visibleMessages.length === 0 && !roomAnnouncement && (
               <div className="text-center py-32 opacity-20 select-none">
                 <MessageSquare className="mx-auto mb-6 text-slate-400" size={64} />
                 <p className="text-sm font-black uppercase tracking-[0.4em]">Inicie a conversa!</p>
@@ -348,7 +361,6 @@ const Room = () => {
         </div>
       </main>
 
-      {/* Dialogs mantidos com a lógica funcional */}
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
         <DialogContent className="max-w-[340px] rounded-[3rem] p-10 border-none shadow-[0_48px_96px_-24px_rgba(0,0,0,0.15)]">
           <DialogHeader className="mb-8">
