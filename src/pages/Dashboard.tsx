@@ -229,7 +229,7 @@ const Dashboard = () => {
             <Card className="border-none shadow-xl md:shadow-2xl rounded-2xl md:rounded-[3rem] p-6 md:p-14 bg-white space-y-8 md:space-y-12">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4 md:gap-6">
-                   <div className="bg-primary/10 p-3 md:p-5 rounded-2xl md:rounded-[2rem] text-primary shadow-inner"><Settings size={24} md:size={36} /></div>
+                   <div className="bg-primary/10 p-3 md:p-5 rounded-2xl md:rounded-[2rem] text-primary shadow-inner"><Settings size={24} /></div>
                    <div>
                       <h3 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">Mensagem Padrão</h3>
                       <p className="text-[10px] md:text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Aparece em todas as salas</p>
@@ -256,12 +256,12 @@ const Dashboard = () => {
           <TabsContent value="logs">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
               <Card className="p-6 md:p-10 rounded-2xl md:rounded-[3rem] border-none shadow-lg bg-white text-center space-y-4">
-                <div className="bg-red-50 w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto text-red-600"><FileText size={24} md:size={32} /></div>
+                <div className="bg-red-50 w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto text-red-600"><FileText size={24} /></div>
                 <h3 className="text-lg md:text-xl font-black">Exportar PDF</h3>
                 <Button onClick={() => {}} className="w-full h-14 md:h-16 font-black rounded-xl md:rounded-2xl bg-red-600">Exportar PDF</Button>
               </Card>
               <Card className="p-6 md:p-10 rounded-2xl md:rounded-[3rem] border-none shadow-lg bg-white text-center space-y-4">
-                <div className="bg-emerald-50 w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto text-emerald-600"><TableIcon size={24} md:size={32} /></div>
+                <div className="bg-emerald-50 w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto text-emerald-600"><TableIcon size={24} /></div>
                 <h3 className="text-lg md:text-xl font-black">Exportar CSV</h3>
                 <Button onClick={() => {}} variant="outline" className="w-full h-14 md:h-16 font-black rounded-xl md:rounded-2xl border-emerald-200 text-emerald-600">Exportar CSV</Button>
               </Card>
