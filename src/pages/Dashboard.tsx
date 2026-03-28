@@ -20,7 +20,8 @@ import {
   Phone,
   CreditCard,
   Link as LinkIcon,
-  UserPlus
+  UserPlus,
+  Pencil
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -43,6 +44,7 @@ const Dashboard = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAdDialogOpen, setIsAdDialogOpen] = useState(false);
+  const [editingAdId, setEditingAdId] = useState<string | null>(null);
   
   const [defaultMessage, setDefaultMessage] = useState('');
   const [messageInterval, setMessageInterval] = useState('0');
@@ -113,20 +115,48 @@ const Dashboard = () => {
       return;
     }
     const validImages = newAd.imageUrls.filter(url => url.trim() !== '');
-    const adToAdd: Ad = {
-      id: Date.now().toString(),
-      imageUrls: validImages,
-      link: newAd.link,
-      city: newAd.city || 'Global',
-      slotIndex: Number(newAd.slotIndex) || 0,
-      text: newAd.text
-    };
-    const updatedAds = [...ads, adToAdd];
+    
+    let updatedAds;
+    if (editingAdId) {
+      updatedAds = ads.map(ad => ad.id === editingAdId ? {
+        ...ad,
+        imageUrls: validImages,
+        link: newAd.link,
+        city: newAd.city || 'Global',
+        slotIndex: Number(newAd.slotIndex) || 0,
+        text: newAd.text
+      } : ad);
+      toast({ title: "Anúncio Atualizado" });
+    } else {
+      const adToAdd: Ad = {
+        id: Date.now().toString(),
+        imageUrls: validImages,
+        link: newAd.link,
+        city: newAd.city || 'Global',
+        slotIndex: Number(newAd.slotIndex) || 0,
+        text: newAd.text
+      };
+      updatedAds = [...ads, adToAdd];
+      toast({ title: "Anúncio Publicado" });
+    }
+    
     localStorage.setItem('kipapo_ads', JSON.stringify(updatedAds));
     setAds(updatedAds);
     setIsAdDialogOpen(false);
+    setEditingAdId(null);
     setNewAd({ imageUrls: ['', '', '', ''], link: 'https://', city: 'Global', slotIndex: 0, text: '' });
-    toast({ title: "Anúncio Publicado" });
+  };
+
+  const handleEditAd = (ad: Ad) => {
+    setEditingAdId(ad.id);
+    setNewAd({
+      imageUrls: [...(ad.imageUrls || []), '', '', '', ''].slice(0, 4),
+      link: ad.link,
+      city: ad.city,
+      slotIndex: ad.slotIndex,
+      text: ad.text || ''
+    });
+    setIsAdDialogOpen(true);
   };
 
   const deleteAd = (id: string) => {
@@ -195,7 +225,7 @@ const Dashboard = () => {
             <Card className="border-none shadow-xl md:shadow-2xl rounded-2xl md:rounded-[3rem] overflow-hidden bg-white">
               <div className="p-4 md:p-8 flex flex-col md:flex-row justify-between items-center bg-slate-50/50 border-b gap-4">
                 <h3 className="text-lg md:text-xl font-black">Banners de Publicidade</h3>
-                <Button onClick={() => setIsAdDialogOpen(true)} className="rounded-xl md:rounded-2xl bg-primary h-12 md:h-14 font-black px-6 w-full md:w-auto"><Plus size={18} className="mr-2" /> Novo Banner</Button>
+                <Button onClick={() => { setEditingAdId(null); setNewAd({ imageUrls: ['', '', '', ''], link: 'https://', city: 'Global', slotIndex: 0, text: '' }); setIsAdDialogOpen(true); }} className="rounded-xl md:rounded-2xl bg-primary h-12 md:h-14 font-black px-6 w-full md:w-auto"><Plus size={18} className="mr-2" /> Novo Banner</Button>
               </div>
               <div className="overflow-x-auto">
                 <Table>
@@ -215,7 +245,10 @@ const Dashboard = () => {
                         <TableCell><Badge variant="outline" className="text-[10px]">{ad.city}</Badge></TableCell>
                         <TableCell className="text-xs">{ad.slotIndex === 0 ? "Topo" : ad.slotIndex === 1 ? "Lateral" : "Lobby"}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" onClick={() => deleteAd(ad.id)} className="text-red-500"><Trash2 size={18} /></Button>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleEditAd(ad)} className="text-indigo-600"><Pencil size={18} /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => deleteAd(ad.id)} className="text-red-500"><Trash2 size={18} /></Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -321,7 +354,9 @@ const Dashboard = () => {
       <Dialog open={isAdDialogOpen} onOpenChange={setIsAdDialogOpen}>
         <DialogContent className="max-w-[95vw] md:max-w-2xl rounded-2xl md:rounded-[3.5rem] p-6 md:p-10 overflow-y-auto max-h-[90vh]">
           <DialogHeader className="mb-4 md:mb-6">
-            <DialogTitle className="text-2xl md:text-3xl font-black text-center tracking-tighter">Novo Banner</DialogTitle>
+            <DialogTitle className="text-2xl md:text-3xl font-black text-center tracking-tighter">
+              {editingAdId ? "Editar Banner" : "Novo Banner"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 md:space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -346,7 +381,9 @@ const Dashboard = () => {
                   <option value={2}>Página Inicial (Lobby)</option>
                </select>
             </div>
-            <Button onClick={handleCreateAd} className="w-full h-16 md:h-20 bg-primary hover:bg-primary/90 text-white rounded-2xl md:rounded-[2rem] font-black text-lg md:text-xl shadow-xl shadow-primary/20 transition-all active:scale-95">PUBLICAR</Button>
+            <Button onClick={handleCreateAd} className="w-full h-16 md:h-20 bg-primary hover:bg-primary/90 text-white rounded-2xl md:rounded-[2rem] font-black text-lg md:text-xl shadow-xl shadow-primary/20 transition-all active:scale-95">
+              {editingAdId ? "SALVAR ALTERAÇÕES" : "PUBLICAR"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
