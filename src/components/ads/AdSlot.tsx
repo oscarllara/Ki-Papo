@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, PlayCircle, AlertCircle } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 export interface Ad {
@@ -12,7 +12,7 @@ export interface Ad {
   city: string; 
   slotIndex: number; 
   type?: 'image' | 'video';
-  text?: string; // Novo campo para texto abaixo da imagem
+  text?: string;
 }
 
 interface AdSlotProps {
@@ -25,7 +25,6 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [currentImageSubIndex, setCurrentImageSubIndex] = useState(0);
   const [ads, setAds] = useState<Ad[]>([]);
-  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     const loadAds = () => {
@@ -42,7 +41,6 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
       });
 
       setAds(filtered);
-      setImgError(false);
     };
 
     loadAds();
@@ -63,7 +61,6 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
         setCurrentImageSubIndex(0);
         setCurrentAdIndex((prev) => (prev + 1) % ads.length);
       }
-      setImgError(false);
     }, 5000);
     
     return () => clearInterval(interval);
@@ -78,49 +75,49 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     if (allImages.length > 0 && allImages[currentImageSubIndex]) {
       return allImages[currentImageSubIndex];
     }
-    try {
-      const domain = new URL(activeAd.link).hostname;
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-    } catch {
-      return 'https://via.placeholder.com/800x400?text=Ki+Papo+Publicidade';
-    }
+    return 'https://via.placeholder.com/800x400?text=Ki+Papo+Publicidade';
   };
 
+  // Ajuste de proporção baseado no slot
+  const aspectClass = slotIndex === 1 ? "aspect-[3/4]" : "aspect-[21/9] md:aspect-[4/1]";
+
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn("flex flex-col gap-2 w-full", className)}>
       <a 
         href={activeAd.link} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="block relative rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all group bg-slate-100 border border-slate-200 aspect-[2/1]"
+        className={cn(
+          "block relative rounded-2xl md:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-all group bg-slate-100 border border-slate-200",
+          aspectClass
+        )}
       >
         <img 
           src={getDisplayImage()} 
           alt="Publicidade" 
-          onError={() => setImgError(true)}
           className="w-full h-full object-cover transition-opacity duration-500"
         />
         
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-          <div className="bg-white text-primary text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-2">
-            Ver Site <ExternalLink size={12} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+          <div className="bg-white text-primary text-[9px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5">
+            Ver Site <ExternalLink size={10} />
           </div>
         </div>
 
-        <div className="absolute top-2 left-2 bg-black/20 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
+        <div className="absolute top-2 left-2 bg-black/30 backdrop-blur-sm text-[7px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
           Anúncio
         </div>
 
         {allImages.length > 1 && (
-          <div className="absolute bottom-2 right-4 flex gap-1">
+          <div className="absolute bottom-2 right-3 flex gap-1">
             {allImages.map((_, i) => (
-              <div key={i} className={cn("h-1 rounded-full transition-all", i === currentImageSubIndex ? "w-4 bg-white" : "w-1 bg-white/40")} />
+              <div key={i} className={cn("h-0.5 rounded-full transition-all", i === currentImageSubIndex ? "w-3 bg-white" : "w-1 bg-white/40")} />
             ))}
           </div>
         )}
       </a>
       {activeAd.text && (
-        <p className="text-center text-xs font-bold text-slate-500 px-4 line-clamp-2">
+        <p className="text-center text-[10px] md:text-xs font-bold text-slate-500 px-2 line-clamp-1">
           {activeAd.text}
         </p>
       )}
