@@ -13,7 +13,14 @@ import {
   Upload,
   MessageCircle,
   Settings,
-  Clock
+  Clock,
+  User,
+  Calendar,
+  MapPin,
+  Phone,
+  CreditCard,
+  Link as LinkIcon,
+  UserPlus
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -297,6 +304,62 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Popup de Detalhes do Usuário */}
+      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+        <DialogContent className="max-w-md rounded-[3rem] p-10">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-3xl font-black text-center tracking-tighter">Detalhes do Usuário</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                <div className="bg-primary/10 p-3 rounded-xl text-primary"><User size={24} /></div>
+                <div>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Nome Completo</p>
+                  <p className="font-bold text-slate-900">{selectedUser.name}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-1 text-slate-400"><Calendar size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Nascimento</span></div>
+                  <p className="font-bold text-slate-900">{selectedUser.birthDate}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-1 text-slate-400"><CreditCard size={14} /><span className="text-[10px] font-black uppercase tracking-widest">CPF</span></div>
+                  <p className="font-bold text-slate-900">{selectedUser.cpf}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-1 text-slate-400"><Phone size={14} /><span className="text-[10px] font-black uppercase tracking-widest">WhatsApp</span></div>
+                  <p className="font-bold text-slate-900">{selectedUser.whatsapp}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-1 text-slate-400"><MapPin size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Localização</span></div>
+                  <p className="font-bold text-slate-900">{selectedUser.city} - {selectedUser.state}</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 rounded-2xl">
+                <div className="flex items-center gap-2 mb-1 text-slate-400"><LinkIcon size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Rede Social / E-mail</span></div>
+                <p className="font-bold text-slate-900 break-all">{selectedUser.socialLink || "-"}</p>
+              </div>
+
+              {selectedUser.indicatedBy && (
+                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                  <div className="flex items-center gap-2 mb-1 text-indigo-400"><UserPlus size={14} /><span className="text-[10px] font-black uppercase tracking-widest">Indicado por</span></div>
+                  <p className="font-bold text-indigo-900">{selectedUser.indicatedBy}</p>
+                </div>
+              )}
+
+              <Button onClick={() => setSelectedUser(null)} className="w-full h-14 rounded-2xl bg-slate-900 font-black text-white">Fechar Detalhes</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isAdDialogOpen} onOpenChange={setIsAdDialogOpen}>
         <DialogContent className="max-w-2xl rounded-[3.5rem] p-10 overflow-y-auto max-h-[90vh]">
