@@ -74,6 +74,13 @@ const Dashboard = () => {
     setIsLoaded(true);
   }, [navigate]);
 
+  // Lógica de filtragem de usuários
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.id.toString().includes(searchTerm) ||
+    user.city.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (!isLoaded) return null;
 
   const handleFileUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
