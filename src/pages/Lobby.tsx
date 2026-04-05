@@ -40,23 +40,32 @@ const Lobby = () => {
   const [loadingStates, setLoadingStates] = useState(true);
   const [loadingCities, setLoadingCities] = useState(false);
   
-  // Novos estados para busca por raio
   const [viewMode, setViewMode] = useState<'city' | 'nearby'>('city');
   const [radius, setRadius] = useState([50]);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 
+  // Carregar dados do usuário logado
+  const [userProfile, setUserProfile] = useState<any>(null);
+
   useEffect(() => {
+    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
+    if (savedUsers.length > 0) {
+      setUserProfile(savedUsers[0]); // Pega o último usuário cadastrado
+      setSelectedCity(savedUsers[0].city);
+    }
+
     const loadStates = async () => {
       try {
         const data = await fetchStates();
         setStates(data);
-        const homeStateSigla = sessionStorage.getItem('kipapo_home_state');
+        
+        const homeStateSigla = sessionStorage.getItem('kipapo_home_state') || (savedUsers.length > 0 ? savedUsers[0].state : null);
+        
         if (homeStateSigla) {
           const found = data.find(s => s.sigla === homeStateSigla);
           if (found) setSelectedState(found);
           else if (data.length > 0) setSelectedState(data[0]);
-          sessionStorage.removeItem('kipapo_home_state');
         } else if (data.length > 0) {
           setSelectedState(data[0]);
         }
@@ -76,13 +85,14 @@ const Lobby = () => {
       try {
         const data = await fetchCitiesByState(selectedState.sigla);
         setCities(data);
-        const homeCity = sessionStorage.getItem('kipapo_home_city');
-        if (homeCity) {
-          setSelectedCity(homeCity);
-          sessionStorage.removeItem('kipapo_home_city');
-        } else {
-          setSelectedCity(null);
+        
+        // Se mudou de estado manualmente, limpa a cidade selecionada a menos que seja a do perfil
+        if (userProfile && selectedState.sigla === userProfile.state) {
+          setSelectedCity(userProfile.city);
+        } else if (viewMode === 'city') {
+          // Não limpa se estivermos apenas carregando o estado inicial
         }
+        
         setCitySearch("");
       } catch (error) {
         console.error("Erro ao carregar cidades", error);
@@ -91,7 +101,7 @@ const Lobby = () => {
       }
     };
     loadCities();
-  }, [selectedState]);
+  }, [selectedState, userProfile]);
 
   const handleGetLocation = () => {
     setIsLocating(true);
@@ -137,8 +147,10 @@ const Lobby = () => {
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col h-screen overflow-hidden font-sans">
       <header className="px-8 h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex justify-between items-center z-20 shrink-0 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="bg-primary p-3 rounded-[1.25rem] text-white shadow-xl shadow-primary/20"><MessageSquare size={24} className="fill-current" /></div>
-          <div className="flex items-baseline gap-1">
+          <div className="bg-primary p-3 rounded-[1.25rem] text-white shadow-xl shadow-primary/20" onClick={() => navigate('/')}>
+            <MessageSquare size={24} className="fill-current" />
+          </div>
+          <div className="flex items-baseline gap-1 cursor-pointer" onClick={() => navigate('/')}>
             <span className="text-3xl font-black text-primary tracking-tighter">Ki</span>
             <span className="text-3xl font-black text-secondary tracking-tighter">Papo</span>
           </div>
@@ -160,8 +172,12 @@ const Lobby = () => {
           </Button>
           <div className="h-10 w-px bg-slate-100 mx-2" />
           <div className="hidden md:flex flex-col items-end">
-             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Localização Atual</span>
-             <span className="text-sm font-bold text-slate-700">{selectedCity || "Selecionando..."}</span>
+             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+               {viewMode === 'nearby' ? "GPS Ativo" : "Localização Atual"}
+             </span>
+             <span className="text-sm font-bold text-slate-700">
+               {viewMode === 'nearby' ? `Raio ${radius}km` : (selectedCity || "Selecionar...")}
+             </span>
           </div>
         </div>
       </header>
