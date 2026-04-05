@@ -13,17 +13,12 @@ import {
   ArrowLeft, 
   Users, 
   Lock, 
-  Image as GalleryIcon,
-  Video as VideoIcon,
-  FileImage as ImageIcon,
   Info,
-  MessageSquare,
   Megaphone
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { toast } from "sonner";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import AdSlot from '@/components/ads/AdSlot';
 
 interface ChatMessage {
@@ -54,6 +49,16 @@ const Room = () => {
 
   const onlineUsers = ["Maria_22", "Joao_Silva", "Gabi_BH", "Paulo_Vila", "Nanda_Fit"];
 
+  // Título da sala amigável
+  const cityName = useMemo(() => {
+    if (!roomId) return "Local";
+    if (roomId.startsWith('nearby-')) return "Perto de Você";
+    
+    const parts = roomId.split('-');
+    const namePart = parts.slice(0, -1).join(' ');
+    return namePart.replace(/\b\w/g, l => l.toUpperCase()) || "Sala Local";
+  }, [roomId]);
+
   useEffect(() => {
     if (scrollRef.current) {
       const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -63,6 +68,17 @@ const Room = () => {
 
   useEffect(() => {
     if (!hasJoined) return;
+
+    // Mensagem inicial do sistema ao entrar
+    const welcomeMsg: ChatMessage = {
+      id: 'welcome',
+      sender: 'Sistema',
+      content: `Bem-vindo à sala ${cityName}, ${nickname}! Respeite os outros usuários e divirta-se.`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isMe: false,
+      type: 'system'
+    };
+    setMessagesList([welcomeMsg]);
 
     const loadMsgConfig = () => {
       const config = JSON.parse(localStorage.getItem('kipapo_msg_config') || '{"content":"","interval":"0"}');
@@ -102,14 +118,7 @@ const Room = () => {
       if (intervalId) clearInterval(intervalId);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [hasJoined]);
-
-  const cityName = useMemo(() => {
-    if (!roomId) return "Local";
-    const parts = roomId.split('-');
-    const namePart = parts.slice(0, -1).join(' ');
-    return namePart.replace(/\b\w/g, l => l.toUpperCase()) || "Sala Local";
-  }, [roomId]);
+  }, [hasJoined, cityName, nickname]);
 
   const handleSendMessage = (content: string = message, type: 'text' | 'image' | 'video' | 'system' = 'text') => {
     if (!content.trim() && type === 'text') return;
@@ -235,7 +244,7 @@ const Room = () => {
         )}
 
         <ScrollArea className="flex-1 p-6 md:p-10 bg-slate-50/30" ref={scrollRef}>
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-4xl mx-auto space-y-6 pb-10">
             {messagesList.map((msg) => (
               <div 
                 key={msg.id} 

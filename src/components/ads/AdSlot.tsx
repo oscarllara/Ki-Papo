@@ -25,6 +25,7 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [currentImageSubIndex, setCurrentImageSubIndex] = useState(0);
   const [ads, setAds] = useState<Ad[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadAds = () => {
@@ -41,6 +42,7 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
       });
 
       setAds(filtered);
+      setImageError(false);
     };
 
     loadAds();
@@ -61,6 +63,7 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
         setCurrentImageSubIndex(0);
         setCurrentAdIndex((prev) => (prev + 1) % ads.length);
       }
+      setImageError(false);
     }, 5000);
     
     return () => clearInterval(interval);
@@ -75,10 +78,12 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     if (allImages.length > 0 && allImages[currentImageSubIndex]) {
       return allImages[currentImageSubIndex];
     }
-    return 'https://via.placeholder.com/800x400?text=Ki+Papo+Publicidade';
+    return null;
   };
 
-  // Ajuste de proporção baseado no slot para evitar cortes
+  const displayImage = getDisplayImage();
+  if (!displayImage || imageError) return null;
+
   const aspectClass = slotIndex === 1 
     ? "aspect-[3/4] w-full" 
     : "aspect-[21/9] md:aspect-[5/1] w-full";
@@ -95,9 +100,10 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
         )}
       >
         <img 
-          src={getDisplayImage()} 
+          src={displayImage} 
           alt="Publicidade" 
           className="w-full h-full object-cover transition-opacity duration-500"
+          onError={() => setImageError(true)}
         />
         
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
