@@ -203,7 +203,7 @@ const Room = () => {
 
   return (
     <div className="flex h-screen bg-[#FDFDFF] overflow-hidden font-sans">
-      <aside className="w-80 bg-white border-r border-slate-100 hidden lg:flex flex-col z-20">
+      <aside className="w-64 bg-white border-r border-slate-100 hidden lg:flex flex-col z-20">
         <div className="p-8 border-b border-slate-50">
           <h3 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[11px]">Online</h3>
         </div>
@@ -244,7 +244,7 @@ const Room = () => {
         )}
 
         <ScrollArea className="flex-1 p-6 md:p-10 bg-slate-50/30" ref={scrollRef}>
-          <div className="max-w-4xl mx-auto space-y-6 pb-10">
+          <div className="max-w-6xl mx-auto space-y-6 pb-10">
             {messagesList.map((msg) => (
               <div 
                 key={msg.id} 
@@ -286,7 +286,7 @@ const Room = () => {
         </ScrollArea>
 
         <div className="p-6 md:p-8 bg-white border-t border-slate-50 shrink-0">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             {isPrivate && (
               <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl mb-4 shadow-lg shadow-primary/20">
                 <span className="flex items-center gap-2"><Lock size={14} /> Conversa Privada com {targetUser}</span>
