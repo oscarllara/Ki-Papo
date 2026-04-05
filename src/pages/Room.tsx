@@ -14,7 +14,8 @@ import {
   Users, 
   Lock, 
   Info,
-  Megaphone
+  Megaphone,
+  EyeOff
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,7 +50,6 @@ const Room = () => {
 
   const onlineUsers = ["Maria_22", "Joao_Silva", "Gabi_BH", "Paulo_Vila", "Nanda_Fit"];
 
-  // Título da sala amigável
   const cityName = useMemo(() => {
     if (!roomId) return "Local";
     if (roomId.startsWith('nearby-')) return "Perto de Você";
@@ -69,7 +69,6 @@ const Room = () => {
   useEffect(() => {
     if (!hasJoined) return;
 
-    // Mensagem inicial do sistema ao entrar
     const welcomeMsg: ChatMessage = {
       id: 'welcome',
       sender: 'Sistema',
@@ -143,12 +142,21 @@ const Room = () => {
     } 
   };
 
+  const selectUserForPrivate = (user: string) => {
+    setTargetUser(user);
+    setIsPrivate(true);
+    // Foca no input de mensagem após um pequeno delay para garantir que o estado atualizou
+    setTimeout(() => {
+      messageInputRef.current?.focus();
+    }, 50);
+  };
+
   const UserList = () => (
     <div className="space-y-1">
       {onlineUsers.map(user => (
         <button 
           key={user} 
-          onClick={() => { setTargetUser(user); setIsPrivate(true); }} 
+          onClick={() => selectUserForPrivate(user)} 
           className={cn(
             "w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-slate-50 text-left group", 
             targetUser === user ? "bg-indigo-50 shadow-sm ring-1 ring-indigo-100" : ""
@@ -267,15 +275,20 @@ const Room = () => {
                   <>
                     <div className="flex items-center gap-2 px-2">
                       <span className={cn("text-[10px] font-black uppercase tracking-wider", msg.isMe ? "text-primary" : "text-slate-400")}>
-                        {msg.sender} • {msg.time}
+                        {msg.sender} {msg.isPrivate && <span className="text-rose-500 ml-1">reservadamente para {msg.receiver}</span>} • {msg.time}
                       </span>
                     </div>
                     <div className={cn(
-                      "p-4 md:p-5 rounded-[1.75rem] shadow-sm", 
+                      "p-4 md:p-5 rounded-[1.75rem] shadow-sm relative overflow-hidden", 
                       msg.isMe 
-                        ? "bg-primary text-white rounded-tr-none" 
-                        : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
+                        ? (msg.isPrivate ? "bg-slate-800 text-white rounded-tr-none" : "bg-primary text-white rounded-tr-none")
+                        : (msg.isPrivate ? "bg-rose-50 text-rose-900 border border-rose-100 rounded-tl-none" : "bg-white text-slate-700 border border-slate-100 rounded-tl-none")
                     )}>
+                      {msg.isPrivate && (
+                        <div className="absolute top-0 right-0 p-1 opacity-20">
+                          <EyeOff size={12} />
+                        </div>
+                      )}
                       <p className="font-bold text-sm md:text-base leading-relaxed break-words">{msg.content}</p>
                     </div>
                   </>
@@ -288,16 +301,16 @@ const Room = () => {
         <div className="p-6 md:p-8 bg-white border-t border-slate-50 shrink-0">
           <div className="max-w-6xl mx-auto">
             {isPrivate && (
-              <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl mb-4 shadow-lg shadow-primary/20">
-                <span className="flex items-center gap-2"><Lock size={14} /> Conversa Privada com {targetUser}</span>
-                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="bg-white/20 px-3 py-1 rounded-lg hover:bg-white/30 transition-colors">CANCELAR</button>
+              <div className="flex items-center justify-between bg-slate-800 text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl mb-4 shadow-lg animate-in slide-in-from-bottom-2">
+                <span className="flex items-center gap-2"><Lock size={14} className="text-rose-500" /> Conversa Reservada com {targetUser}</span>
+                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 transition-colors">CANCELAR</button>
               </div>
             )}
             <div className="flex items-center gap-3 bg-slate-50 rounded-[2rem] p-2 border-2 border-transparent focus-within:border-primary/10 focus-within:bg-white transition-all shadow-inner">
               <Button variant="ghost" size="icon" className="text-slate-300 rounded-2xl h-12 w-12 shrink-0 hover:text-primary" onClick={() => setIsMediaDialogOpen(true)}><CameraIcon size={24} /></Button>
               <Input 
                 ref={messageInputRef}
-                placeholder="Diga algo..." 
+                placeholder={isPrivate ? `Enviar reservadamente para ${targetUser}...` : "Diga algo..."} 
                 className="border-none bg-transparent font-bold text-base md:text-lg h-12 focus-visible:ring-0" 
                 value={message} 
                 onChange={(e) => setMessage(e.target.value)} 
@@ -306,7 +319,10 @@ const Room = () => {
               <Button 
                 onClick={() => handleSendMessage()} 
                 disabled={!message.trim()} 
-                className="bg-primary rounded-2xl w-12 h-12 shrink-0 shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                className={cn(
+                  "rounded-2xl w-12 h-12 shrink-0 shadow-lg active:scale-95 transition-all",
+                  isPrivate ? "bg-slate-800 shadow-slate-800/20" : "bg-primary shadow-primary/20"
+                )}
               >
                 <SendHorizontal size={22} />
               </Button>
