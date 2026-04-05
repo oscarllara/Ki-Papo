@@ -15,16 +15,17 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const DEFAULT_USER = 'oscarlarafg@hotmail.com';
-  const DEFAULT_PASS = 'fabi2411';
+  // Credenciais Master solicitadas
+  const DEFAULT_USER = 'admin@admin.com';
+  const DEFAULT_PASS = 'Senha@123';
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Lista de admins cadastrados via dashboard
+    // Lista de admins cadastrados via dashboard (opcional para expansão futura)
     const admins = JSON.parse(localStorage.getItem('kipapo_admins') || '[]');
 
-    // Verifica se é o admin fornecido ou um dos cadastrados
+    // Verifica se é o admin master ou um dos cadastrados
     const isValidAdmin = (username === DEFAULT_USER && password === DEFAULT_PASS) || 
                        admins.some((a: any) => a.username === username && a.password === password);
 
