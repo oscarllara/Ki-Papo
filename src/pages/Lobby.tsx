@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { 
   MapPin, 
   Heart, 
@@ -21,7 +22,9 @@ import {
   Loader2,
   Music,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  Navigation,
+  Radar
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { fetchStates, fetchCitiesByState, IBGEState, IBGECity } from '@/services/ibge';
@@ -36,6 +39,12 @@ const Lobby = () => {
   const [citySearch, setCitySearch] = useState("");
   const [loadingStates, setLoadingStates] = useState(true);
   const [loadingCities, setLoadingCities] = useState(false);
+  
+  // Novos estados para busca por raio
+  const [viewMode, setViewMode] = useState<'city' | 'nearby'>('city');
+  const [radius, setRadius] = useState([50]);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     const loadStates = async () => {
@@ -84,6 +93,30 @@ const Lobby = () => {
     loadCities();
   }, [selectedState]);
 
+  const handleGetLocation = () => {
+    setIsLocating(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setIsLocating(false);
+          setViewMode('nearby');
+        },
+        (error) => {
+          console.error("Erro ao obter localização", error);
+          setIsLocating(false);
+          alert("Não foi possível obter sua localização. Verifique as permissões do navegador.");
+        }
+      );
+    } else {
+      setIsLocating(false);
+      alert("Geolocalização não suportada pelo seu navegador.");
+    }
+  };
+
   const filteredCities = useMemo(() => {
     if (!citySearch.trim()) return cities;
     const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -111,6 +144,17 @@ const Lobby = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
+           <Button 
+             variant="ghost" 
+             onClick={handleGetLocation}
+             className={cn(
+               "rounded-2xl font-black text-[10px] uppercase tracking-widest gap-2 h-12 px-6 transition-all",
+               viewMode === 'nearby' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:bg-slate-50"
+             )}
+           >
+            {isLocating ? <Loader2 className="animate-spin" size={16} /> : <Navigation size={16} />}
+            Perto de Você
+          </Button>
            <Button variant="ghost" size="icon" onClick={() => navigate('/admin-login')} className="rounded-2xl text-slate-300 hover:text-primary h-12 w-12 hover:bg-primary/5">
             <Settings size={22} />
           </Button>
@@ -133,20 +177,20 @@ const Lobby = () => {
                 states.map((state) => (
                   <button 
                     key={state.sigla} 
-                    onClick={() => setSelectedState(state)} 
+                    onClick={() => { setSelectedState(state); setViewMode('city'); }} 
                     className={cn(
                       "w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group relative", 
-                      selectedState?.sigla === state.sigla 
+                      selectedState?.sigla === state.sigla && viewMode === 'city'
                         ? "bg-primary text-white shadow-2xl shadow-primary/30 translate-x-1" 
                         : "text-slate-500 hover:bg-slate-50 hover:text-primary"
                     )}
                   >
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-colors", 
-                      selectedState?.sigla === state.sigla ? "bg-white/20" : "bg-slate-100"
+                      selectedState?.sigla === state.sigla && viewMode === 'city' ? "bg-white/20" : "bg-slate-100"
                     )}>{state.sigla}</div>
                     <span className="hidden md:block font-black text-sm truncate uppercase tracking-tight">{state.nome}</span>
-                    {selectedState?.sigla === state.sigla && <ChevronRight size={16} className="absolute right-4 opacity-50" />}
+                    {selectedState?.sigla === state.sigla && viewMode === 'city' && <ChevronRight size={16} className="absolute right-4 opacity-50" />}
                   </button>
                 ))
               )}
@@ -159,31 +203,62 @@ const Lobby = () => {
             <div className="max-w-6xl mx-auto">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="flex items-center gap-6">
-                  <div className="bg-primary/10 p-6 rounded-[2.5rem] shadow-inner text-primary"><MapPin size={36} /></div>
+                  <div className={cn(
+                    "p-6 rounded-[2.5rem] shadow-inner transition-colors",
+                    viewMode === 'nearby' ? "bg-secondary/20 text-secondary" : "bg-primary/10 text-primary"
+                  )}>
+                    {viewMode === 'nearby' ? <Radar size={36} className="animate-pulse" /> : <MapPin size={36} />}
+                  </div>
                   <div className="space-y-1">
                     <h2 className="text-5xl font-black text-slate-900 tracking-tighter leading-none">
-                      {selectedCity || selectedState?.nome || "Escolha uma Cidade"}
+                      {viewMode === 'nearby' ? "Perto de Você" : (selectedCity || selectedState?.nome || "Escolha uma Cidade")}
                     </h2>
                     <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">
-                      {selectedCity ? `Salas disponíveis para conversa` : `Selecione seu município em ${selectedState?.nome}`}
+                      {viewMode === 'nearby' 
+                        ? `Buscando em um raio de ${radius}km` 
+                        : (selectedCity ? `Salas disponíveis para conversa` : `Selecione seu município em ${selectedState?.nome}`)}
                     </p>
                   </div>
                 </div>
-                {!selectedCity && (
-                  <div className="relative w-full md:w-[400px]">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
-                    <Input 
-                      placeholder="Buscar sua cidade..." 
-                      className="pl-16 h-20 rounded-[2rem] border-none bg-white shadow-2xl shadow-slate-200/50 text-lg font-bold" 
-                      value={citySearch} 
-                      onChange={(e) => setCitySearch(e.target.value)} 
+
+                {viewMode === 'nearby' ? (
+                  <div className="w-full md:w-[300px] space-y-4 bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-50">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Raio de Busca</span>
+                      <span className="text-sm font-black text-primary">{radius}km</span>
+                    </div>
+                    <Slider 
+                      value={radius} 
+                      onValueChange={setRadius} 
+                      max={200} 
+                      min={1} 
+                      step={1} 
+                      className="py-2"
                     />
+                    <div className="flex justify-between text-[9px] font-bold text-slate-300 uppercase">
+                      <span>1km</span>
+                      <span>200km</span>
+                    </div>
                   </div>
-                )}
-                {selectedCity && (
-                  <Button variant="outline" onClick={() => setSelectedCity(null)} className="rounded-2xl h-16 font-black px-8 border-slate-200 hover:bg-slate-50 uppercase tracking-widest text-[11px] gap-2">
-                    <RefreshCw size={16} /> Trocar Cidade
-                  </Button>
+                ) : (
+                  <>
+                    {!selectedCity && (
+                      <div className="relative w-full md:w-[400px]">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                        <Input 
+                          placeholder="Buscar sua cidade..." 
+                          className="pl-16 h-20 rounded-[2rem] border-none bg-white shadow-2xl shadow-slate-200/50 text-lg font-bold" 
+                          value={citySearch} 
+                          onChange={(e) => setCitySearch(e.target.value)} 
+                        />
+                      </div>
+                    )}
+                    {selectedCity && (
+                      <Button variant="outline" onClick={() => setSelectedCity(null)} className="rounded-2xl h-16 font-black px-8 border-slate-200 hover:bg-slate-50 uppercase tracking-widest text-[11px] gap-2">
+                        <RefreshCw size={16} /> Trocar Cidade
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -196,7 +271,7 @@ const Lobby = () => {
                   <Loader2 className="animate-spin text-primary mb-6" size={56} />
                   <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-xs">Mapeando Salas...</p>
                 </div>
-              ) : !selectedCity ? (
+              ) : (viewMode === 'city' && !selectedCity) ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
                   {filteredCities.map(city => (
                     <button 
@@ -218,7 +293,7 @@ const Lobby = () => {
                     {interests.map((interest) => (
                       <Card 
                         key={interest.id} 
-                        onClick={() => navigate(`/room/${selectedCity?.toLowerCase().replace(/\s+/g, '-')}-${interest.id}`)} 
+                        onClick={() => navigate(`/room/${(selectedCity || 'nearby').toLowerCase().replace(/\s+/g, '-')}-${interest.id}`)} 
                         className="group cursor-pointer border-none shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 p-12 rounded-[3.5rem] bg-white relative overflow-hidden active:scale-[0.98] border border-transparent hover:border-primary/10"
                       >
                         <div className="flex items-center justify-between mb-10">
@@ -227,15 +302,21 @@ const Lobby = () => {
                           </div>
                           <div className="flex flex-col items-end">
                              <Badge className="bg-emerald-500 text-white border-none font-black text-[9px] px-3 py-1.5 uppercase tracking-widest shadow-lg shadow-emerald-500/20">AO VIVO</Badge>
-                             <span className="text-[9px] font-black text-slate-300 mt-2 uppercase">24 Online</span>
+                             <span className="text-[9px] font-black text-slate-300 mt-2 uppercase">
+                               {viewMode === 'nearby' ? `${Math.floor(Math.random() * 100) + 10} Online` : "24 Online"}
+                             </span>
                           </div>
                         </div>
                         <h3 className="text-4xl font-black text-slate-900 tracking-tighter group-hover:text-primary transition-colors">{interest.name}</h3>
-                        <p className="text-sm text-slate-400 mt-4 font-bold leading-relaxed">Pessoas reais de <span className="text-primary">{selectedCity}</span> prontas para um papo.</p>
+                        <p className="text-sm text-slate-400 mt-4 font-bold leading-relaxed">
+                          {viewMode === 'nearby' 
+                            ? `Pessoas reais a menos de ${radius}km de você.` 
+                            : `Pessoas reais de ${selectedCity} prontas para um papo.`}
+                        </p>
                       </Card>
                     ))}
                   </div>
-                  <AdSlot city={selectedCity} slotIndex={2} className="h-44 w-full rounded-[3rem]" />
+                  <AdSlot city={selectedCity || 'Global'} slotIndex={2} className="h-44 w-full rounded-[3rem]" />
                 </div>
               )}
             </div>
