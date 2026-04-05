@@ -78,8 +78,10 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
     return 'https://via.placeholder.com/800x400?text=Ki+Papo+Publicidade';
   };
 
-  // Ajuste de proporção baseado no slot
-  const aspectClass = slotIndex === 1 ? "aspect-[3/4]" : "aspect-[21/9] md:aspect-[4/1]";
+  // Ajuste de proporção baseado no slot para evitar cortes
+  const aspectClass = slotIndex === 1 
+    ? "aspect-[3/4] w-full" 
+    : "aspect-[21/9] md:aspect-[5/1] w-full";
 
   return (
     <div className={cn("flex flex-col gap-2 w-full", className)}>
@@ -88,7 +90,7 @@ const AdSlot = ({ city, slotIndex, className }: AdSlotProps) => {
         target="_blank" 
         rel="noopener noreferrer"
         className={cn(
-          "block relative rounded-2xl md:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-all group bg-slate-100 border border-slate-200",
+          "block relative rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group bg-slate-100 border border-slate-200",
           aspectClass
         )}
       >

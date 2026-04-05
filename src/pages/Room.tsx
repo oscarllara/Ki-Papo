@@ -42,7 +42,6 @@ const Room = () => {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [nickname, setNickname] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
@@ -62,7 +61,6 @@ const Room = () => {
     }
   }, [messagesList]);
 
-  // Lógica de Mensagem Padrão e Repetição
   useEffect(() => {
     if (!hasJoined) return;
 
@@ -74,7 +72,6 @@ const Room = () => {
 
     const config = loadMsgConfig();
 
-    // Se houver um intervalo definido, configurar a repetição
     let intervalId: NodeJS.Timeout | null = null;
     const intervalMinutes = parseInt(config.interval || '0');
 
@@ -95,10 +92,8 @@ const Room = () => {
       }, intervalMinutes * 60 * 1000);
     }
 
-    // Escutar mudanças no localStorage (caso o admin mude a msg em outra aba)
     const handleStorageChange = () => {
       loadMsgConfig();
-      // Em uma aplicação real com servidor, isso seria via WebSocket
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -115,10 +110,6 @@ const Room = () => {
     const namePart = parts.slice(0, -1).join(' ');
     return namePart.replace(/\b\w/g, l => l.toUpperCase()) || "Sala Local";
   }, [roomId]);
-
-  const visibleMessages = useMemo(() => {
-    return messagesList.filter(msg => !msg.isPrivate || msg.sender === nickname || msg.receiver === nickname);
-  }, [messagesList, nickname]);
 
   const handleSendMessage = (content: string = message, type: 'text' | 'image' | 'video' | 'system' = 'text') => {
     if (!content.trim() && type === 'text') return;
@@ -150,13 +141,13 @@ const Room = () => {
           key={user} 
           onClick={() => { setTargetUser(user); setIsPrivate(true); }} 
           className={cn(
-            "w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-white text-left group", 
-            targetUser === user ? "bg-white shadow-xl shadow-primary/5 ring-1 ring-primary/10" : ""
+            "w-full flex items-center gap-4 p-4 rounded-2xl transition-all hover:bg-slate-50 text-left group", 
+            targetUser === user ? "bg-indigo-50 shadow-sm ring-1 ring-indigo-100" : ""
           )}
         >
           <div className="relative">
             <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-              <AvatarFallback className="bg-slate-50 font-black text-xs text-slate-400">{user[0]}</AvatarFallback>
+              <AvatarFallback className="bg-slate-100 font-black text-xs text-slate-400">{user[0]}</AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
           </div>
@@ -209,8 +200,8 @@ const Room = () => {
         </div>
         <ScrollArea className="flex-1 p-4">
           <UserList />
-          <div className="mt-10 p-2">
-            <AdSlot city={cityName} slotIndex={1} className="rounded-[2.5rem]" />
+          <div className="mt-10 p-4">
+            <AdSlot city={cityName} slotIndex={1} className="rounded-[2rem]" />
           </div>
         </ScrollArea>
       </aside>
@@ -232,30 +223,30 @@ const Room = () => {
           </div>
         </header>
 
-        <div className="bg-white px-6 py-3 border-b border-slate-50 shrink-0">
-          <AdSlot city={cityName} slotIndex={0} className="rounded-3xl h-16" />
+        <div className="bg-white px-6 py-4 border-b border-slate-50 shrink-0">
+          <AdSlot city={cityName} slotIndex={0} className="rounded-2xl" />
         </div>
 
         {roomAnnouncement && (
-          <div className="bg-indigo-50 border-b border-indigo-100 p-4 md:px-10 flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+          <div className="bg-indigo-50 border-b border-indigo-100 p-4 md:px-10 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 shrink-0">
              <div className="bg-indigo-600 p-2 rounded-xl text-white shrink-0"><Megaphone size={18} /></div>
              <p className="text-indigo-900 text-sm font-bold leading-relaxed">{roomAnnouncement}</p>
           </div>
         )}
 
-        <ScrollArea className="flex-1 p-6 md:p-12 bg-slate-50/20" ref={scrollRef}>
-          <div className="max-w-5xl mx-auto space-y-6">
+        <ScrollArea className="flex-1 p-6 md:p-10 bg-slate-50/30" ref={scrollRef}>
+          <div className="max-w-4xl mx-auto space-y-6">
             {messagesList.map((msg) => (
               <div 
                 key={msg.id} 
                 className={cn(
-                  "flex flex-col gap-2 max-w-[85%] animate-in fade-in", 
+                  "flex flex-col gap-1.5 max-w-[85%] animate-in fade-in", 
                   msg.type === 'system' ? "mx-auto items-center w-full max-w-full" : 
                   msg.isMe ? "ml-auto items-end" : "items-start"
                 )}
               >
                 {msg.type === 'system' ? (
-                  <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 rounded-3xl p-6 text-center shadow-sm w-full md:w-3/4">
+                  <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 rounded-3xl p-6 text-center shadow-sm w-full md:w-3/4 my-4">
                     <div className="flex items-center justify-center gap-3 mb-2">
                       <Megaphone className="text-indigo-600" size={16} />
                       <span className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em]">Comunicado do Sistema</span>
@@ -265,13 +256,18 @@ const Room = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center gap-3">
-                      <span className={cn("text-[10px] font-black uppercase", msg.isMe ? "text-primary" : "text-slate-400")}>
+                    <div className="flex items-center gap-2 px-2">
+                      <span className={cn("text-[10px] font-black uppercase tracking-wider", msg.isMe ? "text-primary" : "text-slate-400")}>
                         {msg.sender} • {msg.time}
                       </span>
                     </div>
-                    <div className={cn("p-5 rounded-[2rem] shadow-sm", msg.isMe ? "bg-primary text-white rounded-tr-none" : "bg-white text-slate-700 border border-slate-100 rounded-tl-none")}>
-                      <p className="font-bold leading-relaxed break-words">{msg.content}</p>
+                    <div className={cn(
+                      "p-4 md:p-5 rounded-[1.75rem] shadow-sm", 
+                      msg.isMe 
+                        ? "bg-primary text-white rounded-tr-none" 
+                        : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
+                    )}>
+                      <p className="font-bold text-sm md:text-base leading-relaxed break-words">{msg.content}</p>
                     </div>
                   </>
                 )}
@@ -280,28 +276,44 @@ const Room = () => {
           </div>
         </ScrollArea>
 
-        <div className="p-6 md:p-10 bg-white border-t border-slate-50 shrink-0">
-          <div className="max-w-5xl mx-auto">
+        <div className="p-6 md:p-8 bg-white border-t border-slate-50 shrink-0">
+          <div className="max-w-4xl mx-auto">
             {isPrivate && (
-              <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl mb-4">
-                <span><Lock size={14} className="inline mr-2"/> Privada: {targetUser}</span>
-                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="bg-white/20 px-3 py-1 rounded-lg">CANCELAR</button>
+              <div className="flex items-center justify-between bg-primary text-white text-[10px] font-black uppercase px-6 py-3 rounded-2xl mb-4 shadow-lg shadow-primary/20">
+                <span className="flex items-center gap-2"><Lock size={14} /> Conversa Privada com {targetUser}</span>
+                <button onClick={() => {setIsPrivate(false); setTargetUser(null)}} className="bg-white/20 px-3 py-1 rounded-lg hover:bg-white/30 transition-colors">CANCELAR</button>
               </div>
             )}
-            <div className="flex items-center gap-3 bg-slate-50 rounded-[2.5rem] p-2 border-2 border-transparent focus-within:border-primary/10">
-              <Button variant="ghost" size="icon" className="text-slate-300 rounded-2xl h-14 w-14 shrink-0" onClick={() => setIsMediaDialogOpen(true)}><CameraIcon size={24} /></Button>
-              <Input placeholder="Diga algo..." className="border-none bg-transparent font-bold text-lg h-14" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} />
-              <Button onClick={() => handleSendMessage()} disabled={!message.trim()} className="bg-primary rounded-[2rem] w-14 h-14 shrink-0"><SendHorizontal size={24} /></Button>
+            <div className="flex items-center gap-3 bg-slate-50 rounded-[2rem] p-2 border-2 border-transparent focus-within:border-primary/10 focus-within:bg-white transition-all shadow-inner">
+              <Button variant="ghost" size="icon" className="text-slate-300 rounded-2xl h-12 w-12 shrink-0 hover:text-primary" onClick={() => setIsMediaDialogOpen(true)}><CameraIcon size={24} /></Button>
+              <Input 
+                ref={messageInputRef}
+                placeholder="Diga algo..." 
+                className="border-none bg-transparent font-bold text-base md:text-lg h-12 focus-visible:ring-0" 
+                value={message} 
+                onChange={(e) => setMessage(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} 
+              />
+              <Button 
+                onClick={() => handleSendMessage()} 
+                disabled={!message.trim()} 
+                className="bg-primary rounded-2xl w-12 h-12 shrink-0 shadow-lg shadow-primary/20 active:scale-95 transition-all"
+              >
+                <SendHorizontal size={22} />
+              </Button>
             </div>
           </div>
         </div>
       </main>
 
       <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
-        <DialogContent className="max-w-[340px] rounded-[3rem] p-10">
-          <div className="grid grid-cols-1 gap-4">
-            <Button onClick={() => {}} className="h-16 bg-primary text-white rounded-2xl font-black">Tirar Foto</Button>
-            <Button onClick={() => {}} variant="secondary" className="h-16 rounded-2xl font-black">Galeria</Button>
+        <DialogContent className="max-w-[340px] rounded-[2.5rem] p-8">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-center font-black">Enviar Mídia</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Button onClick={() => setIsMediaDialogOpen(false)} className="h-14 bg-primary text-white rounded-2xl font-black">Tirar Foto</Button>
+            <Button onClick={() => setIsMediaDialogOpen(false)} variant="secondary" className="h-14 rounded-2xl font-black">Galeria</Button>
           </div>
         </DialogContent>
       </Dialog>
