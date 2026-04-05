@@ -86,11 +86,8 @@ const Lobby = () => {
         const data = await fetchCitiesByState(selectedState.sigla);
         setCities(data);
         
-        // Se mudou de estado manualmente, limpa a cidade selecionada a menos que seja a do perfil
         if (userProfile && selectedState.sigla === userProfile.state) {
           setSelectedCity(userProfile.city);
-        } else if (viewMode === 'city') {
-          // Não limpa se estivermos apenas carregando o estado inicial
         }
         
         setCitySearch("");
@@ -309,7 +306,10 @@ const Lobby = () => {
                     {interests.map((interest) => (
                       <Card 
                         key={interest.id} 
-                        onClick={() => navigate(`/room/${(selectedCity || 'nearby').toLowerCase().replace(/\s+/g, '-')}-${interest.id}`)} 
+                        onClick={() => {
+                          const roomPrefix = viewMode === 'nearby' ? 'nearby' : (selectedCity || 'local').toLowerCase().replace(/\s+/g, '-');
+                          navigate(`/room/${roomPrefix}-${interest.id}`);
+                        }} 
                         className="group cursor-pointer border-none shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 p-12 rounded-[3.5rem] bg-white relative overflow-hidden active:scale-[0.98] border border-transparent hover:border-primary/10"
                       >
                         <div className="flex items-center justify-between mb-10">
