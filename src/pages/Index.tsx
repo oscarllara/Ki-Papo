@@ -118,7 +118,10 @@ const Index = () => {
         <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] rounded-[3rem] overflow-hidden bg-white/90 backdrop-blur-2xl border border-white/20">
           <CardContent className="space-y-6 p-8 pt-10">
             
-            <div className="space-y-4">
+            <div 
+              className="space-y-4"
+              onMouseLeave={() => setIsExpanded(false)}
+            >
               <h3 className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">O que você procura hoje?</h3>
               
               <div className="grid grid-cols-3 gap-2">
