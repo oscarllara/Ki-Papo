@@ -31,7 +31,14 @@ const Nickname = () => {
     }
     
     sessionStorage.setItem('kipapo_nickname', nickname);
-    navigate('/lobby');
+    
+    // Pega a cidade e o interesse para entrar direto na sala
+    const city = sessionStorage.getItem('kipapo_home_city') || 'Geral';
+    const interest = sessionStorage.getItem('selected_interest') || 'amizade';
+    const roomPrefix = city.toLowerCase().replace(/\s+/g, '-');
+    
+    toast({ title: "Entrando na sala...", description: `Bem-vindo ao Ki Papo de ${city}!` });
+    navigate(`/room/${roomPrefix}-${interest}`);
   };
 
   return (
@@ -62,7 +69,7 @@ const Nickname = () => {
             onClick={handleContinue}
             className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 gap-2"
           >
-            CONTINUAR PARA AS CIDADES <ArrowRight size={20} />
+            ENTRAR NA SALA AGORA <ArrowRight size={20} />
           </Button>
           
           <p className="text-center text-[10px] text-slate-300 font-bold uppercase tracking-widest">

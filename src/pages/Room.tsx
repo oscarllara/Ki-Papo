@@ -17,7 +17,8 @@ import {
   Megaphone,
   EyeOff,
   X,
-  Loader2
+  Loader2,
+  LogOut
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -204,7 +205,14 @@ const Room = () => {
               <span className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">Sala Ativa</span>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/lobby')} 
+              className="hidden md:flex items-center gap-2 text-rose-500 font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 rounded-xl px-4 h-10"
+            >
+              <LogOut size={16} /> Sair da Sala
+            </Button>
             <Button variant="ghost" size="icon" className="text-slate-300 rounded-xl h-10 w-10"><Info size={20} /></Button>
             <Sheet><SheetTrigger asChild><Button variant="ghost" size="icon" className="lg:hidden h-10 w-10"><Users size={20} /></Button></SheetTrigger>
               <SheetContent side="right" className="p-0 w-72"><UserList /></SheetContent>
