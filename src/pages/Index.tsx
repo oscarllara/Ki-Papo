@@ -8,9 +8,7 @@ import { Input } from "@/components/ui/input";
 import { 
   MessageSquare, 
   Facebook, 
-  Instagram, 
   Chrome, 
-  Apple, 
   ShieldCheck, 
   Loader2, 
   Settings, 
@@ -20,7 +18,9 @@ import {
   Heart,
   Cross,
   Music,
-  Flame
+  Flame,
+  Plus,
+  Minus
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -29,14 +29,18 @@ const Index = () => {
   const [isAuthenticating, setIsAuthenticating] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [selectedInterest, setSelectedInterest] = useState('amizade');
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const interests = [
-    { id: 'network', name: 'Network', icon: <Globe size={20} />, color: 'text-primary', bg: 'bg-primary/5' },
-    { id: 'amizade', name: 'Amizade', icon: <Users size={20} />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-    { id: 'namoro', name: 'Namoro', icon: <Heart size={20} />, color: 'text-rose-500', bg: 'bg-rose-50' },
-    { id: 'evangelico', name: 'Evangélico', icon: <Cross size={20} />, color: 'text-secondary', bg: 'bg-secondary/10' },
-    { id: 'role', name: 'Rolê', icon: <Music size={20} />, color: 'text-amber-500', bg: 'bg-amber-50' },
-    { id: 'sexo', name: 'Sexo', icon: <Flame size={20} />, color: 'text-pink-500', bg: 'bg-pink-50' },
+  const mainInterests = [
+    { id: 'network', name: 'Network', icon: <Globe size={20} />, color: 'text-primary' },
+    { id: 'evangelico', name: 'Evangélico', icon: <Cross size={20} />, color: 'text-secondary' },
+    { id: 'amizade', name: 'Amizade', icon: <Users size={20} />, color: 'text-indigo-500' },
+  ];
+
+  const extraInterests = [
+    { id: 'role', name: 'Rolê', icon: <Music size={20} />, color: 'text-amber-500' },
+    { id: 'namoro', name: 'Namoro', icon: <Heart size={20} />, color: 'text-rose-500' },
+    { id: 'sexo', name: 'Sexo', icon: <Flame size={20} />, color: 'text-pink-500' },
   ];
 
   const handleSocialLogin = (provider: string) => {
@@ -45,21 +49,11 @@ const Index = () => {
     setTimeout(() => {
       const mockNames: Record<string, string> = {
         'Google': 'Usuário do Google',
-        'Facebook': 'Usuário do Facebook',
-        'Instagram': 'Usuário do Instagram',
-        'Apple': 'Usuário Apple'
-      };
-
-      const mockBases: Record<string, string> = {
-        'Google': 'https://youtube.com/@',
-        'Facebook': 'https://facebook.com/',
-        'Instagram': 'https://instagram.com/',
-        'Apple': 'https://'
+        'Facebook': 'Usuário do Facebook'
       };
 
       sessionStorage.setItem('temp_provider', provider);
       sessionStorage.setItem('temp_name', mockNames[provider] || '');
-      sessionStorage.setItem('temp_base_url', mockBases[provider] || '');
       sessionStorage.setItem('selected_interest', selectedInterest);
       
       setIsAuthenticating(null);
@@ -72,14 +66,12 @@ const Index = () => {
     
     sessionStorage.setItem('temp_provider', 'E-mail');
     sessionStorage.setItem('temp_name', email.split('@')[0]);
-    sessionStorage.setItem('temp_base_url', 'https://instagram.com/');
     sessionStorage.setItem('selected_interest', selectedInterest);
     navigate('/onboarding');
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
-      {/* Background Decorativo */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[120px]" />
       
@@ -115,8 +107,9 @@ const Index = () => {
             
             <div className="space-y-4">
               <h3 className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">O que você procura hoje?</h3>
+              
               <div className="grid grid-cols-3 gap-2">
-                {interests.map((interest) => (
+                {mainInterests.map((interest) => (
                   <button
                     key={interest.id}
                     onClick={() => setSelectedInterest(interest.id)}
@@ -131,6 +124,37 @@ const Index = () => {
                     <span className="text-[9px] font-black uppercase tracking-tighter text-slate-700">{interest.name}</span>
                   </button>
                 ))}
+              </div>
+
+              {isExpanded && (
+                <div className="grid grid-cols-3 gap-2 animate-in slide-in-from-top-2 duration-300">
+                  {extraInterests.map((interest) => (
+                    <button
+                      key={interest.id}
+                      onClick={() => setSelectedInterest(interest.id)}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 border-2",
+                        selectedInterest === interest.id 
+                          ? "bg-white border-primary shadow-lg scale-105 z-10" 
+                          : "bg-slate-50 border-transparent opacity-60 hover:opacity-100"
+                      )}
+                    >
+                      <div className={cn("mb-2", interest.color)}>{interest.icon}</div>
+                      <span className="text-[9px] font-black uppercase tracking-tighter text-slate-700">{interest.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-center">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="rounded-full w-8 h-8 p-0 bg-slate-50 text-slate-400 hover:text-primary hover:bg-primary/5"
+                >
+                  {isExpanded ? <Minus size={16} /> : <Plus size={16} />}
+                </Button>
               </div>
             </div>
 
@@ -172,10 +196,6 @@ const Index = () => {
                 <Sparkles size={20} /> COMEÇAR AGORA
               </Button>
             </div>
-            
-            <p className="text-center text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em] mt-4 leading-relaxed">
-              Ao entrar você aceita nossos <br/> termos e políticas
-            </p>
           </CardContent>
         </Card>
 
