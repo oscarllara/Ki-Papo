@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Nickname from "./pages/Nickname";
 import Onboarding from "./pages/Onboarding";
 import Lobby from "./pages/Lobby";
 import Room from "./pages/Room";
@@ -21,6 +22,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/nickname" element={<Nickname />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/room/:roomId" element={<Room />} />

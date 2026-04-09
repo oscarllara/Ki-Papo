@@ -38,30 +38,19 @@ const Lobby = () => {
   const [radius, setRadius] = useState([50]);
   const [isLocating, setIsLocating] = useState(false);
 
-  // Carregar dados do usuário logado
-  const [userProfile, setUserProfile] = useState<any>(null);
-
   useEffect(() => {
-    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
-    if (savedUsers.length > 0) {
-      setUserProfile(savedUsers[0]);
-      setSelectedCity(savedUsers[0].city);
-    }
-
     const loadStates = async () => {
       try {
         const data = await fetchStates();
         setStates(data);
         
-        const homeStateSigla = sessionStorage.getItem('kipapo_home_state') || (savedUsers.length > 0 ? savedUsers[0].state : null);
+        // Tenta pegar o estado do usuário se existir, senão pega MG por padrão
+        const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
+        const homeStateSigla = savedUsers.length > 0 ? savedUsers[0].state : "MG";
         
-        if (homeStateSigla) {
-          const found = data.find(s => s.sigla === homeStateSigla);
-          if (found) setSelectedState(found);
-          else if (data.length > 0) setSelectedState(data[0]);
-        } else if (data.length > 0) {
-          setSelectedState(data[0]);
-        }
+        const found = data.find(s => s.sigla === homeStateSigla);
+        if (found) setSelectedState(found);
+        else if (data.length > 0) setSelectedState(data[0]);
       } catch (error) {
         console.error("Erro ao carregar estados", error);
       } finally {
@@ -78,11 +67,6 @@ const Lobby = () => {
       try {
         const data = await fetchCitiesByState(selectedState.sigla);
         setCities(data);
-        
-        if (userProfile && selectedState.sigla === userProfile.state) {
-          setSelectedCity(userProfile.city);
-        }
-        
         setCitySearch("");
       } catch (error) {
         console.error("Erro ao carregar cidades", error);
@@ -91,7 +75,7 @@ const Lobby = () => {
       }
     };
     loadCities();
-  }, [selectedState, userProfile]);
+  }, [selectedState]);
 
   const handleGetLocation = () => {
     setIsLocating(true);
@@ -135,7 +119,7 @@ const Lobby = () => {
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col h-screen overflow-hidden font-sans">
       <header className="px-8 h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex justify-between items-center z-20 shrink-0 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="bg-primary p-3 rounded-[1.25rem] text-white shadow-xl shadow-primary/20" onClick={() => navigate('/')}>
+          <div className="bg-primary p-3 rounded-[1.25rem] text-white shadow-xl shadow-primary/20 cursor-pointer" onClick={() => navigate('/')}>
             <MessageSquare size={24} className="fill-current" />
           </div>
           <div className="flex items-baseline gap-1 cursor-pointer" onClick={() => navigate('/')}>
@@ -164,7 +148,7 @@ const Lobby = () => {
                {viewMode === 'nearby' ? "GPS Ativo" : "Localização Atual"}
              </span>
              <span className="text-sm font-bold text-slate-700">
-               {viewMode === 'nearby' ? `Raio ${radius}km` : (selectedCity || "Selecionar...")}
+               {viewMode === 'nearby' ? `Raio ${radius}km` : (selectedState?.nome || "Selecionar...")}
              </span>
           </div>
         </div>
@@ -215,12 +199,12 @@ const Lobby = () => {
                   </div>
                   <div className="space-y-1">
                     <h2 className="text-5xl font-black text-slate-900 tracking-tighter leading-none">
-                      {viewMode === 'nearby' ? "Perto de Você" : (selectedCity || selectedState?.nome || "Escolha uma Cidade")}
+                      {viewMode === 'nearby' ? "Perto de Você" : (selectedState?.nome || "Escolha uma Cidade")}
                     </h2>
                     <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">
                       {viewMode === 'nearby' 
                         ? `Buscando em um raio de ${radius}km` 
-                        : (selectedCity ? `Salas disponíveis para conversa` : `Selecione seu município em ${selectedState?.nome}`)}
+                        : `Selecione seu município em ${selectedState?.nome || 'seu estado'}`}
                     </p>
                   </div>
                 </div>
@@ -242,24 +226,15 @@ const Lobby = () => {
                     <Button onClick={handleSelectNearby} className="w-full h-12 bg-primary rounded-xl font-black text-white mt-2">ENTRAR NAS SALAS</Button>
                   </div>
                 ) : (
-                  <>
-                    {!selectedCity && (
-                      <div className="relative w-full md:w-[400px]">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
-                        <Input 
-                          placeholder="Buscar sua cidade..." 
-                          className="pl-16 h-20 rounded-[2rem] border-none bg-white shadow-2xl shadow-slate-200/50 text-lg font-bold" 
-                          value={citySearch} 
-                          onChange={(e) => setCitySearch(e.target.value)} 
-                        />
-                      </div>
-                    )}
-                    {selectedCity && (
-                      <Button variant="outline" onClick={() => setSelectedCity(null)} className="rounded-2xl h-16 font-black px-8 border-slate-200 hover:bg-slate-50 uppercase tracking-widest text-[11px] gap-2">
-                        <RefreshCw size={16} /> Trocar Cidade
-                      </Button>
-                    )}
-                  </>
+                  <div className="relative w-full md:w-[400px]">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                    <Input 
+                      placeholder="Buscar sua cidade..." 
+                      className="pl-16 h-20 rounded-[2rem] border-none bg-white shadow-2xl shadow-slate-200/50 text-lg font-bold" 
+                      value={citySearch} 
+                      onChange={(e) => setCitySearch(e.target.value)} 
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -289,7 +264,7 @@ const Lobby = () => {
                       </button>
                     ))}
                   </div>
-                  <AdSlot city={selectedCity || 'Global'} slotIndex={2} className="h-44 w-full rounded-[3rem]" />
+                  <AdSlot city={selectedState?.nome || 'Global'} slotIndex={2} className="h-44 w-full rounded-[3rem]" />
                 </div>
               )}
             </div>

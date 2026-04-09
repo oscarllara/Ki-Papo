@@ -20,7 +20,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import AdSlot from '@/components/ads/AdSlot';
 
@@ -61,17 +60,17 @@ const Room = () => {
     return namePart.replace(/\b\w/g, l => l.toUpperCase()) || "Sala Local";
   }, [roomId]);
 
-  // Recuperar nome do usuário e entrar automaticamente
   useEffect(() => {
+    const savedNickname = sessionStorage.getItem('kipapo_nickname');
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
-    if (savedUsers.length > 0) {
-      const user = savedUsers[0];
-      // Pega apenas o primeiro nome ou o nome completo formatado
-      const firstName = user.name.split(' ')[0];
-      setNickname(firstName);
+    
+    if (savedNickname) {
+      setNickname(savedNickname);
+      setHasJoined(true);
+    } else if (savedUsers.length > 0) {
+      setNickname(savedUsers[0].name.split(' ')[0]);
       setHasJoined(true);
     } else {
-      // Se não houver usuário, volta para o início para identificar
       navigate('/');
     }
     setIsLoading(false);
@@ -268,7 +267,7 @@ const Room = () => {
               </div>
             )}
             <div className="flex items-center gap-2 bg-slate-50 rounded-2xl p-1.5 border-2 border-transparent focus-within:border-primary/10 focus-within:bg-white transition-all shadow-inner">
-              <Button variant="ghost" size="icon" className="text-slate-300 rounded-xl h-10 w-10 shrink-0 hover:text-primary" onClick={() => setIsMediaDialogOpen(true)}><CameraIcon size={20} /></Button>
+              <Button variant="ghost" size="icon" className="text-slate-300 rounded-xl h-10 w-10 shrink-0 hover:text-primary"><CameraIcon size={20} /></Button>
               <Input 
                 ref={messageInputRef}
                 placeholder={isPrivate ? `Reservado para ${targetUser}...` : "Diga algo..."} 
@@ -291,18 +290,6 @@ const Room = () => {
           </div>
         </div>
       </main>
-
-      <Dialog open={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen}>
-        <DialogContent className="max-w-[320px] rounded-3xl p-6">
-          <DialogHeader className="mb-2">
-            <DialogTitle className="text-center font-black">Enviar Mídia</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-2">
-            <Button onClick={() => setIsMediaDialogOpen(false)} className="h-12 bg-primary text-white rounded-xl font-black">Tirar Foto</Button>
-            <Button onClick={() => setIsMediaDialogOpen(false)} variant="secondary" className="h-12 rounded-xl font-black">Galeria</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

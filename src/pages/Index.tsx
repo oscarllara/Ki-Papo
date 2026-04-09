@@ -69,7 +69,7 @@ const Index = () => {
       sessionStorage.setItem('selected_interest', selectedInterest);
       
       setIsAuthenticating(null);
-      navigate('/onboarding');
+      navigate('/nickname');
     }, 1200);
   };
 
@@ -80,7 +80,7 @@ const Index = () => {
     sessionStorage.setItem('temp_name', email.split('@')[0]);
     sessionStorage.setItem('temp_base_url', '');
     sessionStorage.setItem('selected_interest', selectedInterest);
-    navigate('/onboarding');
+    navigate('/nickname');
   };
 
   return (
