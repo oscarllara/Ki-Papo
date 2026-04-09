@@ -59,7 +59,7 @@ const Onboarding = () => {
 
     if (tempName) {
       if (tempName.startsWith('Usuário')) setNamePlaceholder(tempName);
-      else setFormData(prev => ({ ...prev, name: tempName }));
+      else setFormData(prev => ({ ...prev, name: formatName(tempName) }));
     }
   }, []);
 
@@ -113,6 +113,7 @@ const Onboarding = () => {
     return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
   };
 
+  const formatName = (value: string) => value.replace(/\b\w/g, (char) => char.toUpperCase());
   const formatCityName = (value: string) => value.replace(/\b\w/g, (char) => char.toUpperCase());
 
   const handleVerify = () => {
@@ -131,7 +132,6 @@ const Onboarding = () => {
 
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     
-    // Gera ID sequencial iniciando em 1000
     const lastId = savedUsers.length > 0 
       ? Math.max(...savedUsers.map((u: any) => u.id || 999)) 
       : 999;
@@ -183,7 +183,12 @@ const Onboarding = () => {
         <CardContent className="space-y-5 p-10 pt-4 bg-white">
           <div className="space-y-1.5">
             <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Nome Completo</Label>
-            <Input placeholder={namePlaceholder} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-14 rounded-2xl border-slate-200 font-bold" />
+            <Input 
+              placeholder={namePlaceholder} 
+              value={formData.name} 
+              onChange={(e) => setFormData({...formData, name: formatName(e.target.value)})} 
+              className="h-14 rounded-2xl border-slate-200 font-bold" 
+            />
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
