@@ -11,16 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { 
   MapPin, 
-  Heart, 
-  Users, 
-  Cross, 
   MessageSquare, 
-  Flame, 
   Settings, 
   Search,
-  Globe,
   Loader2,
-  Music,
   ChevronRight,
   RefreshCw,
   Navigation,
@@ -42,7 +36,6 @@ const Lobby = () => {
   
   const [viewMode, setViewMode] = useState<'city' | 'nearby'>('city');
   const [radius, setRadius] = useState([50]);
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 
   // Carregar dados do usuário logado
@@ -51,7 +44,7 @@ const Lobby = () => {
   useEffect(() => {
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
     if (savedUsers.length > 0) {
-      setUserProfile(savedUsers[0]); // Pega o último usuário cadastrado
+      setUserProfile(savedUsers[0]);
       setSelectedCity(savedUsers[0].city);
     }
 
@@ -104,23 +97,19 @@ const Lobby = () => {
     setIsLocating(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
+        () => {
           setIsLocating(false);
           setViewMode('nearby');
         },
         (error) => {
           console.error("Erro ao obter localização", error);
           setIsLocating(false);
-          alert("Não foi possível obter sua localização. Verifique as permissões do navegador.");
+          alert("Não foi possível obter sua localização.");
         }
       );
     } else {
       setIsLocating(false);
-      alert("Geolocalização não suportada pelo seu navegador.");
+      alert("Geolocalização não suportada.");
     }
   };
 
@@ -131,14 +120,16 @@ const Lobby = () => {
     return cities.filter(city => normalize(city.nome).includes(search));
   }, [cities, citySearch]);
 
-  const interests = [
-    { id: 'network', name: 'Network', icon: <Globe size={24} />, color: 'text-primary', bg: 'bg-primary/5' },
-    { id: 'amizade', name: 'Amizade', icon: <Users size={24} />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-    { id: 'namoro', name: 'Namoro', icon: <Heart size={24} />, color: 'text-rose-500', bg: 'bg-rose-50' },
-    { id: 'evangelico', name: 'Evangélico', icon: <Cross size={24} />, color: 'text-secondary', bg: 'bg-secondary/10' },
-    { id: 'role', name: 'Rolê', icon: <Music size={24} />, color: 'text-amber-500', bg: 'bg-amber-50' },
-    { id: 'sexo', name: 'Sexo', icon: <Flame size={24} />, color: 'text-pink-500', bg: 'bg-pink-50' },
-  ];
+  const handleSelectCity = (cityName: string) => {
+    const interest = sessionStorage.getItem('selected_interest') || 'amizade';
+    const roomPrefix = cityName.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/room/${roomPrefix}-${interest}`);
+  };
+
+  const handleSelectNearby = () => {
+    const interest = sessionStorage.getItem('selected_interest') || 'amizade';
+    navigate(`/room/nearby-${interest}`);
+  };
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col h-screen overflow-hidden font-sans">
@@ -248,10 +239,7 @@ const Lobby = () => {
                       step={1} 
                       className="py-2"
                     />
-                    <div className="flex justify-between text-[9px] font-bold text-slate-300 uppercase">
-                      <span>1km</span>
-                      <span>200km</span>
-                    </div>
+                    <Button onClick={handleSelectNearby} className="w-full h-12 bg-primary rounded-xl font-black text-white mt-2">ENTRAR NAS SALAS</Button>
                   </div>
                 ) : (
                   <>
@@ -284,52 +272,21 @@ const Lobby = () => {
                   <Loader2 className="animate-spin text-primary mb-6" size={56} />
                   <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-xs">Mapeando Salas...</p>
                 </div>
-              ) : (viewMode === 'city' && !selectedCity) ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
-                  {filteredCities.map(city => (
-                    <button 
-                      key={city.id} 
-                      onClick={() => setSelectedCity(city.nome)} 
-                      className="p-8 bg-white rounded-[2.5rem] shadow-sm hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)] hover:scale-[1.03] transition-all duration-500 text-center group active:scale-95 border border-transparent hover:border-secondary/20"
-                    >
-                      <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-secondary/10 transition-colors">
-                        <MapPin size={28} className="text-slate-300 group-hover:text-secondary transition-colors" />
-                      </div>
-                      <span className="font-black text-slate-800 block truncate text-base">{city.nome}</span>
-                      <span className="text-[10px] font-black text-slate-300 uppercase mt-2 block tracking-widest">Entrar na Sala</span>
-                    </button>
-                  ))}
-                </div>
               ) : (
                 <div className="space-y-12 pb-20">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {interests.map((interest) => (
-                      <Card 
-                        key={interest.id} 
-                        onClick={() => {
-                          const roomPrefix = viewMode === 'nearby' ? 'nearby' : (selectedCity || 'local').toLowerCase().replace(/\s+/g, '-');
-                          navigate(`/room/${roomPrefix}-${interest.id}`);
-                        }} 
-                        className="group cursor-pointer border-none shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 p-12 rounded-[3.5rem] bg-white relative overflow-hidden active:scale-[0.98] border border-transparent hover:border-primary/10"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredCities.map(city => (
+                      <button 
+                        key={city.id} 
+                        onClick={() => handleSelectCity(city.nome)} 
+                        className="p-8 bg-white rounded-[2.5rem] shadow-sm hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)] hover:scale-[1.03] transition-all duration-500 text-center group active:scale-95 border border-transparent hover:border-secondary/20"
                       >
-                        <div className="flex items-center justify-between mb-10">
-                          <div className={cn("w-20 h-20 rounded-[1.75rem] flex items-center justify-center shadow-inner transition-transform group-hover:scale-110 duration-500", interest.bg, interest.color)}>
-                            {interest.icon}
-                          </div>
-                          <div className="flex flex-col items-end">
-                             <Badge className="bg-emerald-500 text-white border-none font-black text-[9px] px-3 py-1.5 uppercase tracking-widest shadow-lg shadow-emerald-500/20">AO VIVO</Badge>
-                             <span className="text-[9px] font-black text-slate-300 mt-2 uppercase">
-                               {viewMode === 'nearby' ? `${Math.floor(Math.random() * 100) + 10} Online` : "24 Online"}
-                             </span>
-                          </div>
+                        <div className="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-secondary/10 transition-colors">
+                          <MapPin size={28} className="text-slate-300 group-hover:text-secondary transition-colors" />
                         </div>
-                        <h3 className="text-4xl font-black text-slate-900 tracking-tighter group-hover:text-primary transition-colors">{interest.name}</h3>
-                        <p className="text-sm text-slate-400 mt-4 font-bold leading-relaxed">
-                          {viewMode === 'nearby' 
-                            ? `Pessoas reais a menos de ${radius}km de você.` 
-                            : `Pessoas reais de ${selectedCity} prontas para um papo.`}
-                        </p>
-                      </Card>
+                        <span className="font-black text-slate-800 block truncate text-base">{city.nome}</span>
+                        <span className="text-[10px] font-black text-slate-300 uppercase mt-2 block tracking-widest">Entrar na Sala</span>
+                      </button>
                     ))}
                   </div>
                   <AdSlot city={selectedCity || 'Global'} slotIndex={2} className="h-44 w-full rounded-[3rem]" />

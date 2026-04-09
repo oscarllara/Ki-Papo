@@ -14,13 +14,30 @@ import {
   ShieldCheck, 
   Loader2, 
   Settings, 
-  Sparkles 
+  Sparkles,
+  Globe,
+  Users,
+  Heart,
+  Cross,
+  Music,
+  Flame
 } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const navigate = useNavigate();
   const [isAuthenticating, setIsAuthenticating] = useState<string | null>(null);
   const [email, setEmail] = useState('');
+  const [selectedInterest, setSelectedInterest] = useState('amizade');
+
+  const interests = [
+    { id: 'network', name: 'Network', icon: <Globe size={20} />, color: 'text-primary', bg: 'bg-primary/5' },
+    { id: 'amizade', name: 'Amizade', icon: <Users size={20} />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { id: 'namoro', name: 'Namoro', icon: <Heart size={20} />, color: 'text-rose-500', bg: 'bg-rose-50' },
+    { id: 'evangelico', name: 'Evangélico', icon: <Cross size={20} />, color: 'text-secondary', bg: 'bg-secondary/10' },
+    { id: 'role', name: 'Rolê', icon: <Music size={20} />, color: 'text-amber-500', bg: 'bg-amber-50' },
+    { id: 'sexo', name: 'Sexo', icon: <Flame size={20} />, color: 'text-pink-500', bg: 'bg-pink-50' },
+  ];
 
   const handleSocialLogin = (provider: string) => {
     setIsAuthenticating(provider);
@@ -43,6 +60,7 @@ const Index = () => {
       sessionStorage.setItem('temp_provider', provider);
       sessionStorage.setItem('temp_name', mockNames[provider] || '');
       sessionStorage.setItem('temp_base_url', mockBases[provider] || '');
+      sessionStorage.setItem('selected_interest', selectedInterest);
       
       setIsAuthenticating(null);
       navigate('/onboarding');
@@ -55,6 +73,7 @@ const Index = () => {
     sessionStorage.setItem('temp_provider', 'E-mail');
     sessionStorage.setItem('temp_name', email.split('@')[0]);
     sessionStorage.setItem('temp_base_url', 'https://instagram.com/');
+    sessionStorage.setItem('selected_interest', selectedInterest);
     navigate('/onboarding');
   };
 
@@ -74,98 +93,104 @@ const Index = () => {
         </div>
       )}
 
-      <div className="w-full max-w-md space-y-10 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        <div className="text-center space-y-6">
+      <div className="w-full max-w-md space-y-8 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <div className="text-center space-y-4">
           <div className="inline-flex flex-col items-center justify-center">
-            <div className="bg-primary w-24 h-24 rounded-[2.5rem] flex items-center justify-center relative shadow-2xl shadow-primary/30 transform hover:rotate-6 transition-transform duration-500">
-              <span className="text-white text-5xl font-black tracking-tighter">Ki</span>
-              <div className="absolute -top-2 -right-2 bg-secondary w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg border-4 border-white">
-                <MessageSquare size={18} className="text-primary fill-current" />
+            <div className="bg-primary w-20 h-20 rounded-[2rem] flex items-center justify-center relative shadow-2xl shadow-primary/30 transform hover:rotate-6 transition-transform duration-500">
+              <span className="text-white text-4xl font-black tracking-tighter">Ki</span>
+              <div className="absolute -top-1 -right-1 bg-secondary w-8 h-8 rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
+                <MessageSquare size={14} className="text-primary fill-current" />
               </div>
             </div>
-            <h1 className="text-secondary text-7xl font-black tracking-tighter mt-4 drop-shadow-sm">Papo</h1>
+            <h1 className="text-secondary text-6xl font-black tracking-tighter mt-2 drop-shadow-sm">Papo</h1>
           </div>
-          <div className="space-y-2">
-            <p className="text-slate-800 font-black text-2xl tracking-tight">Onde sua cidade se encontra.</p>
-            <p className="text-slate-400 font-bold text-sm uppercase tracking-[0.2em]">Conecte-se com quem está perto</p>
+          <div className="space-y-1">
+            <p className="text-slate-800 font-black text-xl tracking-tight">Onde sua cidade se encontra.</p>
+            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Conecte-se com quem está perto</p>
           </div>
         </div>
 
-        <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] rounded-[3.5rem] overflow-hidden bg-white/90 backdrop-blur-2xl border border-white/20">
-          <CardContent className="space-y-3 p-10 pt-12">
-            <div className="grid grid-cols-2 gap-3">
+        <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] rounded-[3rem] overflow-hidden bg-white/90 backdrop-blur-2xl border border-white/20">
+          <CardContent className="space-y-6 p-8 pt-10">
+            
+            <div className="space-y-4">
+              <h3 className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">O que você procura hoje?</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {interests.map((interest) => (
+                  <button
+                    key={interest.id}
+                    onClick={() => setSelectedInterest(interest.id)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 border-2",
+                      selectedInterest === interest.id 
+                        ? "bg-white border-primary shadow-lg scale-105 z-10" 
+                        : "bg-slate-50 border-transparent opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    <div className={cn("mb-2", interest.color)}>{interest.icon}</div>
+                    <span className="text-[9px] font-black uppercase tracking-tighter text-slate-700">{interest.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
+              <div className="relative flex justify-center text-[9px] uppercase font-black tracking-[0.3em]"><span className="bg-white px-4 text-slate-300">Entrar com</span></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
               <Button 
                 onClick={() => handleSocialLogin('Google')} 
                 variant="outline" 
-                className="h-16 rounded-2xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                className="h-14 rounded-xl border-slate-100 hover:bg-slate-50 gap-2 font-bold text-slate-700 text-xs shadow-sm"
               >
-                <Chrome size={20} className="text-[#EA4335]" /> Google
+                <Chrome size={16} className="text-[#EA4335]" /> Google
               </Button>
               <Button 
                 onClick={() => handleSocialLogin('Facebook')} 
                 variant="outline" 
-                className="h-16 rounded-2xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                className="h-14 rounded-xl border-slate-100 hover:bg-slate-50 gap-2 font-bold text-slate-700 text-xs shadow-sm"
               >
-                <Facebook size={20} className="text-[#1877F2] fill-[#1877F2]" /> Facebook
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                onClick={() => handleSocialLogin('Instagram')} 
-                variant="outline" 
-                className="h-16 rounded-2xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
-              >
-                <Instagram size={20} className="text-[#E4405F]" /> Instagram
-              </Button>
-              <Button 
-                onClick={() => handleSocialLogin('Apple')} 
-                variant="outline" 
-                className="h-16 rounded-2xl border-slate-100 hover:bg-slate-50 gap-3 font-bold text-slate-700 transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
-              >
-                <Apple size={20} className="text-slate-900" /> Apple
+                <Facebook size={16} className="text-[#1877F2] fill-[#1877F2]" /> Facebook
               </Button>
             </div>
             
-            <div className="relative py-8">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.3em]"><span className="bg-white px-6 text-slate-300">Ou use seu e-mail</span></div>
-            </div>
-
-            <div className="space-y-4">
+            <div className="space-y-3">
               <Input 
                 type="email"
                 placeholder="seu-email@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-16 rounded-2xl border-slate-100 text-center font-bold text-lg focus-visible:ring-primary/20 bg-slate-50/50"
+                className="h-14 rounded-xl border-slate-100 text-center font-bold text-sm focus-visible:ring-primary/20 bg-slate-50/50"
               />
               <Button 
                 onClick={handleEmailLogin}
                 disabled={!email.includes('@')}
-                className="w-full h-20 rounded-[2rem] bg-primary hover:bg-primary/90 text-white font-black text-xl shadow-2xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 gap-3"
+                className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 gap-2"
               >
-                <Sparkles size={24} /> COMEÇAR AGORA
+                <Sparkles size={20} /> COMEÇAR AGORA
               </Button>
             </div>
             
-            <p className="text-center text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] mt-8 leading-relaxed">
+            <p className="text-center text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em] mt-4 leading-relaxed">
               Ao entrar você aceita nossos <br/> termos e políticas
             </p>
           </CardContent>
         </Card>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 pt-2">
           <button 
             onClick={() => navigate('/admin-login')}
-            className="text-slate-400 hover:text-primary transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] group"
+            className="text-slate-400 hover:text-primary transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] group"
           >
-            <ShieldCheck size={16} className="group-hover:scale-110 transition-transform" /> Acesso Administrativo
+            <ShieldCheck size={14} className="group-hover:scale-110 transition-transform" /> Acesso Administrativo
           </button>
           <button 
             onClick={() => navigate('/admin-login')}
-            className="text-slate-400 hover:text-primary transition-all flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] group"
+            className="text-slate-400 hover:text-primary transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] group"
           >
-            <Settings size={16} className="group-hover:rotate-90 transition-transform duration-500" /> Configurações
+            <Settings size={14} className="group-hover:rotate-90 transition-transform duration-500" /> Configurações
           </button>
         </div>
       </div>
