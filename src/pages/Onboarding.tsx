@@ -158,7 +158,7 @@ const Onboarding = () => {
     sessionStorage.setItem('kipapo_home_state', formData.state);
     
     toast({ title: "Cadastro Concluído", description: `Seu ID é ${nextId}. Identidade validada.` });
-    navigate('/lobby');
+    navigate('/nickname');
   };
 
   const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,7 +172,7 @@ const Onboarding = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <Card className="w-full max-w-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in duration-500">
+      <Card className="w-full max-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in duration-500">
         <CardHeader className="text-center pb-2 bg-white pt-10">
           <div className="mx-auto bg-emerald-100 w-16 h-16 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
             <ShieldCheck className="text-emerald-600" size={32} />
