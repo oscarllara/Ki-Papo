@@ -16,7 +16,8 @@ import {
   Info,
   Megaphone,
   EyeOff,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -42,6 +43,7 @@ const Room = () => {
   
   const [nickname, setNickname] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [targetUser, setTargetUser] = useState<string | null>(null);
@@ -58,6 +60,22 @@ const Room = () => {
     const namePart = parts.slice(0, -1).join(' ');
     return namePart.replace(/\b\w/g, l => l.toUpperCase()) || "Sala Local";
   }, [roomId]);
+
+  // Recuperar nome do usuário e entrar automaticamente
+  useEffect(() => {
+    const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
+    if (savedUsers.length > 0) {
+      const user = savedUsers[0];
+      // Pega apenas o primeiro nome ou o nome completo formatado
+      const firstName = user.name.split(' ')[0];
+      setNickname(firstName);
+      setHasJoined(true);
+    } else {
+      // Se não houver usuário, volta para o início para identificar
+      navigate('/');
+    }
+    setIsLoading(false);
+  }, [navigate]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -124,12 +142,6 @@ const Room = () => {
     setTimeout(() => messageInputRef.current?.focus(), 10);
   };
 
-  const handleJoin = () => { 
-    if (nickname.trim().length >= 3) {
-      setHasJoined(true);
-    } 
-  };
-
   const selectUserForPrivate = (user: string) => {
     setTargetUser(user);
     setIsPrivate(true);
@@ -162,34 +174,10 @@ const Room = () => {
     </div>
   );
 
-  if (!hasJoined) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FDFDFF] flex items-center justify-center p-4 font-sans">
-        <Card className="w-full max-w-md p-8 md:p-12 rounded-[2.5rem] border-none shadow-2xl space-y-8 bg-white">
-          <div className="text-center space-y-6">
-            <div className="bg-primary/5 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto text-primary">
-              <Users size={40} />
-            </div>
-            <div className="space-y-1">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Entrar na Sala</h2>
-              <p className="text-slate-400 font-bold text-xs">Escolha seu apelido para começar</p>
-            </div>
-            <Input 
-              placeholder="Seu apelido..." 
-              value={nickname} 
-              onChange={(e) => setNickname(e.target.value)} 
-              onKeyDown={(e) => e.key === 'Enter' && handleJoin()} 
-              className="h-16 rounded-2xl text-center font-black text-xl border-none bg-slate-50 shadow-inner" 
-            />
-            <Button 
-              onClick={handleJoin} 
-              disabled={nickname.trim().length < 3} 
-              className="w-full h-16 bg-primary hover:bg-primary/90 rounded-2xl font-black text-lg text-white shadow-xl"
-            >
-              ENTRAR NO CHAT
-            </Button>
-          </div>
-        </Card>
+      <div className="min-h-screen bg-[#FDFDFF] flex items-center justify-center font-sans">
+        <Loader2 className="animate-spin text-primary" size={40} />
       </div>
     );
   }
