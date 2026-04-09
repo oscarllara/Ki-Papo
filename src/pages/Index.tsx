@@ -20,7 +20,9 @@ import {
   Music,
   Flame,
   Plus,
-  Minus
+  Minus,
+  Instagram,
+  Apple
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -49,11 +51,21 @@ const Index = () => {
     setTimeout(() => {
       const mockNames: Record<string, string> = {
         'Google': 'Usuário do Google',
-        'Facebook': 'Usuário do Facebook'
+        'Facebook': 'Usuário do Facebook',
+        'Instagram': 'Usuário do Instagram',
+        'Apple': 'Usuário Apple'
+      };
+
+      const baseUrls: Record<string, string> = {
+        'Instagram': 'https://instagram.com/',
+        'Facebook': 'https://facebook.com/',
+        'Google': '',
+        'Apple': ''
       };
 
       sessionStorage.setItem('temp_provider', provider);
       sessionStorage.setItem('temp_name', mockNames[provider] || '');
+      sessionStorage.setItem('temp_base_url', baseUrls[provider] || '');
       sessionStorage.setItem('selected_interest', selectedInterest);
       
       setIsAuthenticating(null);
@@ -66,6 +78,7 @@ const Index = () => {
     
     sessionStorage.setItem('temp_provider', 'E-mail');
     sessionStorage.setItem('temp_name', email.split('@')[0]);
+    sessionStorage.setItem('temp_base_url', '');
     sessionStorage.setItem('selected_interest', selectedInterest);
     navigate('/onboarding');
   };
@@ -177,6 +190,20 @@ const Index = () => {
                 className="h-14 rounded-xl border-slate-100 hover:bg-slate-50 gap-2 font-bold text-slate-700 text-xs shadow-sm"
               >
                 <Facebook size={16} className="text-[#1877F2] fill-[#1877F2]" /> Facebook
+              </Button>
+              <Button 
+                onClick={() => handleSocialLogin('Instagram')} 
+                variant="outline" 
+                className="h-14 rounded-xl border-slate-100 hover:bg-slate-50 gap-2 font-bold text-slate-700 text-xs shadow-sm"
+              >
+                <Instagram size={16} className="text-[#E4405F]" /> Instagram
+              </Button>
+              <Button 
+                onClick={() => handleSocialLogin('Apple')} 
+                variant="outline" 
+                className="h-14 rounded-xl border-slate-100 hover:bg-slate-50 gap-2 font-bold text-slate-700 text-xs shadow-sm"
+              >
+                <Apple size={16} className="text-slate-900 fill-slate-900" /> Apple
               </Button>
             </div>
             
