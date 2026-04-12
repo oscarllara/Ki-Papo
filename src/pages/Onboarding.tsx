@@ -36,6 +36,15 @@ const Onboarding = () => {
     indicatedBy: ''
   });
 
+  // Função para formatar nome: Primeira letra Maiúscula, restante minúscula
+  const formatName = (value: string) => {
+    return value
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   useEffect(() => {
     const loadStates = async () => {
       try {
@@ -56,17 +65,17 @@ const Onboarding = () => {
     setProvider(tempProvider);
     setBaseUrl(tempBaseUrl);
     
-    // Se for e-mail, Google ou Apple, o link social pode ser o próprio nome/email temporário
-    const initialSocialLink = tempBaseUrl || (tempProvider === 'E-mail' ? tempName : '');
-    
     setFormData(prev => ({ 
       ...prev, 
       socialLink: tempBaseUrl || (tempProvider === 'Instagram' || tempProvider === 'Facebook' ? tempBaseUrl : '')
     }));
 
     if (tempName) {
-      if (tempName.startsWith('Usuário')) setNamePlaceholder(tempName);
-      else setFormData(prev => ({ ...prev, name: formatName(tempName) }));
+      if (tempName.startsWith('Usuário')) {
+        setNamePlaceholder(tempName);
+      } else {
+        setFormData(prev => ({ ...prev, name: formatName(tempName) }));
+      }
     }
   }, []);
 
@@ -120,9 +129,6 @@ const Onboarding = () => {
     return `+55 (${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7, 11)}`;
   };
 
-  const formatName = (value: string) => value.replace(/\b\w/g, (char) => char.toUpperCase());
-  const formatCityName = (value: string) => value.replace(/\b\w/g, (char) => char.toUpperCase());
-
   const handleVerify = () => {
     if (!formData.name || formData.whatsapp.length < 18 || !formData.cpf || !formData.state || !formData.city || !formData.birthDate) {
       toast({ variant: "destructive", title: "Dados incompletos", description: "Por favor, preencha todos os campos obrigatórios." });
@@ -138,10 +144,7 @@ const Onboarding = () => {
     }
 
     const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
-    
-    const lastId = savedUsers.length > 0 
-      ? Math.max(...savedUsers.map((u: any) => u.id || 999)) 
-      : 999;
+    const lastId = savedUsers.length > 0 ? Math.max(...savedUsers.map((u: any) => u.id || 999)) : 999;
     const nextId = lastId + 1;
 
     const newUser = {
@@ -160,21 +163,11 @@ const Onboarding = () => {
     };
     
     localStorage.setItem('kipapo_users', JSON.stringify([newUser, ...savedUsers]));
-    
     sessionStorage.setItem('kipapo_home_city', formData.city);
     sessionStorage.setItem('kipapo_home_state', formData.state);
     
     toast({ title: "Cadastro Concluído", description: `Seu ID é ${nextId}. Identidade validada.` });
     navigate('/nickname');
-  };
-
-  const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (baseUrl && !val.startsWith(baseUrl)) {
-      setFormData(prev => ({ ...prev, socialLink: baseUrl }));
-    } else {
-      setFormData(prev => ({ ...prev, socialLink: val }));
-    }
   };
 
   return (
@@ -225,7 +218,7 @@ const Onboarding = () => {
 
           <div className="space-y-1.5">
             <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Cidade</Label>
-            <Input placeholder="Sua cidade" value={formData.city} onChange={(e) => setFormData({...formData, city: formatCityName(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
+            <Input placeholder="Sua cidade" value={formData.city} onChange={(e) => setFormData({...formData, city: formatName(e.target.value)})} className="h-14 rounded-2xl border-slate-200 font-bold" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -244,7 +237,7 @@ const Onboarding = () => {
             <Input 
               placeholder={provider === 'E-mail' ? 'seu-email@exemplo.com' : 'Link do seu perfil'}
               value={formData.socialLink} 
-              onChange={handleSocialLinkChange} 
+              onChange={(e) => setFormData({...formData, socialLink: e.target.value})} 
               className="h-14 rounded-2xl border-slate-200 font-bold" 
             />
           </div>
