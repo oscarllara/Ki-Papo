@@ -25,12 +25,14 @@ import {
   Apple
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isAuthenticating, setIsAuthenticating] = useState<string | null>(null);
   const [email, setEmail] = useState('');
-  const [selectedInterest, setSelectedInterest] = useState('amizade');
+  const [selectedInterest, setSelectedInterest] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const mainInterests = [
@@ -46,6 +48,11 @@ const Index = () => {
   ];
 
   const handleSocialLogin = (provider: string) => {
+    if (!selectedInterest) {
+      toast({ variant: "destructive", title: "Selecione um interesse", description: "Escolha o que você procura hoje antes de entrar." });
+      return;
+    }
+
     setIsAuthenticating(provider);
     
     setTimeout(() => {
@@ -74,6 +81,10 @@ const Index = () => {
   };
 
   const handleEmailLogin = () => {
+    if (!selectedInterest) {
+      toast({ variant: "destructive", title: "Selecione um interesse", description: "Escolha o que você procura hoje antes de entrar." });
+      return;
+    }
     if (!email.includes('@')) return;
     
     sessionStorage.setItem('temp_provider', 'E-mail');
@@ -100,7 +111,7 @@ const Index = () => {
 
       <div className="w-full max-w-md space-y-8 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
         <div className="text-center space-y-4">
-          <div className="inline-flex flex-col items-center justify-center">
+          <div className="inline-flex flex-col items-center justify-center cursor-pointer" onClick={() => navigate('/')}>
             <div className="bg-primary w-20 h-20 rounded-[2rem] flex items-center justify-center relative shadow-2xl shadow-primary/30 transform hover:rotate-6 transition-transform duration-500">
               <span className="text-white text-4xl font-black tracking-tighter">Ki</span>
               <div className="absolute -top-1 -right-1 bg-secondary w-8 h-8 rounded-xl flex items-center justify-center shadow-lg border-2 border-white">

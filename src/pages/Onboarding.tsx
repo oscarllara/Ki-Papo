@@ -11,7 +11,8 @@ import {
   ShieldCheck, 
   Loader2, 
   Calendar,
-  UserPlus
+  UserPlus,
+  MessageSquare
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { fetchStates, IBGEState } from '@/services/ibge';
@@ -36,7 +37,6 @@ const Onboarding = () => {
     indicatedBy: ''
   });
 
-  // Função para formatar nome: Primeira letra Maiúscula, restante minúscula
   const formatName = (value: string) => {
     return value
       .toLowerCase()
@@ -67,7 +67,7 @@ const Onboarding = () => {
     
     setFormData(prev => ({ 
       ...prev, 
-      socialLink: tempBaseUrl || (tempProvider === 'Instagram' || tempProvider === 'Facebook' ? tempBaseUrl : '')
+      socialLink: tempBaseUrl || (tempProvider === 'E-mail' ? tempName : '')
     }));
 
     if (tempName) {
@@ -170,9 +170,29 @@ const Onboarding = () => {
     navigate('/nickname');
   };
 
+  const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Se tiver baseUrl (FB/IG), não deixa apagar o prefixo
+    if (baseUrl && !val.startsWith(baseUrl)) {
+      setFormData(prev => ({ ...prev, socialLink: baseUrl }));
+    } else {
+      setFormData(prev => ({ ...prev, socialLink: val }));
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <Card className="w-full max-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in duration-500">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 font-sans">
+      <div className="flex items-center gap-3 mb-8 cursor-pointer" onClick={() => navigate('/')}>
+        <div className="bg-primary p-2 rounded-xl text-white shadow-lg shadow-primary/20">
+          <MessageSquare size={20} className="fill-current" />
+        </div>
+        <div className="flex items-baseline gap-0.5">
+          <span className="text-2xl font-black text-primary tracking-tighter">Ki</span>
+          <span className="text-2xl font-black text-secondary tracking-tighter">Papo</span>
+        </div>
+      </div>
+
+      <Card className="w-full max-md rounded-[2.5rem] border-none shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500">
         <CardHeader className="text-center pb-2 bg-white pt-10">
           <div className="mx-auto bg-emerald-100 w-16 h-16 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
             <ShieldCheck className="text-emerald-600" size={32} />
@@ -237,7 +257,7 @@ const Onboarding = () => {
             <Input 
               placeholder={provider === 'E-mail' ? 'seu-email@exemplo.com' : 'Link do seu perfil'}
               value={formData.socialLink} 
-              onChange={(e) => setFormData({...formData, socialLink: e.target.value})} 
+              onChange={handleSocialLinkChange} 
               className="h-14 rounded-2xl border-slate-200 font-bold" 
             />
           </div>
