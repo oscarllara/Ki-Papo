@@ -18,7 +18,13 @@ import {
   X,
   Loader2,
   LogOut,
-  Smile
+  Smile,
+  Globe,
+  Cross,
+  Music,
+  Heart,
+  Flame,
+  Sparkles
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -51,13 +57,27 @@ const Room = () => {
 
   const onlineUsers = ["Maria_22", "Joao_Silva", "Gabi_BH", "Paulo_Vila", "Nanda_Fit", "Lucas_SP", "Ana_Clara"];
 
-  const cityName = useMemo(() => {
-    if (!roomId) return "Local";
-    if (roomId.startsWith('nearby-')) return "Perto de Você";
+  // Mapeamento de interesses para exibição
+  const interestMap: Record<string, { name: string, icon: React.ReactNode, color: string, bg: string }> = {
+    network: { name: 'Network', icon: <Globe size={14} />, color: 'text-primary', bg: 'bg-primary/10' },
+    evangelico: { name: 'Evangélico', icon: <Cross size={14} />, color: 'text-secondary', bg: 'bg-secondary/10' },
+    amizade: { name: 'Amizade', icon: <Users size={14} />, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    role: { name: 'Rolê', icon: <Music size={14} />, color: 'text-amber-500', bg: 'bg-amber-50' },
+    namoro: { name: 'Namoro', icon: <Heart size={14} />, color: 'text-rose-500', bg: 'bg-rose-50' },
+    sexo: { name: 'Sexo', icon: <Flame size={14} />, color: 'text-pink-500', bg: 'bg-pink-50' },
+  };
+
+  const { cityName, category } = useMemo(() => {
+    if (!roomId) return { cityName: "Local", category: null };
     
     const parts = roomId.split('-');
+    const categoryId = parts[parts.length - 1];
     const namePart = parts.slice(0, -1).join(' ');
-    return namePart.replace(/\b\w/g, l => l.toUpperCase()) || "Sala Local";
+    
+    return {
+      cityName: roomId.startsWith('nearby-') ? "Perto de Você" : (namePart.replace(/\b\w/g, l => l.toUpperCase()) || "Sala Local"),
+      category: interestMap[categoryId] || { name: categoryId.toUpperCase(), icon: <Sparkles size={14} />, color: 'text-slate-500', bg: 'bg-slate-100' }
+    };
   }, [roomId]);
 
   useEffect(() => {
@@ -212,6 +232,15 @@ const Room = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {category && (
+              <div className={cn(
+                "hidden sm:flex items-center gap-2 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest shadow-sm border border-white/50",
+                category.bg, category.color
+              )}>
+                {category.icon}
+                {category.name}
+              </div>
+            )}
             <Button 
               variant="ghost" 
               onClick={() => navigate('/lobby')} 
