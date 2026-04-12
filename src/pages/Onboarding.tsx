@@ -23,7 +23,7 @@ const Onboarding = () => {
   const [states, setStates] = useState<IBGEState[]>([]);
   const [loadingStates, setLoadingStates] = useState(true);
   const [provider, setProvider] = useState<string>('E-mail');
-  const [baseUrl, setBaseUrl] = useState<string>('https://instagram.com/');
+  const [baseUrl, setBaseUrl] = useState<string>('');
 
   const [formData, setFormData] = useState({ 
     name: '',
@@ -51,11 +51,18 @@ const Onboarding = () => {
 
     const tempName = sessionStorage.getItem('temp_name');
     const tempProvider = sessionStorage.getItem('temp_provider') || 'E-mail';
-    const tempBaseUrl = sessionStorage.getItem('temp_base_url') || 'https://instagram.com/';
+    const tempBaseUrl = sessionStorage.getItem('temp_base_url') ?? '';
     
     setProvider(tempProvider);
     setBaseUrl(tempBaseUrl);
-    setFormData(prev => ({ ...prev, socialLink: tempBaseUrl }));
+    
+    // Se for e-mail, Google ou Apple, o link social pode ser o próprio nome/email temporário
+    const initialSocialLink = tempBaseUrl || (tempProvider === 'E-mail' ? tempName : '');
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      socialLink: tempBaseUrl || (tempProvider === 'Instagram' || tempProvider === 'Facebook' ? tempBaseUrl : '')
+    }));
 
     if (tempName) {
       if (tempName.startsWith('Usuário')) setNamePlaceholder(tempName);
@@ -163,7 +170,7 @@ const Onboarding = () => {
 
   const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (!val.startsWith(baseUrl)) {
+    if (baseUrl && !val.startsWith(baseUrl)) {
       setFormData(prev => ({ ...prev, socialLink: baseUrl }));
     } else {
       setFormData(prev => ({ ...prev, socialLink: val }));
@@ -233,8 +240,13 @@ const Onboarding = () => {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Perfil Social / E-mail</Label>
-            <Input value={formData.socialLink} onChange={handleSocialLinkChange} className="h-14 rounded-2xl border-slate-200 font-bold" />
+            <Label className="font-black text-slate-700 text-[10px] uppercase tracking-widest">Perfil Social / E-mail ({provider})</Label>
+            <Input 
+              placeholder={provider === 'E-mail' ? 'seu-email@exemplo.com' : 'Link do seu perfil'}
+              value={formData.socialLink} 
+              onChange={handleSocialLinkChange} 
+              className="h-14 rounded-2xl border-slate-200 font-bold" 
+            />
           </div>
 
           <div className="space-y-1.5">
