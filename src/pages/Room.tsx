@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import AdSlot from '@/components/ads/AdSlot';
+import Logo from '@/components/Logo';
 
 interface ChatMessage {
   id: string;
@@ -57,7 +58,6 @@ const Room = () => {
 
   const onlineUsers = ["Maria_22", "Joao_Silva", "Gabi_BH", "Paulo_Vila", "Nanda_Fit", "Lucas_SP", "Ana_Clara"];
 
-  // Mapeamento de interesses para exibição
   const interestMap: Record<string, { name: string, icon: React.ReactNode, color: string, bg: string }> = {
     network: { name: 'Network', icon: <Globe size={14} />, color: 'text-primary', bg: 'bg-primary/10' },
     evangelico: { name: 'Evangélico', icon: <Cross size={14} />, color: 'text-secondary', bg: 'bg-secondary/10' },
@@ -223,6 +223,10 @@ const Room = () => {
         <header className="h-20 md:h-24 border-b border-slate-100 flex items-center justify-between px-6 md:px-10 bg-white/90 backdrop-blur-xl z-10 shrink-0">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate('/lobby')} className="rounded-2xl h-12 w-12 bg-slate-50 hover:bg-slate-100 text-slate-400"><ArrowLeft size={24} /></Button>
+            <div className="cursor-pointer" onClick={() => navigate('/')}>
+              <Logo size="sm" />
+            </div>
+            <div className="h-10 w-px bg-slate-100 mx-2 hidden md:block" />
             <div>
               <h2 className="font-black text-slate-900 text-xl md:text-2xl tracking-tighter leading-none">{cityName}</h2>
               <div className="flex items-center gap-2 mt-1">

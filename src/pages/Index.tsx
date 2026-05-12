@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
-  MessageSquare, 
   Facebook, 
   Chrome, 
   ShieldCheck, 
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import Logo from '@/components/Logo';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -96,8 +96,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[120px]" />
+      {/* Background Decorativo */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-secondary/20 rounded-full blur-[120px]" />
       
       {isAuthenticating && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-50 flex items-center justify-center p-4">
@@ -109,21 +110,9 @@ const Index = () => {
         </div>
       )}
 
-      <div className="w-full max-w-md space-y-8 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        <div className="text-center space-y-4">
-          <div className="inline-flex flex-col items-center justify-center cursor-pointer" onClick={() => navigate('/')}>
-            <div className="bg-primary w-20 h-20 rounded-[2rem] flex items-center justify-center relative shadow-2xl shadow-primary/30 transform hover:rotate-6 transition-transform duration-500">
-              <span className="text-white text-4xl font-black tracking-tighter">Ki</span>
-              <div className="absolute -top-1 -right-1 bg-secondary w-8 h-8 rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
-                <MessageSquare size={14} className="text-primary fill-current" />
-              </div>
-            </div>
-            <h1 className="text-secondary text-6xl font-black tracking-tighter mt-2 drop-shadow-sm">Papo</h1>
-          </div>
-          <div className="space-y-1">
-            <p className="text-slate-800 font-black text-xl tracking-tight">Onde sua cidade se encontra.</p>
-            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">Conecte-se com quem está perto</p>
-          </div>
+      <div className="w-full max-w-md space-y-10 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <div className="text-center">
+          <Logo size="lg" showSlogan={true} className="mb-8" />
         </div>
 
         <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] rounded-[3rem] overflow-hidden bg-white/90 backdrop-blur-2xl border border-white/20">

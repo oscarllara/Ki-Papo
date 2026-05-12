@@ -13,28 +13,28 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Azul Ki Papo - Mais saturado */
-    --primary: 215 85% 45%;
+    /* Azul Metálico Ki Papo */
+    --primary: 215 55% 35%;
     --primary-foreground: 210 40% 98%;
 
-    /* Verde Ki Papo - Mais vibrante */
-    --secondary: 75 90% 48%;
+    /* Verde Lima Ki Papo */
+    --secondary: 78 75% 50%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 75 90% 95%;
-    --accent-foreground: 215 85% 45%;
+    --accent: 78 75% 95%;
+    --accent-foreground: 215 55% 35%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 215 85% 45%;
+    --ring: 215 55% 35%;
 
-    --radius: 2rem;
+    --radius: 1.5rem;
   }
 }
 
@@ -46,6 +46,14 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+}
+
+.glass-effect {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+}
+
+.metallic-gradient {
+  background: linear-gradient(135deg, #3a6ea5 0%, #2b5a8f 50%, #1e3f66 100%);
 }
 
 /* Custom Scrollbar */

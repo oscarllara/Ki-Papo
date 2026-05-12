@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { fetchStates, fetchCitiesByState, IBGEState, IBGECity } from '@/services/ibge';
 import AdSlot from '@/components/ads/AdSlot';
+import Logo from '@/components/Logo';
 
 const Lobby = () => {
   const navigate = useNavigate();
@@ -44,7 +45,6 @@ const Lobby = () => {
         const data = await fetchStates();
         setStates(data);
         
-        // Tenta pegar o estado do usuário se existir, senão pega MG por padrão
         const savedUsers = JSON.parse(localStorage.getItem('kipapo_users') || '[]');
         const homeStateSigla = savedUsers.length > 0 ? savedUsers[0].state : "MG";
         
@@ -118,14 +118,8 @@ const Lobby = () => {
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col h-screen overflow-hidden font-sans">
       <header className="px-8 h-24 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex justify-between items-center z-20 shrink-0 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="bg-primary p-3 rounded-[1.25rem] text-white shadow-xl shadow-primary/20 cursor-pointer" onClick={() => navigate('/')}>
-            <MessageSquare size={24} className="fill-current" />
-          </div>
-          <div className="flex items-baseline gap-1 cursor-pointer" onClick={() => navigate('/')}>
-            <span className="text-3xl font-black text-primary tracking-tighter">Ki</span>
-            <span className="text-3xl font-black text-secondary tracking-tighter">Papo</span>
-          </div>
+        <div className="cursor-pointer" onClick={() => navigate('/')}>
+          <Logo size="sm" />
         </div>
         <div className="flex items-center gap-4">
            <Button 
