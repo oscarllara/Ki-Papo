@@ -33,7 +33,7 @@ const Logo = ({ className, size = 'md', showSlogan = false }: LogoProps) => {
           <span className="text-white font-black tracking-tighter drop-shadow-md">Ki</span>
           
           {/* O Balãozinho Verde Lima */}
-          <div className="absolute -top-1 -right-1 bg-[#9ACD32] p-1 rounded-lg shadow-lg border-2 border-white animate-bounce-slow">
+          <div className="absolute -top-1 -right-1 bg-[#9ACD32] p-1.5 rounded-lg shadow-lg border-2 border-white animate-bounce-slow z-10">
             <MessageSquare size={current.icon} className="text-[#1e3f66] fill-current" />
           </div>
           
